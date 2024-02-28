@@ -1,1 +1,1 @@
-# KUCODE
+# KUCODE (KU COmmunity of DEvelopers)
