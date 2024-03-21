@@ -22,3 +22,9 @@ Vetur
 ```
 docker compose up
 ```
+
+<br />
+
+## 기여 가이드라인
+**이 프로젝트에 기여를 하고자 한다면 
+[기여 가이드라인](.github/CONTRIBUTING.md) 을 읽어보시기를 바랍니다.**
