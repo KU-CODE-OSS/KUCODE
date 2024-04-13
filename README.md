@@ -16,13 +16,23 @@ Auto Close Tag
 Vetur  
 
 # Running
-1. create a .env file on project root and add SECRET_KEY variable (for django settings)
-2. Launch docker
-3. run command
-```
-docker compose up
+```sh
+docker-compose -f docker-compose.base.yaml up -d db
 ```
 
+### Production
+```sh
+docker-compose -f docker-compose.base.yaml -f docker-compose.prod.yaml up -d
+```
+### Production with HTTPS (with Let's Encrypt by Caddy)
+> Change HTTPS_DOMAIN environment variable inside __.env__ from localhost to your domain name
+```sh
+docker-compose -f docker-compose.base.yaml -f docker-compose.prod+ssl.yaml up -d
+```
+### Development (a hot-reload of Vue.js and Django apps. Celery tasks updated by manual required)
+```sh
+docker-compose -f docker-compose.base.yaml -f docker-compose.dev.yaml up -d
+```
 <br />
 
 ## 기여 가이드라인
