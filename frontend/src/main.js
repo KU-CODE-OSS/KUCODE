@@ -1,12 +1,8 @@
-import { createApp } from 'vue'
-import router from "@/router"
+import Vue from 'vue'
 import App from './App.vue'
 
-import './assets/main.css'
-import {api} from "@/services/api"
+Vue.config.productionTip = false
 
-const app = createApp(App)
-app.use(router)
-app.mount('#app')
-
-app.config.globalProperties.$api = api
+new Vue({
+  render: h => h(App),
+}).$mount('#app')
