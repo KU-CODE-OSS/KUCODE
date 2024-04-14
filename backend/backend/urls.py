@@ -3,9 +3,12 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 
+base_api_url = 'api/'
+
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("api/", include("core.api.urls"))
+    # path("admin/", admin.site.urls),
+    path(base_api_url, include("core.api.urls")),
+    path(base_api_url + 'account/', include("account.api.urls"))
 ]
 
 if bool(settings.DEBUG):

@@ -34,7 +34,7 @@ Vetur
 
 ---
 
-Feel free to use this project as a template or fork it according to your needs. If you encounter any issues or have suggestions for improvements, please open an issue or pull request. Happy coding!
+
 
 ## Setup and Usage
 
