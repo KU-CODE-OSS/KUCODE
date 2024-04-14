@@ -86,7 +86,7 @@ This health check endpoint can be useful for monitoring the status of the backen
 ### Endpoints
 
 - `/`: Vue.js with Vite example app.
-- `/admin`: Django admin panel. To access, you need to create a superuser using `make createsuperuser`.
+<!-- - `/admin`: Django admin panel. To access, you need to create a superuser using `make createsuperuser`. -->
 - `/api`: Django API. Includes `/api/healthcheck` endpoint.
 
 
