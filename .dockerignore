@@ -159,8 +159,4 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-!.envs/.local
-.envs/.production/*.env
-
-!frontend
-
+**/node_modules
