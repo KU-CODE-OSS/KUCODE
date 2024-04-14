@@ -15,15 +15,82 @@ Auto Rename Tag
 Auto Close Tag  
 Vetur  
 
-# Running
-1. create a .env file on project root and add SECRET_KEY variable (for django settings)
-2. Launch docker
-3. run command
-```
-docker compose up
+
+---
+
+## Technologies Used
+
+- Docker
+- Django
+- Postgres
+- Vue.js
+- Nginx
+- Gunicorn
+
+## Features
+
+- Complete setup for Docker, Django, Postgres, Vue.js, and Nginx.
+- Accelerated development process.
+
+---
+
+
+
+## Setup and Usage
+
+### Running Locally
+
+To run the project locally for development, you can use the provided `local.yml` Docker Compose file along with the `Makefile`.
+
+```bash
+make run
 ```
 
-<br />
+| Container  | Service | Host Port | Docker Port |
+| ---------- | ------- | --------- | ----------- |
+| dev-django | django  | 8000      | 8000        |
+| dev-frontend  | vuejs   | 80      | 5173        |
+| dev-db     | db      |       | 5432        |
+| dev-pg-admin     | pg-admin      | 9000      | 80        |
+
+### Running in Production
+
+To run the project in a production environment, you can use the provided `production.yml` Docker Compose file along with the `Makefile`.
+Before running in production, make sure to add the necessary environment settings for each service in the .envs/.production directory. Sample environment files for each service are provided in this directory and need to be configured accordingly.
+
+```bash
+make run env=production
+```
+
+| Container  | Service | Host Port | Docker Port |
+| ---------- | ------- | --------- | ----------- |
+| django     | django  |           | 8000        |
+| db         | db      |           | 5432        |
+| nginx      | nginx   | 80        | 80          |
+
+For a quick check of what it looks like in production you can copy the files in .envs/.local to .envs/.production
+
+### Useful Makefile Commands
+
+- `make migrate`: Run Django migrations.
+- `make makemigrations`: Generate Django migration files.
+- `make test`: Run Django tests.
+- `make flake`: Run Flake8 for linting.
+
+### Health Check Endpoint
+
+In the Django backend, an API endpoint `/api/healthcheck` has already been implemented. This endpoint is designed to provide a quick health status check of the backend. When accessed, it returns a `200 OK` response, indicating that the backend is up and running properly.
+
+This health check endpoint can be useful for monitoring the status of the backend application, especially in production environments where it's essential to ensure the availability and reliability of the services.
+
+### Endpoints
+
+- `/`: Vue.js with Vite example app.
+- `/admin`: Django admin panel. To access, you need to create a superuser using `make createsuperuser`.
+- `/api`: Django API. Includes `/api/healthcheck` endpoint.
+
+
+
 
 ## 기여 가이드라인
 **이 프로젝트에 기여를 하고자 한다면 
