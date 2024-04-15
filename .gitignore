@@ -163,4 +163,5 @@ cython_debug/
 .envs/.production/*.env
 
 !frontend
+/frontend/node_modules
 
