@@ -35,9 +35,9 @@ LOCAL_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -125,9 +125,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_URLS_REGEX = r"^/api/.*$"
 
-CORS_ALLOW_ALL_ORIGINS = bool(env("CORS_ALLOWED_ORIGINS", default=False))
+CORS_ALLOW_ALL_ORIGINS= False
 
-CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS", default="http://localhost,http://127.0.0.1").split(',')
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://43.155.173.127"
+]
 
 if DEBUG:
     REST_FRAMEWORK = {

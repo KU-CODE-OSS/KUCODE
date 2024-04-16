@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Axios 인스턴스 생성
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: 'http://43.155.173.127:8000/api',
   xsrfHeaderName: 'X-CSRFToken',
   xsrfCookieName: 'csrftoken'
 });
