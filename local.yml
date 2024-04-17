@@ -7,8 +7,11 @@ services:
       dockerfile: ./compose/local/django/Dockerfile
     command: bash -c "
           python manage.py migrate --no-input &&
-          python manage.py runserver 0.0.0.0:8000
-          "
+          python manage.py runserver 0.0.0.0:8000"
+    environment:
+      - PUBLIC_IP=${PUBLIC_IP}
+      - VUE_APP_API_URL=http://${PUBLIC_IP}:8000
+      - CORS_ALLOWED_ORIGIN=http://${PUBLIC_IP}
     volumes:
       - ./backend:/app
     ports:
@@ -60,6 +63,8 @@ services:
       - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+    env_file:
+      - .env
     depends_on:
       - backend
     container_name: dev_frontend

@@ -1,5 +1,6 @@
 from pathlib import Path
 import environ
+import os
 
 env = environ.Env()
 
@@ -127,7 +128,13 @@ CORS_URLS_REGEX = r"^/api/.*$"
 
 CORS_ALLOW_ALL_ORIGINS = bool(env("CORS_ALLOWED_ORIGINS", default=False))
 
+CUSTOM_CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGIN')
+
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS", default="http://localhost,http://127.0.0.1").split(',')
+
+if CUSTOM_CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append(CUSTOM_CORS_ALLOWED_ORIGINS)
+
 
 if DEBUG:
     REST_FRAMEWORK = {
