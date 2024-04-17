@@ -38,6 +38,21 @@ Vetur
 
 ## Setup and Usage
 
+### Setting up the .env file
+
+To get started, you need to create a .env file in the root directory of the project. Then, you must populate it following this format:
+
+```bash
+# .env
+PUBLIC_IP=  # Place to write the IP address (exclude 'http://')
+VUE_APP_API_URL=http://${PUBLIC_IP}:8000/api
+CORS_ALLOWED_ORIGIN=http://${PUBLIC_IP}
+```
+
+In this setup, if you are running the environment locally, you can use localhost or 127.0.0.1 as the PUBLIC_IP. However, in a cloud environment, you should specify the public IP address.
+
+For an example, refer to the .env_example file provided in the project.
+
 ### Running Locally
 
 To run the project locally for development, you can use the provided `local.yml` Docker Compose file along with the `Makefile`.

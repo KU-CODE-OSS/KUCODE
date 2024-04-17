@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Axios 인스턴스 생성
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: process.env.VUE_APP_API_URL,
   xsrfHeaderName: 'X-CSRFToken',
   xsrfCookieName: 'csrftoken'
 });
@@ -14,7 +14,7 @@ function handleError(error) {
 }
 
 export function getHealthCheck() {
-    return ajax('/account/healthcheck?format=json', 'get');
+    return ajax('/account/healthcheck', 'get');
 }
   
 // ajax 함수
