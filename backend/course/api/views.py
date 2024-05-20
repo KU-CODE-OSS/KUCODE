@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -23,6 +24,12 @@ def course_create_db (request):
         ta = request.GET.get('ta')
         student_count = request.GET.get('student_count')
 
+        if not course_id or not year or not semester:
+            raise ValueError("course_id and year and semester cannot be empty")
+        
+        if Course.objects.filter(course_id=course_id, year=year,semester=semester).exists():
+            raise ValueError("course already exists.")
+        
         course = Course.objects.create(
             course_id=course_id,
             year=year,
@@ -34,6 +41,7 @@ def course_create_db (request):
         )
 
         return JsonResponse({"status": "OK", "message": "course record created successfully"})
+    
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)     
 
@@ -44,9 +52,7 @@ def course_read_db(request):
         semester = request.GET.get('semester')    
         course = Course.objects.get(course_id=course_id, year=year, semester=semester)
 
-        if course is None:
-            return JsonResponse({"status": "Error", "message": "User doesn't exist"})
-       
+
         data = {
             "course_id":course.course_id,
             "year": course.year,
@@ -58,10 +64,11 @@ def course_read_db(request):
         }
         return JsonResponse(data)
     
-    except course.DoesNotExist:
-        return JsonResponse({"status": "Error", "message":"course  doesn't exist"}, status=404)
+    except ObjectDoesNotExist:
+        return JsonResponse({"status": "Error", "message": f"Course '{course_id}' does not exist"}, status=404)    
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
 
 
 def course_update_db(request):
@@ -78,10 +85,11 @@ def course_delete_db(request):
         course = Course.objects.get(course_id=course_id, year=year, semester=semester)
         course.delete()  # 사용자 객체를 삭제합니다.
         return JsonResponse({"status": "OK", "message": "course record deleted successfully"})
-    except course.DoesNotExist:
-        return False, f"User with username '{course}' does not exist"
+    
+    except ObjectDoesNotExist:
+        return JsonResponse({"status": "Error", "message": f"Course '{course_id}' does not exist"}, status=404)    
     except Exception as e:
-        return False, str(e)
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 
 
 

@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.core.exceptions import ObjectDoesNotExist
+
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -15,19 +17,27 @@ class HealthCheckAPIView(APIView):
 
 def student_create_db (request):
     try:
-        id=request.GET.get('id')
+        id = request.GET.get('id')
         github_id = request.GET.get('github_id')
 
+        # 빈 값인 경우 에러 처리
+        if not id or not github_id:
+            raise ValueError("ID and GitHub ID cannot be empty")
+        
+        # 이미 존재하는 학생인 경우 에러 처리
+        if Student.objects.filter(id=id).exists():
+            raise ValueError("Student with this ID already exists")
 
         student = Student.objects.create(
             id=id,
             github_id=github_id,
         )
 
-
         return JsonResponse({"status": "OK", "message": "Student record created successfully"})
+    except ValueError as ve:
+        return JsonResponse({"status": "Error", "message": str(ve)}, status=400)
     except Exception as e:
-        return JsonResponse({"status": "Error", "message": str(e)}, status=500)     
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 
 def student_read_db(request):
     try:
@@ -53,8 +63,8 @@ def student_read_db(request):
         }
         return JsonResponse(data)
     
-    except User.DoesNotExist:
-        return JsonResponse({"status": "Error", "message":"User  doesn't exist"}, status=404)
+    except ObjectDoesNotExist:
+        return JsonResponse({"status": "Error", "message": f"Student with github_id '{github_id}' does not exist"}, status=404)
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 
@@ -63,6 +73,8 @@ def student_update_db(request):
     try:
         github_id = request.GET.get('github_id')
         response= requests.get("http://119.28.232.108:5000/api/user",params={'github_id':github_id})
+        if response.status_code == 404:
+            return JsonResponse({"status": "Error", "message": "GitHub user not found"}, status=404)
         data = response.json()
 
         # 데이터에서 필요한 정보 추출
@@ -84,6 +96,9 @@ def student_update_db(request):
         student.save()
     
         return JsonResponse({"status": "OK", "message": "Student record update successfully"})
+   
+    except ObjectDoesNotExist:
+        return JsonResponse({"status": "Error", "message": f"Student with github_id '{github_id}' does not exist"}, status=404)
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)       
 
@@ -91,10 +106,12 @@ def student_delete_db(request):
     try:
         github_id = request.GET.get('github_id')
         student = Student.objects.get(github_id=github_id)
+
         student.delete()  # 사용자 객체를 삭제합니다.
         return JsonResponse({"status": "OK", "message": "Student record deleted successfully"})
-    except User.DoesNotExist:
-        return False, f"User with username '{student}' does not exist"
+    
+    except ObjectDoesNotExist:
+        return JsonResponse({"status": "Error", "message": f"Student with github_id '{github_id}' does not exist"}, status=404)
     except Exception as e:
-        return False, str(e)
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 

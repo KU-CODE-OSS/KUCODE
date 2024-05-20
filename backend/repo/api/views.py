@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -17,7 +18,16 @@ def repo_create_db (request):
     try:
         github_id = request.GET.get('github_id')
         repo = request.GET.get('repo')
+
+        if not repo or not github_id:
+            raise ValueError("repo and GitHub ID cannot be empty")
+         
+        if Repository.objects.filter(owner_github_id=github_id, name=repo).exists():
+            raise ValueError("repo already exists.")
+         
         response= requests.get("http://119.28.232.108:5000/api/repos",params={'github_id':github_id,'repo_name':repo})
+        if response.status_code == 404:
+            return JsonResponse({"status": "Error", "message": "Repo has not been found"}, status=404)        
         data = response.json()
 
         id = data.get('id')
@@ -67,8 +77,7 @@ def repo_read_db(request):
         repo = request.GET.get('repo')
 
         repository = Repository.objects.get(owner_github_id=github_id, name=repo)
-        if repository is None:
-            return JsonResponse({"status": "Error", "message": "User doesn't exist"})
+
        
         data = {
             "id":repository.id,
@@ -93,8 +102,8 @@ def repo_read_db(request):
         }
         return JsonResponse(data)
     
-    except Repository.DoesNotExist:
-        return JsonResponse({"status": "Error", "message":"Repo doesn't exist"}, status=404)
+    except ObjectDoesNotExist:
+        return JsonResponse({"status": "Error", "message": f"Repo '{repo}' does not exist"}, status=404)    
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 
@@ -146,10 +155,12 @@ def repo_update_db(request):
         repository.description = description
         repository.release_version = release_version
         repository.save()
-    
         return JsonResponse({"status": "OK", "message": "Student record update successfully"})
+    
+    except ObjectDoesNotExist:
+        return JsonResponse({"status": "Error", "message": f"Repo '{repo}' does not exist"}, status=404)    
     except Exception as e:
-        return JsonResponse({"status": "Error", "message": str(e)}, status=500)       
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 
 def repo_delete_db(request):
     try:
@@ -158,8 +169,9 @@ def repo_delete_db(request):
         repository = Repository.objects.get(owner_github_id=github_id, name=repo)
         repository.delete()  # 사용자 객체를 삭제합니다.
         return JsonResponse({"status": "OK", "message": "The repo has been deleted successfully"})
-    except Repository.DoesNotExist:
-        return False, f"repo with name '{repository}' does not exist"
+    
+    except ObjectDoesNotExist:
+        return JsonResponse({"status": "Error", "message": f"Repo '{repo}' does not exist"}, status=404)    
     except Exception as e:
-        return False, str(e)
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 
