@@ -15,5 +15,5 @@ urlpatterns = [
  # DB CRUD for course_registration
 
     path("course_registration_create_db", views.course_registration_create_db, name="course_registration_create_db"),
-
+    path("course_project_update", views.course_project_update, name="course_project_update"),
 ]
