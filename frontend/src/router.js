@@ -1,9 +1,10 @@
-import { createRouter, createWebHistory } from 'vue-router'
-// import HomeView from '../views/HomeView.vue'
+import { createWebHistory, createRouter } from "vue-router"
+// import AppView from './App.vue'
 import MainView from './main.vue'
 import DashBoard from './dashboard.vue'
 import Login from './login.vue';
 import dash_stats from './dash_stats.vue';
+
 
 const routes = [
   {    path: "/",    component: MainView  },
@@ -13,8 +14,8 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes,
-})
+});
 
-export default router
+export default router; 
