@@ -1,10 +1,13 @@
 @import './base.css';
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  /* max-width: 1280px; */
+  margin: 0;
+  padding: 100px 100px 0px 100px;
   font-weight: normal;
+  height: 100rem;
+  width: auto;
+  min-width: 1200px;
 }
 
 a,
@@ -14,14 +17,23 @@ a,
   transition: 0.4s;
   padding: 3px;
 }
-
+.vsc-initialized{
+  background-color: rgb(252, 252, 252);
+  min-width: 1200px !important;
+}
+@media (min-width: 1200px) {
+	html {
+		overflow-x: auto;
+    width: 1200px;
+	}
+}
 @media (hover: hover) {
   a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
+    background-color: #862633;
   }
 }
 
-@media (min-width: 1024px) {
+/* @media (min-width: 1024px) {
   body {
     display: flex;
     place-items: center;
@@ -32,4 +44,4 @@ a,
     grid-template-columns: 1fr 1fr;
     padding: 0 2rem;
   }
-}
+} */

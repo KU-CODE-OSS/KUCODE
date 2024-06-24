@@ -1,0 +1,45 @@
+<template>
+  <div class="default-container">
+    <div class="left-split"></div>
+    <div class="right-split"></div>
+  </div> 
+</template>
+
+<script>
+export default {
+  name: 'Information',
+}
+</script>
+
+<style scoped>
+.default-container {
+  display: flex;
+  width: 100vw;
+  height: calc(100rem - 100px);
+  background: var(--White, #FCFCFC);
+  overflow: hidden; /* Ensure no overflow issues */
+}
+.default-container {
+  display: flex;
+  width: 100vw;
+  height: calc(100rem - 100px);
+  background: var(--White, #FCFCFC);
+  overflow: hidden; /* Ensure no overflow issues */
+}
+
+.left-split {
+  margin-left: 220px;
+  width: 400px !important;
+  min-width: 400px;
+  height: 100em;
+  border-right: 2px solid;
+  border-right-color: #DCE2ED;
+}
+
+.right-split {
+  width: 100%;
+  margin-right: 320px;
+}
+
+
+</style>
