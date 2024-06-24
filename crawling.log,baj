@@ -1,0 +1,1808 @@
+nohup: ignoring input
+Cycle started at: 2024-06-14 14:02:39
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 45m 36s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 48s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 25s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 32s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 26m 7s)
+Cycle ended at: 2024-06-14 15:15:02
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-14 16:15:02
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 40s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 45m 44s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 56s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 35s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 38s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 18m 13s)
+Cycle ended at: 2024-06-14 17:19:40
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-14 18:19:40
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 40s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 44m 47s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 54s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 7m 55s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 7m 56s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 7m 55s)
+Cycle ended at: 2024-06-14 19:13:03
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-14 20:13:03
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 40s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 45m 26s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 55s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 11m 10s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 11m 10s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 11m 11s)
+Cycle ended at: 2024-06-14 21:10:20
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-14 22:10:20
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 44m 41s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 54s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 9m 46s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 9m 46s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 9m 46s)
+Cycle ended at: 2024-06-14 23:05:25
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 00:05:25
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 40s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 44m 9s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 1s)
+Cycle ended at: 2024-06-15 00:50:15
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 01:50:15
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 44m 6s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 1s)
+Cycle ended at: 2024-06-15 02:35:01
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 03:35:01
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 49s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 1s)
+Cycle ended at: 2024-06-15 04:19:31
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 05:19:31
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 37s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 1s)
+Cycle ended at: 2024-06-15 06:03:48
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 07:03:48
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 31s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-15 07:47:59
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 08:48:00
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 56s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 1m 50s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 1m 50s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 1m 51s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 1m 51s)
+Cycle ended at: 2024-06-15 09:34:26
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 10:34:26
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 41s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-15 11:18:47
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 12:18:47
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 40s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 28m 53s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 1s)
+Cycle ended at: 2024-06-15 12:48:22
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 13:48:22
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 44m 51s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 54s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 27s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 29s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 19m 23s)
+Cycle ended at: 2024-06-15 14:53:15
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 15:53:15
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 37s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 49s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 40s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 22s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 13s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 15s)
+Cycle ended at: 2024-06-15 16:48:57
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 17:48:57
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 56s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 44s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 37s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 11s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 18s)
+Cycle ended at: 2024-06-15 18:44:49
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 19:44:49
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 55s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 40s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 27s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 4s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 11s)
+Cycle ended at: 2024-06-15 20:40:33
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 21:40:33
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 44m 10s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 43s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 28s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 14s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 21s)
+Cycle ended at: 2024-06-15 22:36:43
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-15 23:36:43
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 44m 13s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 41s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 21s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 10s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 13s)
+Cycle ended at: 2024-06-16 00:32:48
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-16 01:32:48
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 49s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 44s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 29s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 11s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 18s)
+Cycle ended at: 2024-06-16 02:28:34
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-16 03:28:34
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 37s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 46s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 40s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 15s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 8s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 10s)
+Cycle ended at: 2024-06-16 04:24:07
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-16 05:24:07
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 37s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 28s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 3s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 1s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 3s)
+Cycle ended at: 2024-06-16 06:19:15
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-16 07:19:15
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 41s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 40s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 22s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 6s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 9s)
+Cycle ended at: 2024-06-16 08:14:44
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-16 09:14:44
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 37s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 40s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 45s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 19s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 12s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 16s)
+Cycle ended at: 2024-06-16 10:10:17
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-16 11:10:17
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 40s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 41s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 17s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 9s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 10s)
+Cycle ended at: 2024-06-16 12:05:46
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-16 13:05:46
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 45s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 43s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 19s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 10s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 15s)
+Cycle ended at: 2024-06-16 14:01:24
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-16 15:01:24
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 37s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 28s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 41s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 18s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 3s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 10s)
+Cycle ended at: 2024-06-16 15:56:39
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-16 16:56:39
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 14s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 37s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 8s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 4s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 4s)
+Cycle ended at: 2024-06-16 17:51:35
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-16 18:51:35
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 57s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 41s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 23s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 9s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 13s)
+Cycle ended at: 2024-06-16 19:47:24
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-16 20:47:24
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 41s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 41s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 16s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 7s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 11s)
+Cycle ended at: 2024-06-16 21:42:54
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-16 22:42:54
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 55s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 40s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 15s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 5s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 10s)
+Cycle ended at: 2024-06-16 23:38:39
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 00:38:39
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 49s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 18s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 5s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 12s)
+Cycle ended at: 2024-06-17 01:34:19
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 02:34:19
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 40s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 42s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 21s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 10s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 13s)
+Cycle ended at: 2024-06-17 03:29:50
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 04:29:50
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 49s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 44s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 10s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 14s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 17s)
+Cycle ended at: 2024-06-17 05:25:36
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 06:25:36
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 36s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 30s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 40s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 9m 59s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 7s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 12s)
+Cycle ended at: 2024-06-17 07:20:54
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 08:20:54
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 19s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 9m 59s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 3s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 9s)
+Cycle ended at: 2024-06-17 09:16:00
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 10:16:00
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 000 (Time taken: 0h 25m 46s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 000 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 with response code 000 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 000 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 with response code 000 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 000 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 000 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 000 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 000 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-17 10:42:24
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 11:42:24
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 10s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 40s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 9s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 8s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 9s)
+Cycle ended at: 2024-06-17 12:37:21
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 13:37:21
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 38s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 43m 55s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 5m 42s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 10m 8s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 11m 7s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 11m 12s)
+Cycle ended at: 2024-06-17 14:33:07
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 15:33:07
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 39s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 44m 2s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 13m 9s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 14m 35s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 14m 35s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 14m 35s)
+Cycle ended at: 2024-06-17 16:32:23
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 17:32:23
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-17 17:32:24
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 18:32:24
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-17 18:32:24
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 19:32:24
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-17 19:32:24
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 20:32:24
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-17 20:32:25
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 21:32:25
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-17 21:32:25
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 22:32:25
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-17 22:32:25
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-17 23:32:25
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-17 23:32:26
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 00:32:26
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 00:32:26
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 01:32:26
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 01:32:26
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 02:32:26
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 02:32:27
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 03:32:27
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 03:32:27
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 04:32:27
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 04:32:27
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 05:32:27
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 05:32:28
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 06:32:28
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 06:32:28
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 07:32:28
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 07:32:28
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 08:32:28
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 08:32:29
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 09:32:29
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 09:32:29
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 10:32:29
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 10:32:29
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 11:32:29
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 11:32:30
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 12:32:30
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 12:32:30
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 13:32:30
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 13:32:30
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 14:32:30
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 14:32:31
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 15:32:31
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 15:32:31
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 16:32:31
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 16:32:31
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 17:32:31
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 17:32:31
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 18:32:31
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 18:32:31
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 19:32:31
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 1s)
+Cycle ended at: 2024-06-18 19:32:32
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 20:32:32
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 20:32:32
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 21:32:32
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 21:32:32
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 22:32:32
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 22:32:32
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-18 23:32:32
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-18 23:32:32
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 00:32:32
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 00:32:32
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 01:32:32
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 01:32:33
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 02:32:33
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 02:32:33
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 03:32:33
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 03:32:33
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 04:32:33
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 04:32:33
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 05:32:33
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 05:32:33
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 06:32:33
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 06:32:33
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 07:32:33
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 07:32:34
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 08:32:34
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 08:32:34
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 09:32:34
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 09:32:34
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 10:32:34
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 400 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 10:32:34
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 11:32:34
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 11:32:35
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 12:32:35
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 12:32:35
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 13:32:35
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 13:32:35
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 14:32:35
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 14:32:36
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 15:32:36
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 15:32:36
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 16:32:36
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 16:32:36
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 17:32:36
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 17:32:37
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 18:32:37
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 18:32:37
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 19:32:37
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 1s)
+Cycle ended at: 2024-06-19 19:32:38
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 20:32:38
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 20:32:38
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 21:32:38
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 21:32:38
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 22:32:38
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 22:32:39
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-19 23:32:39
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-19 23:32:39
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 00:32:39
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 00:32:39
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 01:32:39
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 01:32:40
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 02:32:40
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 02:32:40
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 03:32:40
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 03:32:40
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 04:32:40
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 1s)
+Cycle ended at: 2024-06-20 04:32:41
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 05:32:41
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 05:32:41
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 06:32:41
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 06:32:41
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 07:32:41
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 07:32:42
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 08:32:42
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 08:32:42
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 09:32:42
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 09:32:42
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 10:32:42
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 10:32:43
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 11:32:43
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 11:32:43
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 12:32:43
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 12:32:43
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 13:32:43
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 13:32:44
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 14:32:44
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 14:32:44
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 15:32:44
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 15:32:44
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 16:32:44
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 16:32:44
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 17:32:44
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 1s)
+Cycle ended at: 2024-06-20 17:32:45
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 18:32:45
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 18:32:45
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 19:32:45
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 19:32:45
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 20:32:45
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 20:32:45
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 21:32:45
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 21:32:45
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 22:32:45
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 22:32:45
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-20 23:32:45
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-20 23:32:46
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 00:32:46
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 00:32:46
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 01:32:46
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 01:32:46
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 02:32:46
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 02:32:46
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 03:32:46
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 03:32:46
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 04:32:46
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 04:32:47
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 05:32:47
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 05:32:47
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 06:32:47
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 06:32:47
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 07:32:47
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 07:32:47
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 08:32:47
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 08:32:47
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 09:32:47
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 1s)
+Cycle ended at: 2024-06-21 09:32:48
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 10:32:48
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 10:32:48
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 11:32:48
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 11:32:48
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 12:32:48
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 12:32:48
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 13:32:48
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 13:32:48
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 14:32:48
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 14:32:48
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 15:32:48
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 1s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 15:32:49
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 16:32:49
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_commit_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_issue_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_pr_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_contributor_db with response code 500 (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 16:32:49
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 17:32:49
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 17:32:49
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 18:32:49
+Success: http://localhost:8000/api/account/sync_student_db (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_db (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 18:32:49
+All requests completed. Waiting for 3 hours before the next cycle.
+Cycle started at: 2024-06-21 19:32:49
+Failed: http://localhost:8000/api/account/sync_student_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/repo/sync_repo_db with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE341-01&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_registration_create_db?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Failed: http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1 with response code 500 (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_contributor_db (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_pr_db (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_issue_db (Time taken: 0h 0m 0s)
+Success: http://localhost:8000/api/repo/sync_repo_commit_db (Time taken: 0h 0m 0s)
+Cycle ended at: 2024-06-21 19:32:49
+All requests completed. Waiting for 3 hours before the next cycle.

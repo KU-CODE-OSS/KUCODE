@@ -15,6 +15,7 @@ from django.db.models import Sum
 
 from repo.models import Repository, Repo_contributor, Repo_issue,Repo_pr, Repo_commit
 from account.models import Student
+from course.models import Course, Course_project, Course_registration
 import requests
 
 class HealthCheckAPIView(APIView):
@@ -44,7 +45,7 @@ def sync_repo_db(request):
             id = student['id']
             github_id = student['github_id']
             
-            response = requests.get(f"{settings.PUBLIC_IP_FASTAPI}/user/repos", params={'github_id': github_id})
+            response = requests.get(f"http://{settings.PUBLIC_IP}:5000/api/user/repos", params={'github_id': github_id})
             if response.status_code != 200:
                 message = f"Failed to fetch repositories for GitHub user {github_id}"
                 print(message)
@@ -76,7 +77,7 @@ def sync_repo_db(request):
                 repo_id = repo['id']
                 repo_count += 1
                 print(f'({repo_count}/{total_repo_count}) Processing repository {repo_name} of GitHub user {github_id}')
-                repo_response = requests.get(f"{settings.PUBLIC_IP_FASTAPI}/repos", params={'github_id': github_id, 'repo_name': repo_name})
+                repo_response = requests.get(f"http://{settings.PUBLIC_IP}:5000/api/repos", params={'github_id': github_id, 'repo_name': repo_name})
                 if repo_response.status_code != 200:
                     message = f"Failed to fetch data for repo {repo_name} of GitHub user {github_id}"
                     print(message)
@@ -193,15 +194,75 @@ def remove_repository(github_id, repository):
 # --- Repository Read ---
 def repo_read_db(request):
     try:
-        repository = Repository.objects.all
-        repo_list = [{'id': repo.id, 'name': repo.name, 'url': repo.url, 'owner_github_id': repo.owner_github_id, 'created_at': repo.created_at, 'updated_at': repo.updated_at, 'fork_count': repo.fork_count, 'star_count': repo.star_count, 'commit_count': repo.commit_count, 'open_issue_count': repo.open_issue_count, 'closed_issue_count': repo.closed_issue_count, 'language': repo.language, 'contributors': repo.contributors, 'license': repo.license, 'has_readme': repo.has_readme, 'description': repo.description, 'release_version': repo.release_version} for repo in repository]
-        return JsonResponse(repo_list, safe=False)
-    
-    except ObjectDoesNotExist:
-        return JsonResponse({"status": "Error", "message": f"Repo '{repo}' does not exist"}, status=404)    
+        repo_list = Repository.objects.all()
+        data =[]
+        for r in repo_list:
+            
+            pr = Repo_pr.objects.filter(repo=r).count()
+            contributors_list = r.contributors.split(",")
+            contributors_count = len(contributors_list)
+            
+            repo_info ={
+            'id': r.id,
+            'name': r.name,
+            'url': r.url,
+            'owner_github_id': r.owner_github_id,
+            'created_at': r.created_at,
+            'updated_at': r.updated_at,
+            'fork_count': r.fork_count,
+            'star_count': r.star_count,
+            'commit_count': r.commit_count,
+            'total_issue_count': int(r.open_issue_count) + int(r.closed_issue_count),
+            "pr_count":pr,
+            'language': r.language,
+            'contributors': contributors_count,
+            'license': r.license,
+            'has_readme': r.has_readme,
+            'description': r.description,
+            'release_version': r.release_version
+            }
+            
+            data.append(repo_info)
+   
+        return JsonResponse(data, safe=False)
+     
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 
+
+def repo_course_read_db(request):
+    try:
+        course_projects = Course_project.objects.all().values_list('repo')
+        repo_list = Repository.objects.filter(id__in=course_projects)
+        data =[]
+        for r in repo_list:
+            print(r)
+            pr = Repo_pr.objects.filter(repo=r).count()
+            contributors_list = r.contributors.split(",")
+            contributors_count = len(contributors_list)
+            repo_info = {
+                'id': r.id,
+                'name': r.name,
+                'url': r.url,
+                'owner_github_id': r.owner_github_id,
+                'created_at': r.created_at,
+                'updated_at': r.updated_at,
+                'fork_count': r.fork_count,
+                'star_count': r.star_count,
+                'commit_count': r.commit_count,
+                'total_issue_count': int(r.open_issue_count) + int(r.closed_issue_count),
+                "pr_count":pr,
+                'language': r.language,
+                'contributors': contributors_count,
+                'license': r.license,
+                'has_readme': r.has_readme,
+                'description': r.description,
+                'release_version': r.release_version
+            }
+            data.append(repo_info)
+        return JsonResponse(data, safe=False)
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # ---repo_Contributor API-------------------------------
 def sync_repo_contributor_db(request):
     try:
@@ -228,7 +289,7 @@ def sync_repo_contributor_db(request):
             github_id = repo['github_id']
             processed_repo_ids.add(repo_id)
 
-            response = requests.get(f"{settings.PUBLIC_IP_FASTAPI}/repos/contributor", params={'github_id': github_id, 'repo_name': repo_name})
+            response = requests.get(f"http://{settings.PUBLIC_IP}:5000/api/repos/contributor", params={'github_id': github_id, 'repo_name': repo_name})
             contributor_data = response.json()
 
             total_contributor_count = len(contributor_data)
@@ -346,7 +407,7 @@ def sync_repo_issue_db(request):
             else:
                 since = "2008-02-08T00:00:00Z"
 
-            response = requests.get(f"{settings.PUBLIC_IP_FASTAPI}/repos/issues", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
+            response = requests.get(f"http://{settings.PUBLIC_IP}:5000/api/repos/issues", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
             data = response.json()
 
             total_issue_count = len(data)
@@ -471,7 +532,7 @@ def sync_repo_pr_db(request):
             else:
                 since = "2008-02-08T00:00:00Z"
 
-            response = requests.get(f"{settings.PUBLIC_IP_FASTAPI}/repos/pulls", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
+            response = requests.get(f"http://{settings.PUBLIC_IP}:5000/api/repos/pulls", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
             data = response.json()
 
             total_pr_count = len(data)
@@ -595,7 +656,7 @@ def sync_repo_commit_db(request):
             else:
                 since = latest_commit.last_update
 
-            response = requests.get(f"{settings.PUBLIC_IP_FASTAPI}/repos/commit", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
+            response = requests.get(f"http://{settings.PUBLIC_IP}:5000/api/repos/commit", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
             data = response.json()
 
             total_commit_count = len(data)
@@ -698,7 +759,7 @@ def sync_repo_db_test(request):
         
         print(f"Processing repositories for GitHub user {github_id}")
             
-        response = requests.get(f"{settings.PUBLIC_IP_FASTAPI}/user/repos", params={'github_id': github_id})
+        response = requests.get(f"http://{settings.PUBLIC_IP}:5000/api/user/repos", params={'github_id': github_id})
         if response.status_code != 200:
             message = f"Failed to fetch repositories for GitHub user {github_id}"
             print(message)
@@ -728,7 +789,7 @@ def sync_repo_db_test(request):
             repo_id = repo['id']
             repo_count += 1
             print(f'({repo_count}/{total_repo_count}) Processing repository {repo_name} of GitHub user {github_id}')
-            repo_response = requests.get(f"{settings.PUBLIC_IP_FASTAPI}/repos", params={'github_id': github_id, 'repo_name': repo_name})
+            repo_response = requests.get(f"http://{settings.PUBLIC_IP}:5000/api/repos", params={'github_id': github_id, 'repo_name': repo_name})
             if repo_response.status_code != 200:
                 message = f"Failed to fetch data for repo {repo_name} of GitHub user {github_id}"
                 print(message)
@@ -838,7 +899,7 @@ def sync_repo_contributor_db_test(request):
             github_id = repo['github_id']
             processed_repo_ids.add(repo_id)
 
-            response = requests.get(f"{settings.PUBLIC_IP_FASTAPI}/repos/contributor", params={'github_id': github_id, 'repo_name': repo_name})
+            response = requests.get(f"http://{settings.PUBLIC_IP}:5000/api/repos/contributor", params={'github_id': github_id, 'repo_name': repo_name})
             contributor_data = response.json()
 
             total_contributor_count = len(contributor_data)
@@ -886,7 +947,7 @@ def sync_repo_contributor_db_test(request):
 #-----------------------------------------------------
 # --- REPO ISSUE TEST --
 def sync_repo_issue_db_test(request):
-    try:
+    try:    
         github_id = request.GET.get('github_id')
 
         repositories = Repository.objects.filter(owner_github_id=github_id) 
@@ -920,7 +981,7 @@ def sync_repo_issue_db_test(request):
             else:
                 since = "2008-02-08T00:00:00Z"
 
-            response = requests.get(f"{settings.PUBLIC_IP_FASTAPI}/repos/issues", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
+            response = requests.get(f"http://{settings.PUBLIC_IP}:5000/api/repos/issues", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
             data = response.json()
 
             total_issue_count = len(data)
@@ -1006,7 +1067,7 @@ def sync_repo_pr_db_test(request):
             else:
                 since = "2008-02-08T00:00:00Z"
 
-            response = requests.get(f"{settings.PUBLIC_IP_FASTAPI}/repos/pulls", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
+            response = requests.get(f"http://{settings.PUBLIC_IP}:5000/api/repos/pulls", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
             data = response.json()
 
             total_pr_count = len(data)
@@ -1091,7 +1152,7 @@ def sync_repo_commit_db_test(request):
             else:
                 since = latest_commit.last_update
 
-            response = requests.get(f"{settings.PUBLIC_IP_FASTAPI}/repos/commit", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
+            response = requests.get(f"http://{settings.PUBLIC_IP}:5000/api/repos/commit", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
             data = response.json()
 
             total_commit_count = len(data)

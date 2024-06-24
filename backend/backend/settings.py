@@ -1,31 +1,18 @@
 from pathlib import Path
 import environ
 import os
-from dotenv import load_dotenv
 
-# BASE_DIR 설정
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# .env 파일 경로 설정 및 로드
-dotenv_path = os.path.join(BASE_DIR, '.env')
-load_dotenv(dotenv_path)
-
-# environ.Env 객체 생성
 env = environ.Env()
 
-# ENVIRONMENT 변수에 따라 추가 환경 파일 로드
-env.read_env(dotenv_path)
-
-# .envs 폴더의 환경 파일 경로 설정 및 로드
-environment = env("ENVIRONMENT", default="development")
-env.read_env(os.path.join(BASE_DIR, f'.envs/{environment}'))
-
-# 환경 변수 설정
-PUBLIC_IP_FASTAPI = env("PUBLIC_IP_FASTAPI")
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = env("SECRET_KEY")
-DEBUG = env.bool("DEBUG", default=False)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+
+DEBUG = env("DEBUG", default=False)
+
+ALLOWED_HOSTS = env("ALLOWED_HOSTS", default='').split(",")
+
+PUBLIC_IP = env("PUBLIC_IP")
 
 # Application definition
 
@@ -48,6 +35,7 @@ LOCAL_APPS = [
     "account",
     "repo",
     "course",
+    "login", 
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
