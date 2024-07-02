@@ -90,6 +90,8 @@
 .default-router {
   color: black;
   transition-duration: 0.2s;
+  font-weight: 600;
+  color: var(--Gray100, #CDCDCD);
 }
 
 .default-router:hover {

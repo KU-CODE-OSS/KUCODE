@@ -1,8 +1,11 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
-import Dashboard from '../views/Dashboard.vue';
-import Information from '../views/Information.vue';
-import Statistics from '../views/Statistics.vue';
+import Dashboard from '@/views/Dashboard.vue';
+import Information from '@/views/Information.vue';
+import Statistics from '@/views/Statistics.vue';
+import StatisticsCourse from '@/views/StatisticsComponents/StatisticsCourse.vue';
+import StatisticsStudent from '@/views/StatisticsComponents/StatisticsStudent.vue'
+import StatisticsRepos from '@/views/StatisticsComponents/StatisticsRepos.vue'
 import QnA from '../views/QnA.vue'
 
 const routes = [
@@ -19,7 +22,28 @@ const routes = [
   {
     path: '/statistics',
     name: 'Statistics',
-    component: Statistics
+    component: Statistics,
+    children: [
+      { // default path
+        path: '',
+        redirect: '/statistics/course',
+      },
+      {
+        path: 'course',
+        name: 'StatisticsCourse',
+        component: StatisticsCourse,
+      },
+      {
+        path: 'students',
+        name: 'StatisticsStudent',
+        component: StatisticsStudent,
+      },
+      {
+        path: 'repos',
+        name: 'StatisticsRepos',
+        component: StatisticsRepos,
+      },
+    ]
   },
   {
     path: '/qna',

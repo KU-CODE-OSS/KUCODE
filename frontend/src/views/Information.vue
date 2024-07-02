@@ -1,7 +1,11 @@
 <template>
   <div class="default-container">
     <div class="left-split"></div>
-    <div class="right-split"></div>
+    <div class="right-split">
+      <div class="title">
+        정보
+      </div>
+    </div>
   </div> 
 </template>
 
@@ -29,8 +33,8 @@ export default {
 
 .left-split {
   margin-left: 220px;
-  width: 400px !important;
-  min-width: 400px;
+  width: 300px !important;
+  min-width: 300px;
   height: 100em;
   border-right: 2px solid;
   border-right-color: #DCE2ED;
@@ -39,6 +43,14 @@ export default {
 .right-split {
   width: 100%;
   margin-right: 320px;
+  .title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-top: 57px;
+    margin-left: 57px;
+    min-height: 45px;
+    margin-bottom: 64px;
+  }
 }
 
 
