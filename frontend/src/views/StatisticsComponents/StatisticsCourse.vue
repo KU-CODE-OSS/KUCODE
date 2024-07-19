@@ -42,7 +42,7 @@
     <div class="navigation_underline"></div>
     <div class="contents-box">
       <transition name="slide-fade" mode="out-in">
-        <div v-if="!showTable" class="table">Table Content</div>
+        <div v-if="!showTable" class="table"><TableMajor/></div>
         <div v-else class="chart">
           <div class="year-chart-container">
             <div class="title">연도별 데이터</div>
@@ -57,8 +57,13 @@
 </template>
 
 <script>
+import TableMajor from './table/table_major.vue';
+
 export default {
   name: 'StatisticsCourse',
+  components: {
+    TableMajor,
+  },
   data() {
     return {
       showTable: false,

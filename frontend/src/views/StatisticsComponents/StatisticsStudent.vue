@@ -42,7 +42,7 @@
     <div class="navigation_underline"></div>
     <div class="contents-box">
       <transition name="slide-fade" mode="out-in">
-        <div v-if="!showTable" class="table">Table Content</div>
+        <div v-if="!showTable" class="table"> <TableUser/></div>
         <div v-else class="chart">
           <div class="year-chart-container">
             <div class="chart-title">연도별 데이터</div>
@@ -76,6 +76,8 @@ import BarChart2 from '../StudentCharts/BarCharts2.vue';
 import BarChart3 from '../StudentCharts/BarCharts3.vue';
 import BarChart4 from '../StudentCharts/BarCharts4.vue';
 
+import TableUser from './table/table_user.vue';
+
 export default {
   name: 'StatisticsStudent',
   components: {
@@ -83,6 +85,7 @@ export default {
     BarChart2,
     BarChart3,
     BarChart4,
+    TableUser,
   },
   data() {
     return {

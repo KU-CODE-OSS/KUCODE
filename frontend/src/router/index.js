@@ -26,6 +26,7 @@ const routes = [
     children: [
       { // default path
         path: '',
+        name: 'default',
         redirect: '/statistics/course',
       },
       {
