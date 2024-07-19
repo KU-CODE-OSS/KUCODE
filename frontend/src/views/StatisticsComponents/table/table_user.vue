@@ -30,13 +30,13 @@
             차트
         </v-tab>
       </v-tabs> -->
-      <teleport to="#qqqq">
+      <portal to="stat_table_user">
         <Filters
             class="filter-container"
             :students="students"
             @update:filteredStudents="updateFilteredStudents"
           ></Filters>
-      </teleport>
+      </portal>
 
       <v-window v-model="table_or_chart">
         <v-window-item value="table">
@@ -173,7 +173,7 @@ export default {
     async fetchTotal() {
       try {
         this.loading = true;
-        const response = await axios.get('http://119.28.232.108:8000/api/account/student_read_total');
+        const response = await axios.get('http://localhost/api/account/student_read_total');
         this.processTotal(response.data);
         // console.log('Total Data:', response.data);
       } catch (error) {
@@ -228,7 +228,7 @@ export default {
     },
     async fetchCourse() {
       try {
-        const response = await axios.get('http://119.28.232.108:8000/api/account/student_read_course_info');
+        const response = await axios.get('http://localhost/api/account/student_read_course_info');
         this.processCourse(response.data);
         // console.log('Course Data:', response.data);
       } catch (error) {

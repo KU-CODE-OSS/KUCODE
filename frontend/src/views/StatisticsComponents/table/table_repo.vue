@@ -60,7 +60,7 @@
         try {
           this.loading = true
           const response = await axios.get(
-            'http://119.28.232.108:8000/api/repo/repo_read_db'
+            'http://localhost/api/repo/repo_read_db'
           )
           this.processTotal(response.data)
           // console.log('Total Data:', response.data)

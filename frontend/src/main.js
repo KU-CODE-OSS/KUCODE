@@ -8,6 +8,9 @@ import router from './router'
 import vuetify from './plugins/vuetify'
 import ECharts from 'vue-echarts'
 import 'echarts-gl'
+
+import PortalVue from 'portal-vue'
+
 // import echarts from 'echarts'
 // import { LineChart, BarChart, ScatterChart, EffectScatterChart } from 'echarts/charts'
 // import { GridComponent, TitleComponent, TooltipComponent, LegendComponent, DataZoomComponent } from 'echarts/components'
@@ -32,5 +35,7 @@ const app = createApp(App)
 app.use(vuetify)
 app.use(createPinia())
 app.use(router)
+app.use(PortalVue)
+
 
 app.mount('#app')

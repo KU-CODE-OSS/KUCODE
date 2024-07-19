@@ -9,10 +9,10 @@
             <div style="display: inline-block; padding-left: 50%">
               <v-btn class="init" variant="outlined">초기화</v-btn>
             </div>
-            <TableUser />
-            <div id="qqqq"></div>
-            <!-- <TableMajor />
-            <div id="wwww"></div> -->
+            <portal-target name="stat_table_major">
+            </portal-target> 
+            <portal-target name="stat_table_user">
+            </portal-target> 
           </div>
         </div>
       </div>
@@ -48,9 +48,9 @@
       this.setTitles()
     },
     methods: {
-      updateFilteredStudents(filteredStudents) {
-        this.filteredStudents = filteredStudents
-      },
+      // updateFilteredStudents(filteredStudents) {
+      //   this.filteredStudents = filteredStudents
+      // },
       setTitles() {
         if (this.$route.name === 'StatisticsCourse') {
           this.titles = '과목 통계'

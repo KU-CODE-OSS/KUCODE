@@ -1,18 +1,12 @@
 <template>
+  <portal to="stat_table_major">
+    <filters
+      class="filter-container"
+      :students="items"
+      @update:filteredStudents="updateFilteredItems"
+    ></filters>
+  </portal>
   <div>
-    <!-- <teleport to='#wwww'> -->
-    <!-- <v-row>
-      <v-col cols="10"> </v-col>
-      <v-col cols="0"> -->
-        <!-- <filters
-          class="filter-container"
-          :students="items"
-          @update:filteredStudents="updateFilteredItems"
-        ></filters> -->
-      <!-- </v-col>
-    </v-row> -->
-    <!-- </teleport> -->
-
     <!-- <v-toolbar flat color="white">
       <v-divider class="mx-2" inset vertical></v-divider>
       <v-spacer></v-spacer>
@@ -105,7 +99,7 @@
 <script>
 import axios from 'axios';
 import * as XLSX from 'xlsx';
-import Filters from './Filters.vue';
+import Filters from './table_major_filters.vue';
 
 export default {
   components: {
@@ -260,7 +254,7 @@ export default {
         formData.append('course_repo_name', this.importItem.course_repo_name);
       
       try {
-        const response = await axios.post('http://119.28.232.108:8000/api/account/student_excel_import', formData, {
+        const response = await axios.post('http://localhost/api/account/student_excel_import', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
@@ -290,7 +284,7 @@ export default {
     async fetchData() {
       try {
         this.loading = true;
-        const response = await axios.get('http://119.28.232.108:8000/api/course/course_read_db');
+        const response = await axios.get('http://localhost/api/course/course_read_db');
         console.log('API Response:', response.data); // 응답 데이터 로그 출력
         this.items = response.data; // 응답 데이터를 직접 items에 할당
         this.filteredItems = response.data; // 필터링된 데이터에 할당

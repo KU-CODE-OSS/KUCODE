@@ -1,7 +1,7 @@
 <template>
   <v-container class="filter_box">
-    <v-row style="width: 750px">
-      <v-col cols="4">
+    <v-row>
+      <v-col cols="12">
         <v-combobox
           v-model="yearFilters"
           :items="[2024, 2023, 2022, 2021]"
@@ -13,7 +13,9 @@
           clearable
         ></v-combobox>
       </v-col>
-      <v-col cols="4">
+    </v-row>
+    <v-row>
+      <v-col cols="12">
         <v-combobox
           v-model="departmentFilters"
           :items="[...new Set(students.map(student => student.course_id))]"
@@ -25,7 +27,9 @@
           clearable
         ></v-combobox>
       </v-col>
-      <v-col cols="4">
+    </v-row>
+    <v-row>
+      <v-col cols="12">
         <v-combobox
           v-model="courseFilters"
           :items="[...new Set(students.map(student => student.name))]"
@@ -97,7 +101,8 @@ export default {
 
 <style scoped>
 .filter_box {
-  max-width: 50%;
+  max-width: 400px;
+  width: 300px;
   /* margin-top: 0 auto; */
   /* align-content: center; */
 }
