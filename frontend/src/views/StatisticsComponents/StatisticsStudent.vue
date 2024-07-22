@@ -221,7 +221,7 @@ export default {
       }
     
       &:placeholder-shown ~ .form__label {
-        font-size: 1.0rem;
+        font-size: 18px;
         cursor: text;
       }
     }
@@ -232,7 +232,7 @@ export default {
       display: block;
       transition: 0.2s;
       color: #9b9b9b;
-      font-size: 1.3rem;
+      font-size: 1.1rem;
       pointer-events: none;
     }
     

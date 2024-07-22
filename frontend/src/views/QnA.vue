@@ -32,13 +32,14 @@ export default {
 }
 
 .left-split {
-  margin-left: 220px;
-  width: 300px !important;
-  min-width: 300px;
+  margin-left: 320px;
+  width: 268px !important;
+  min-width: 268px;
   height: 100em;
   border-right: 2px solid;
   border-right-color: #DCE2ED;
 }
+
 
 .right-split {
   width: 100%;

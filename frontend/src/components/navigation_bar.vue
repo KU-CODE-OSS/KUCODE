@@ -38,6 +38,7 @@
 <style>
 .navigation_bar {
   height: 100%;
+  width: 1332px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -49,8 +50,8 @@
   display: flex;
   justify-content: flex-start; /* Center the logo and navigation */
   align-items: center;
-  width: 100%;
-  height: 100px;
+  width: 1920px;
+  height: 120px;
   padding-left: 320px;
   border-bottom: 1px solid var(--Gray_stroke, #DCE2ED);
   background-color: var(--White, #FCFCFC);
@@ -91,6 +92,7 @@
   color: black;
   transition-duration: 0.2s;
   font-weight: 600;
+  font-size: 18px;
   color: var(--Gray100, #CDCDCD);
 }
 

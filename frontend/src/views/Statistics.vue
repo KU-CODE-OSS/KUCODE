@@ -58,29 +58,31 @@ export default {
 <style>
 .default-container {
   display: flex;
-  width: 100vw;
-  height: calc(100rem - 100px);
+  width: 100%;
+  height: calc(100rem - 120px);
   background: var(--White, #FCFCFC);
   overflow: hidden; /* Ensure no overflow issues */
 }
 .default-container {
   display: flex;
-  width: 100vw;
-  height: calc(100rem - 100px);
+  width: 100%;
+  height: calc(100rem - 120px);
   background: var(--White, #FCFCFC);
   overflow: hidden; /* Ensure no overflow issues */
 }
 
 .left-split {
-  margin-left: 220px;
-  width: 300px !important;
-  min-width: 300px;
+  position: relative;
+  top: 120px;
+  margin-left: 320px;
+  width: 268px !important;
+  min-width: 268px;
   height: 100em;
   border-right: 2px solid;
   border-right-color: #DCE2ED;
   .empty-box {
     width: 100em;
-    margin-bottom: 166px;
+    margin-bottom: 117px;
   }
   .filter-box {
     height: 100%;
@@ -116,15 +118,18 @@ export default {
 }
 
 .right-split {
-  width: 100%;
+  position: relative;
+  top: 120px;
+  width: 1332px;
   margin-right: 320px;
   .title {
     font-size: 28px;
     font-weight: 700;
     margin-top: 57px;
     margin-left: 57px;
-    min-height: 45px;
-    margin-bottom: 64px;
+    height:33px;
+    min-height: 33px;
+    margin-bottom: 34px;
   }
 }
 
