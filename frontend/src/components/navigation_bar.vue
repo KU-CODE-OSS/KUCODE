@@ -52,7 +52,7 @@
   align-items: center;
   width: 1920px;
   height: 120px;
-  padding-left: 320px;
+  /* padding-left: 320px; */
   border-bottom: 1px solid var(--Gray_stroke, #DCE2ED);
   background-color: var(--White, #FCFCFC);
   position: fixed;
@@ -63,6 +63,7 @@
   flex-shrink: 0; /* Ensure header doesn't shrink */
 }
 .logo-nav {
+  margin-left: 320px;
   display: flex;
   align-items: center;
   width: 100%;

@@ -16,6 +16,10 @@ function handleError(error) {
 export function getHealthCheck() {
     return ajax('/account/healthcheck', 'get');
 }
+
+export function getCourseInfo() {
+  return ajax('http://119.28.232.108:8000/api/account/student_read_course_info', 'get')
+}
   
 // ajax 함수
 function ajax(url, method, { params = {}, data = {} } = {}) {

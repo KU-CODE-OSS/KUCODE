@@ -354,7 +354,7 @@ export default {
 
 .navigation_underline {
   border-bottom: solid 2px #dce2ed;
-  width: calc(1600px + 320px) !important;
+  width: calc(1920px - 586px) !important;
 }
 
 .table,

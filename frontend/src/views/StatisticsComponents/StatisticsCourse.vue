@@ -42,7 +42,25 @@
     <div class="navigation_underline"></div>
     <div class="contents-box">
       <transition name="slide-fade" mode="out-in">
-        <div v-if="!showTable" class="table">Table Content</div>
+        <div v-if="!showTable" class="table">
+          <table class="table-over" style="table-layout: fixed"> 
+            <thead class="table-header-wrapper"><th class="table-header" v-for="item in header" v-bind:style="{width: tablewidth(item[1])}">{{item[0]}}</th></thead>
+            <tbody>
+              <tr v-for="item in posts" class="table-row">
+                <!-- {{item}} -->
+                <td>{{item.yearandsemester}}</td>
+                <td>{{item.course_name}}</td>
+                <td>{{item.course_id}}</td>
+                <td>{{item.prof}}</td>
+                <td>{{item.students}}</td>
+                <td>{{item.commit}}</td>
+                <td>{{item.pr}}</td>
+                <td>{{item.issue}}</td>
+                <td>{{item.num_repos}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <div v-else class="chart">
           <div class="year-chart-container">
             <div class="title">연도별 데이터</div>
@@ -57,18 +75,92 @@
 </template>
 
 <script>
+import {getCourseInfo} from '@/api.js'
 export default {
   name: 'StatisticsCourse',
   data() {
     return {
       showTable: false,
       searchField: '',
+      posts: [],
+      currentPage: 1,
+      postsPerPage: 10,
+      header : [['개설학기', '9%'], 
+                ['과목명', '14%'], 
+                ['학수번호', '11%'], 
+                ['지도교수', '11%'], 
+                ['수강생', '11%'],
+                ['Commit', '11%'], 
+                ['PR', '11%'], 
+                ['Issue', '11%'], 
+                ['Repos', '11%']]
     };
+  },
+  computed: {
+    totalPages() {
+      return Math.ceil(this.posts.length / this.postsPerPage)
+    },
   },
   methods: {
     toggle() {
       this.showTable = !this.showTable;
     },
+    yearSort(){
+      this.posts.sort(function(a,b){
+        if( !a.year ) {
+          a.year = -1
+        }
+        if(!b.year) {
+          b.year = -1
+        }
+        return b.year - a.year
+      });
+    },
+    tablewidth(length) {
+      return length
+    },
+    preprocessingTableData(datalist) {
+      var li = []
+      const set = new Set(datalist.map(row=>row.course_id));
+      // console.log(li)
+      const uniqueArr = [...set];
+      datalist.forEach(element => {
+        let index = uniqueArr.indexOf(element.course_id)
+        
+        if (li[index] === undefined) {
+          var newData = new Object()
+          newData.year = element.year
+          newData.yearandsemester = element.year + '-' + element.semester
+          newData.course_name = element.course_name
+          newData.course_id = element.course_id
+          newData.prof = element.prof
+          newData.students = 1
+          newData.commit = element.commit
+          newData.pr = element.pr
+          newData.issue = element.issue
+          newData.num_repos = element.num_repos
+          li[index] = newData
+        }
+        else {
+          var appendData = li[index]
+          appendData.students = appendData.students + 1
+          appendData.commit = appendData.commit + element.commit
+          appendData.pr = appendData.pr + element.pr
+          appendData.issue = appendData.issue + element.issue
+          appendData.num_repos = appendData.num_repos + element.num_repos
+          li[index] = appendData   
+        }
+      });
+      return li;
+    }
+  },
+  mounted() {
+    getCourseInfo().then(res => {
+      this.posts = res.data
+      this.posts = this.preprocessingTableData(this.posts)
+      this.yearSort()
+      console.log(this.posts)
+    })
   },
 };
 </script>
@@ -150,7 +242,7 @@ export default {
       }
     
       &:placeholder-shown ~ .form__label {
-        font-size: 1.0rem;
+        font-size: 18px;
         cursor: text;
       }
     }
@@ -161,7 +253,7 @@ export default {
       display: block;
       transition: 0.2s;
       color: #9b9b9b;
-      font-size: 1.3rem;
+      font-size: 1.1rem;
       pointer-events: none;
     }
     
@@ -283,14 +375,38 @@ export default {
 
 .navigation_underline {
   border-bottom: solid 2px #dce2ed;
-  width: calc(1600px + 320px) !important;
+  width: calc(1920px - 586px) !important;
+}
+
+.table-over {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 16px;
+  .table-header-wrapper{
+    border-top: solid 1px #F9D2D6;
+    border-bottom: solid 1px #F9D2D6; 
+  }
+  .table-header {
+    color: var(--Primary_normal, #910024);
+    font-weight: 600;
+    height: 43px;
+    vertical-align: middle;
+  }
+  .table-row {
+    height: 70px;
+    border-bottom: solid 1px #DCE2ED;
+    text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
 }
 
 .table,
 .chart {
   margin: 20px 0;
   padding: 20px 0;
-  border: 1px solid #dce2ed;
+  /* border: 1px solid #dce2ed; */
   border-radius: 4px;
   height: 100%;
   .year-chart-container {

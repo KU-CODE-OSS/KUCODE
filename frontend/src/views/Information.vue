@@ -16,17 +16,15 @@ export default {
 </script>
 
 <style scoped>
+
 .default-container {
+  /* position: relative; */
   display: flex;
-  width: 100vw;
-  height: calc(100rem - 100px);
-  background: var(--White, #FCFCFC);
-  overflow: hidden; /* Ensure no overflow issues */
-}
-.default-container {
-  display: flex;
-  width: 100vw;
-  height: calc(100rem - 100px);
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  margin-top: 120px;
+  height: 100vh;
   background: var(--White, #FCFCFC);
   overflow: hidden; /* Ensure no overflow issues */
 }
@@ -35,15 +33,15 @@ export default {
   margin-left: 320px;
   width: 268px !important;
   min-width: 268px;
-  height: 100em;
+  height: 100vh;
   border-right: 2px solid;
   border-right-color: #DCE2ED;
 }
 
-
 .right-split {
   width: 100%;
   margin-right: 320px;
+  height: 100vh;
   .title {
     font-size: 28px;
     font-weight: 700;
