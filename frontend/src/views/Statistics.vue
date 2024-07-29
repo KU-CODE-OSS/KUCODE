@@ -5,7 +5,7 @@
       <div class="filter-box">
         <div class="filter-title-box">
           <div class="title">필터</div>
-          <v-btn class="init" variant="outlined" v-on:click="resetFilter">초기화</v-btn>
+          <v-btn class="init" variant="outlined" v-on:click="resetFilter" color="#f5d6de">초기화</v-btn>
         </div>
         <div class="filter-container">
           <!-- year 필터 한 개 시작 -->
@@ -342,7 +342,11 @@ export default {
       .init {
         margin-left: auto;
         margin-right: 15px;
-        background-color: white;
+        background-color: #FCFCFC !important;
+        height: 29px;
+        &:hover {
+          background: #ffe9eb !important;
+        }
         /* &:hover {
           background-color: #CB385C;
           opacity: 0.2;
@@ -352,9 +356,8 @@ export default {
             color: #CB385C !important;
         }
         &.v-btn--variant-outlined {
-          border-color: #CB385C;
-          border-radius: 12px !important;
-          border-width: 2px;
+          border-radius: 10px;
+          border: 1px solid var(--Primary_medium, #CB385C);
         }
       }
     }
@@ -523,4 +526,5 @@ input[type="checkbox"]:checked::after {
   background-color: #FFEAEC;
   border-radius: 2px;
 }
+
 </style>
