@@ -10,6 +10,45 @@
             </svg>
           </div>
         </div>
+        <div class="pannel-body">
+          <div class="import-container">
+            <input class="input-for-import" type="text" id="course_id" placeholder="학수번호" required>
+            </input>
+          </div>
+          <div class="import-container">
+            <input class="input-for-import" type="text" id="year" placeholder="연도" required>
+            </input>
+          </div>
+          <div class="import-container">
+            <input class="input-for-import" type="text" id="semester" placeholder="학기" required>
+            </input>
+          </div>
+          <div class="import-container">
+            <input class="input-for-import" type="text" id="course_name" placeholder="과목명" required>
+            </input>
+          </div>
+          <div class="import-container">
+            <input class="input-for-import" type="text" id="prof" placeholder="교수" required>
+            </input>
+          </div>
+          <div class="import-container">
+            <input class="input-for-import" type="text" id="ta" placeholder="조교" required>
+            </input>
+          </div>
+          <div class="import-container">
+            <label for="file">
+              <div class="btn-upload">
+                <div class="svg">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 8V16M16 12H8M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#616161" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="text">업로드 파일 선택</div>
+              </div>
+            </label>
+            <input type="file" name="file" id="file">
+          </div>
+        </div>
       </div>
     </div>
     <div class="navigation">
@@ -22,13 +61,13 @@
       <div class="menu">
         <router-link v-bind:to="'/statistics/repos'" class="default-router plan-text" append>레포지토리</router-link>
       </div>
-      <div class="import-btn">
+      <div class="import-btn" v-on:click="changeOverlay">
         <div class="import-btn-svg">
           <svg id="svg-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="18" viewBox="0 0 20 18" fill="none">
             <path d="M4.75 0.25C2.12665 0.25 0 2.37665 0 5V13C0 15.6234 2.12665 17.75 4.75 17.75H12C14.6234 17.75 16.75 15.6234 16.75 13C16.75 12.5858 16.4142 12.25 16 12.25C15.5858 12.25 15.25 12.5858 15.25 13C15.25 14.7949 13.7949 16.25 12 16.25H7.46412C8.26157 15.4003 8.75 14.2572 8.75 13V5C8.75 3.74279 8.26157 2.59965 7.46412 1.75H12C13.7949 1.75 15.25 3.20507 15.25 5C15.25 5.41421 15.5858 5.75 16 5.75C16.4142 5.75 16.75 5.41421 16.75 5C16.75 2.37665 14.6234 0.25 12 0.25H4.75Z" fill="#CB385C"/>
             <path d="M13.5302 6.46967C13.8231 6.76256 13.8231 7.23744 13.5302 7.53033L12.8105 8.25L19.2499 8.25C19.6641 8.25 19.9999 8.58579 19.9999 9C19.9999 9.41421 19.6641 9.75 19.2499 9.75L12.8105 9.75L13.5302 10.4697C13.8231 10.7626 13.8231 11.2374 13.5302 11.5303C13.2373 11.8232 12.7624 11.8232 12.4695 11.5303L11.1766 10.2374C10.4932 9.55402 10.4932 8.44598 11.1766 7.76256L12.4695 6.46967C12.7624 6.17678 13.2373 6.17678 13.5302 6.46967Z" fill="#CB385C"/>
           </svg>
-          <div class="import-btn-svg-text" v-on:click="changeOverlay">Import</div>
+          <div class="import-btn-svg-text">Import</div>
         </div>
       </div>
       <div class="search-box">
@@ -491,6 +530,80 @@ export default {
         line-height: 32px;
         z-index: 1002;
         cursor: pointer;
+      }
+    }
+    .pannel-body {
+      display: grid;
+      grid-template-columns: repeat(2, 50%);
+      /* justify-items: center; */
+      margin-top: 30px;
+      .import-container {
+        width: 280px;
+        height: 50px;
+        margin-bottom: 40px;
+        &:nth-child(odd) {
+          margin-left: 50px;
+        }
+        &:nth-child(even) {
+          margin-right: 50px;
+          margin-left: auto;
+        }
+        .input-for-import {
+          z-index: 1003;
+          display: block;
+          /* margin: 0 auto; */
+          height: 100%;
+          width: 100%;
+          border-radius: 10px;
+          border: 1px solid var(--Gray100, #CDCDCD);
+          background: var(--Gray50, #F8F8F8);
+
+          &::placeholder {
+            height: 20px;
+            padding-left: 20px;
+            color: var(--Gray100, #CDCDCD);
+            /* text-sm */
+            font-family: Pretendard;
+            font-size: 16px;
+            font-style: normal;
+            font-weight: 500;
+            line-height: normal;
+          }
+        }
+        .btn-upload {
+          width: 183px;
+          height: 50px;
+          background: #F8F8F8;
+          border: 1px solid #616161;
+          border-radius: 10px;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          &:hover {
+            border: 1px solid var(--Primary_light, #F9D2D6);
+            background: var(--Primary_extralight, #FFEAEC);
+            color: var(--Primary_medium, #CB385C);
+          }
+          .svg {
+            width: 24px;
+            height: 24px;
+            margin-left: 18px;
+          }
+          .text {
+            color: var(--Gray500, #616161);
+            font-weight: 500;
+            width: 113px;
+            font-family: Pretendard;
+            font-size: 16px;
+            margin-right : 18px;
+          }
+        }
+        
+        #file {
+          display: none;
+        }
       }
     }
   }
