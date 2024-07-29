@@ -5,7 +5,7 @@
       <div class="filter-box">
         <div class="filter-title-box">
           <div class="title">필터</div>
-          <v-btn class="init" variant="outlined">초기화</v-btn>
+          <v-btn class="init" variant="outlined" v-on:click="resetFilter">초기화</v-btn>
         </div>
         <div class="filter-container">
           <!-- year 필터 한 개 시작 -->
@@ -83,14 +83,8 @@
             <svg id="type-svg"  xmlns="http://www.w3.org/2000/svg" v-show="!this.coursenameDropped" width="24" height="25" viewBox="0 0 24 25" fill="none">
               <path d="M12 6.55337V20.8025M5 8.75464C6.26578 8.95067 7.67778 9.27657 9 9.78788M5 12.7546C5.63949 12.8537 6.3163 12.9859 7 13.1584M3.99433 3.51127C6.21271 3.76195 9.19313 4.43632 11.3168 5.92445C11.725 6.21045 12.275 6.21045 12.6832 5.92445C14.8069 4.43632 17.7873 3.76195 20.0057 3.51127C21.1036 3.38721 22 4.30402 22 5.43518V16.7C22 17.8311 21.1036 18.7483 20.0057 18.8723C17.7873 19.123 14.8069 19.7974 12.6832 21.2855C12.275 21.5715 11.725 21.5715 11.3168 21.2855C9.19313 19.7974 6.21271 19.123 3.99433 18.8723C2.89642 18.7483 2 17.8311 2 16.7V5.43518C2 4.30402 2.89642 3.38721 3.99433 3.51127Z" stroke="#262626" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
-            <!-- <svg v-show="this.coursenameDropped" id="type-svg"  xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
-              <path d="M7.9405 9.5H11.9109M7.9405 13.5H15.8812M7.9405 17.5H15.8812M15.8808 2.5V5.5M7.94002 2.5V5.5M6.94791 4H16.8738C19.0666 4 20.8442 5.79086 20.8442 8V18.5C20.8442 20.7091 19.0666 22.5 16.8738 22.5H6.94791C4.75513 22.5 2.97754 20.7091 2.97754 18.5V8C2.97754 5.79086 4.75513 4 6.94791 4Z" stroke="#910024" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <svg v-show="!this.coursenameDropped" id="type-svg"  xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
-              <path d="M7.9405 9.5H11.9109M7.9405 13.5H15.8812M7.9405 17.5H15.8812M15.8808 2.5V5.5M7.94002 2.5V5.5M6.94791 4H16.8738C19.0666 4 20.8442 5.79086 20.8442 8V18.5C20.8442 20.7091 19.0666 22.5 16.8738 22.5H6.94791C4.75513 22.5 2.97754 20.7091 2.97754 18.5V8C2.97754 5.79086 4.75513 4 6.94791 4Z" stroke="#262626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg> -->
             <p class="type-title">
-              학기
+              과목
             </p>
             <button class="drop-btn"><i class="drop-btn-container" v-on:click="coursenamebtnclick">
               <svg class="toggle-btn" v-show="this.coursenameDropped" xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" fill="none">
@@ -283,6 +277,15 @@ export default {
         this.courseFilteredPostsforCourseName = this.coursePosts.filter(item => this.selectedCourseNameItems.includes(item.course_name));
       }
       this.courseFilteredPosts = this.combineFilterData()
+    },
+    resetFilter() {
+      this.selectedYearItems = []
+      this.selectedSemesterItems = []
+      this.selectedCourseNameItems = []
+      this.courseFilteredPostsforYear = this.coursePosts
+      this.courseFilteredPostsforSemester = this.coursePosts
+      this.courseFilteredPostsforCourseName = this.coursePosts
+      this.courseFilteredPosts = this.coursePosts
     }
   },
   computed: {
@@ -341,15 +344,15 @@ export default {
         margin-right: 15px;
         background-color: white;
         /* &:hover {
-          background-color: #862633;
+          background-color: #CB385C;
           opacity: 0.2;
         } */
         .v-btn__content {
             font-weight: 600 !important;
-            color: #862633 !important;
+            color: #CB385C !important;
         }
         &.v-btn--variant-outlined {
-          border-color: #862633;
+          border-color: #CB385C;
           border-radius: 12px !important;
           border-width: 2px;
         }
@@ -359,7 +362,7 @@ export default {
       /* margin-top:20px; */
       width: 268px;
       height: 100em;
-      border-left: solid 1px black;
+      /* border-left: solid 1px black; */
       border-right: 2px solid;
       border-right-color: #DCE2ED;
       .types{
@@ -383,6 +386,10 @@ export default {
         background: var(--Primary_extralight, #FFEAEC);
         .type-title {
           color:#910024;
+        }
+        border-left: 4px solid var(--Primary_normal, #910024);
+        #type-svg {
+          margin-left: 16px !important;
         }
       }
       .types-unfocused {
@@ -427,7 +434,7 @@ ul {
   /* border: solid 1px black; */
 }
 #type-svg {
-  margin-left: 20px !important;
+  margin-left: 20px;
 }
 .drop-btn {
   /* margin: 0 auto; */
