@@ -78,6 +78,7 @@
 import {getCourseInfo} from '@/api.js'
 export default {
   name: 'StatisticsCourse',
+  props: ["postss"],
   data() {
     return {
       showTable: false,
@@ -105,63 +106,20 @@ export default {
     toggle() {
       this.showTable = !this.showTable;
     },
-    yearSort(){
-      this.posts.sort(function(a,b){
-        if( !a.year ) {
-          a.year = -1
-        }
-        if(!b.year) {
-          b.year = -1
-        }
-        return b.year - a.year
-      });
-    },
+  
     tablewidth(length) {
       return length
     },
-    preprocessingTableData(datalist) {
-      var li = []
-      const set = new Set(datalist.map(row=>row.course_id));
-      // console.log(li)
-      const uniqueArr = [...set];
-      datalist.forEach(element => {
-        let index = uniqueArr.indexOf(element.course_id)
-        
-        if (li[index] === undefined) {
-          var newData = new Object()
-          newData.year = element.year
-          newData.yearandsemester = element.year + '-' + element.semester
-          newData.course_name = element.course_name
-          newData.course_id = element.course_id
-          newData.prof = element.prof
-          newData.students = 1
-          newData.commit = element.commit
-          newData.pr = element.pr
-          newData.issue = element.issue
-          newData.num_repos = element.num_repos
-          li[index] = newData
-        }
-        else {
-          var appendData = li[index]
-          appendData.students = appendData.students + 1
-          appendData.commit = appendData.commit + element.commit
-          appendData.pr = appendData.pr + element.pr
-          appendData.issue = appendData.issue + element.issue
-          appendData.num_repos = appendData.num_repos + element.num_repos
-          li[index] = appendData   
-        }
-      });
-      return li;
-    }
   },
   mounted() {
-    getCourseInfo().then(res => {
-      this.posts = res.data
-      this.posts = this.preprocessingTableData(this.posts)
-      this.yearSort()
-      console.log(this.posts)
-    })
+    this.posts = this.postss
   },
+  watch: {
+    postss(to, from) {
+      const vm = this
+      this.posts = vm.postss
+    },
+  }
 };
 </script>
 

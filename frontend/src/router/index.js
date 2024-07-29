@@ -32,6 +32,7 @@ const routes = [
         path: 'course',
         name: 'StatisticsCourse',
         component: StatisticsCourse,
+        props: true,
       },
       {
         path: 'students',
