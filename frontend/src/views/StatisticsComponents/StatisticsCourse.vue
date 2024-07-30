@@ -43,11 +43,15 @@
                     <path d="M12 8V16M16 12H8M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#616161" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </div>
-                <div class="text">업로드 파일 선택</div>
+                <div class="text">교과목 학생 파일</div>
               </div>
             </label>
             <input type="file" name="file" id="file">
           </div>
+        </div>
+        <div class="pannel-footer">
+          <div class="cancel-btn"> 취소 </div>
+          <div class="accept-btn"> 확인 </div>
         </div>
       </div>
     </div>
@@ -557,10 +561,10 @@ export default {
           border-radius: 10px;
           border: 1px solid var(--Gray100, #CDCDCD);
           background: var(--Gray50, #F8F8F8);
-
+          padding-left: 20px;
           &::placeholder {
             height: 20px;
-            padding-left: 20px;
+            /* padding-left: 20px; */
             color: var(--Gray100, #CDCDCD);
             /* text-sm */
             font-family: Pretendard;
@@ -603,6 +607,60 @@ export default {
         
         #file {
           display: none;
+        }
+      }
+    }
+    .pannel-footer {
+      height:70px;
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      .cancel-btn {
+        display: inline-flex;
+        width: 88px;
+        height: 40px;
+        padding: 10px 20px;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        border-radius: 10px;
+        background: var(--Gray50, #F8F8F8);
+        margin-right: 20px;
+        cursor: pointer;
+        font-family: Pretendard;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 500;
+        color: var(--Gray500, #616161);
+        &:hover {
+          background: var(--Gray50, #dadada);
+        }
+      }
+      .accept-btn {
+        display: flex;
+        width: 172px;
+        height: 40px;
+        padding: 10px 30px;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+        border-radius: 10px;
+        border: 1px solid var(--Primary_light, #F9D2D6);
+        background: var(--Primary_extralight, #FFEAEC);
+        cursor: pointer;
+        color: var(--Primary_medium, #CB385C);
+        /* semiTitle-sm */
+        font-family: Pretendard;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 600;
+        margin-right: 50px;
+
+        &:hover {
+          background: var(--Primary_extralight, #fcd2d7);
         }
       }
     }
