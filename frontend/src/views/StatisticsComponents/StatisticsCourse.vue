@@ -1,7 +1,8 @@
 <template>
-  <div class="container">
+  <div class="container" :class="{cursorblock: pannelLoading === true}">
     <div class="import-overlay" v-show="this.showOverlay" v-on:click="changeOverlay">
-      <div class="pannel-container" @click.stop>
+      <div class="pannel-container" :class="{pannelblock : pannelLoading === true}" @click.stop >
+        <pulse-loader class="loader" :loading="pannelLoading" v-bind:color="'#910024'" :size="'15px'"></pulse-loader>
         <div class="pannel-top">
           <div class="text">Import Course</div>
           <div class="exit-svg" v-on:click="changeOverlay">
@@ -12,28 +13,34 @@
         </div>
         <div class="pannel-body">
           <div class="import-container">
-            <input class="input-for-import" type="text" id="course_id" placeholder="학수번호" required>
+            <input class="input-for-import" v-model="importItem.course_id" @focus="clearErrorMessageforCourseID" type="text" id="course_id" placeholder="학수번호" required>
             </input>
+            <p class="err-msg">{{this.ValidationItem.course_id}}</p>
           </div>
           <div class="import-container">
-            <input class="input-for-import" type="text" id="year" placeholder="연도" required>
+            <input class="input-for-import" v-model="importItem.year" @focus="clearErrorMessageforYear" type="text" id="year" placeholder="연도" required>
             </input>
+            <p class="err-msg">{{this.ValidationItem.year}}</p>
           </div>
           <div class="import-container">
-            <input class="input-for-import" type="text" id="semester" placeholder="학기" required>
+            <input class="input-for-import" v-model="importItem.semester" @focus="clearErrorMessageforSemester" type="text" id="semester" placeholder="학기" required>
             </input>
+            <p class="err-msg">{{this.ValidationItem.semester}}</p>
           </div>
           <div class="import-container">
-            <input class="input-for-import" type="text" id="course_name" placeholder="과목명" required>
+            <input class="input-for-import" v-model="importItem.course_name" @focus="clearErrorMessageforCourseName" type="text" id="course_name" placeholder="과목명" required>
             </input>
+            <p class="err-msg">{{this.ValidationItem.course_name}}</p>
           </div>
           <div class="import-container">
-            <input class="input-for-import" type="text" id="prof" placeholder="교수" required>
+            <input class="input-for-import" v-model="importItem.prof" @focus="clearErrorMessageforProf" type="text" id="prof" placeholder="교수" required>
             </input>
+            <p class="err-msg">{{this.ValidationItem.prof}}</p>
           </div>
           <div class="import-container">
-            <input class="input-for-import" type="text" id="ta" placeholder="조교" required>
+            <input class="input-for-import" v-model="importItem.ta" @focus="clearErrorMessageforTA" type="text" id="ta" placeholder="조교" required>
             </input>
+            <p class="err-msg">{{this.ValidationItem.ta}}</p>
           </div>
           <div class="import-container">
             <label for="file">
@@ -46,12 +53,17 @@
                 <div class="text">교과목 학생 파일</div>
               </div>
             </label>
-            <input type="file" name="file" id="file">
+            <p class="err-msg">{{this.ValidationItem.file}}</p>
+            <input type="file" name="file" id="file" v-on:change="selectFile" accept=".xlsx, xls, .csv" />
+          </div>
+          <div class="import-container">
+            <p class="uploaded-file">Selected File Name</p>
+            <p v-show="this.selectedFile" class="uploaded-file-name">{{this.selectedFileName}}</p>
           </div>
         </div>
         <div class="pannel-footer">
-          <div class="cancel-btn"> 취소 </div>
-          <div class="accept-btn"> 확인 </div>
+          <div class="cancel-btn" v-on:click="closeImportDialog"> 취소 </div>
+          <div class="accept-btn" v-on:click="fileUpload"> 확인 </div>
         </div>
       </div>
     </div>
@@ -139,7 +151,8 @@
 </template>
 
 <script>
-import {getCourseInfo} from '@/api.js'
+import {getCourseInfo, postCourseUpload} from '@/api.js'
+import * as XLSX from 'xlsx';
 export default {
   name: 'StatisticsCourse',
   props: ["postss"],
@@ -148,6 +161,8 @@ export default {
       showOverlay: false,
       showTable: false,
       searchField: '',
+      selectedFile: null,
+      pannelLoading: false,
       posts: [],
       currentPage: 1,
       postsPerPage: 10,
@@ -159,7 +174,25 @@ export default {
                 ['Commit', '11%'], 
                 ['PR', '11%'], 
                 ['Issue', '11%'], 
-                ['Repos', '11%']]
+                ['Repos', '11%']],
+      importItem: {
+        course_id: '',
+        year: '',
+        semester: '',
+        course_name: '',
+        prof: '',
+        ta: '',
+      },
+      ValidationItem: {
+        course_id: '',
+        year: '',
+        semester: '',
+        course_name: '',
+        prof: '',
+        ta: '',
+        file: '',
+      },
+      selectedFileName: '',
     };
   },
   computed: {
@@ -168,14 +201,141 @@ export default {
     },
   },
   methods: {
+    selectFile(e) {
+      this.selectedFile = e.target.files[0];
+      this.selectedFileName = this.selectedFile.name
+      console.log(this.selectedFile)
+    },
     toggle() {
       this.showTable = !this.showTable;
+    },
+    checkInput() {
+      let onormore = false;
+      if(this.importItem.course_id === '') {
+        this.ValidationItem.course_id = 'The Course ID is required.'
+        onormore = true
+      }
+      if(this.importItem.year === '') {
+        this.ValidationItem.year = 'The Year is required.'
+        onormore = true
+      }
+      if(this.importItem.semester === '') {
+        this.ValidationItem.semester = 'The Semester is required.'
+        onormore = true
+      }
+      if(this.importItem.course_name === '') {
+        this.ValidationItem.course_name = 'The Course Name is required.'
+        onormore = true
+      }
+      if(this.importItem.prof === '') {
+        this.ValidationItem.prof = 'The Professor Name is required.'
+        onormore = true
+      }
+      if(this.importItem.ta === '') {
+        this.ValidationItem.ta = 'The TA Name is required.'
+        onormore = true
+      }
+      if(!this.selectedFile) {
+        this.ValidationItem.file = 'The TA Name is required.'
+        this.selectedFileName = ''
+        onormore = true
+      } else {
+        this.selectedFileName = this.selectedFile.name
+      }
+      return onormore
+    },
+    clearErrorMessageforCourseID() {
+      this.ValidationItem.course_id = ''
+    },
+    clearErrorMessageforYear() {
+      this.ValidationItem.year = ''
+    },
+    clearErrorMessageforSemester() {
+      this.ValidationItem.semester = ''
+    },
+    clearErrorMessageforCourseName() {
+      this.ValidationItem.course_name = ''
+    },
+    clearErrorMessageforProf() {
+      this.ValidationItem.prof = ''
+    },
+    clearErrorMessageforTA() {
+      this.ValidationItem.ta = ''
+    },
+    clearErrorMessageforFile() {
+      this.ValidationItem.file = ''
+      this.selectedFileName = ''
+    },
+    clearAllMessages() {
+      this.clearErrorMessageforCourseID()
+      this.clearErrorMessageforYear()
+      this.clearErrorMessageforSemester()
+      this.clearErrorMessageforCourseName()
+      this.clearErrorMessageforProf()
+      this.clearErrorMessageforTA()
+      this.clearErrorMessageforFile()
     },
     changeOverlay() {
       this.showOverlay = !this.showOverlay
     },
     tablewidth(length) {
       return length
+    },
+    fileUpload() {
+      if (this.checkInput()) {
+        return;
+      }
+      this.pannelLoading = true
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        console.log(e)
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const sheetData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+        const importDetails = [
+          this.importItem.course_id,
+          this.importItem.year,
+          this.importItem.semester,
+          this.importItem.course_name,
+          this.importItem.prof,
+          this.importItem.ta,
+        ];
+        sheetData.unshift(importDetails);
+
+        // Convert back to worksheet and workbook
+        const newWorksheet = XLSX.utils.aoa_to_sheet(sheetData);
+        const newWorkbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, 'Sheet1');
+
+        // Write the new workbook to a blob
+        const newExcelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
+        const newFile = new Blob([newExcelBuffer], { type: 'application/octet-stream' });
+
+        // Prepare the form data for upload
+        const formData = new FormData();
+        formData.append('file', newFile, 'modified_import.xlsx');
+        formData.append('course_id', this.importItem.course_id);
+        formData.append('year', this.importItem.year);
+        formData.append('semester', this.importItem.semester);
+        formData.append('name', this.importItem.course_name);
+        formData.append('prof', this.importItem.prof);
+        formData.append('ta', this.importItem.ta);
+        postCourseUpload(formData).then(response => {
+          this.closeImportDialog()
+        }).catch(e => {
+          console.error('Error Uploading file:', error);
+          this.pannelLoading = false
+        })
+      };
+      reader.readAsArrayBuffer(this.selectedFile);
+    },
+    closeImportDialog() {
+      this.showOverlay = false;
+      this.clearAllMessages()
+      this.selectedFile = null;
+      this.pannelLoading = false
     },
   },
   mounted() {
@@ -191,6 +351,9 @@ export default {
 </script>
 
 <style scoped>
+.cursorblock {
+  pointer-events: none; 
+}
 .container {
   max-width: 1600px;
 
@@ -501,6 +664,10 @@ export default {
   width: 100vw;
   background: rgba(0, 0, 0, 0.41);
   z-index: 1000;
+  .pannelblock {
+    background: #efefef !important;
+    pointer-events: none;
+  }
   .pannel-container {
     margin: 0 auto;
     width: 710px;
@@ -508,7 +675,12 @@ export default {
     flex-shrink: 0;
     border-radius: 10px;
     background: #FFF;
-
+    transform: rotate(0);
+    .loader{
+      position: fixed;
+      top: 45%;
+      left: 45%;
+    }
     .pannel-top {
       height: 74px;
       .text {
@@ -604,9 +776,20 @@ export default {
             margin-right : 18px;
           }
         }
-        
         #file {
           display: none;
+        }
+        .err-msg {
+          color: red;
+          text-align: left;
+        }
+        .uploaded-file {
+          font-weight: 600;
+        }
+        .uploaded-file-name {
+          overflow:hidden;
+	        text-overflow:ellipsis;
+	        white-space:nowrap;
         }
       }
     }

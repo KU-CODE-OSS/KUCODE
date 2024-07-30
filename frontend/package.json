@@ -20,7 +20,9 @@
     "pinia": "^2.1.7",
     "vue": "^3.4.15",
     "vue-echarts": "^6.7.3",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.2.5",
+    "vue-spinner": "^1.0.4",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@mdi/font": "^7.4.47",
