@@ -5,8 +5,8 @@
 <style>
 
 .echarts {
-  width: 330px;
-  height: 330px;
+  width: 280px;
+  height: 280px;
 }
 </style>
 
@@ -47,7 +47,7 @@ export default {
         title: {
             text: '연도별 Commit',
             textStyle: {
-                fontSize: '20'
+                fontSize: '18'
             },
             top: '20',
             left: '10%',
@@ -61,7 +61,7 @@ export default {
           }
         },
         grid: {
-          left: '10%',
+          left: '5%',
           right: '10%',
           bottom: '40',
           top: '100',

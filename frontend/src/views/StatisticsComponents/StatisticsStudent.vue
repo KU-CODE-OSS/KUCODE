@@ -352,6 +352,7 @@ export default {
   }
 }
 
+
 .navigation_underline {
   border-bottom: solid 2px #dce2ed;
   width: calc(1920px - 586px) !important;
@@ -380,10 +381,11 @@ export default {
   }
   .charts {
     display: flex;
-    min-height: 300px;
+    min-height: 260px;
     justify-content: space-between;
     .chart-container {
-      width: 330px;
+      width: 280px;
+      /* width: calc(1222px / 4)px; */
       /* margin-right: 30px; */
     }
   }
