@@ -1,9 +1,8 @@
 <template>
-    <v-chart :option="option"/>
+    <v-chart :option="option" class="echarts"/>
 </template>
 
-<style>
-
+<style scoped>
 .echarts {
   width: 330px;
   height: 330px;
@@ -11,12 +10,9 @@
 </style>
 
 <script>
-// import Vue from 'vue'
 import ECharts from 'vue-echarts'
 import 'echarts-gl'
 import { use } from "echarts/core";
-
-
 import { LineChart, BarChart, ScatterChart, EffectScatterChart } from 'echarts/charts'
 import { GridComponent, TitleComponent, TooltipComponent, LegendComponent, DataZoomComponent, ToolboxComponent } from 'echarts/components'
 import { UniversalTransition } from 'echarts/features'
@@ -36,8 +32,10 @@ use([
     ToolboxComponent,
   ])
 
+import { getCourseInfo } from '@/api.js'
+
 export default {
-  name: 'BarChart3',
+  name: 'BarChart1',
   components: {
     'v-chart': ECharts
   },
@@ -45,7 +43,7 @@ export default {
     return {
       option : {
         title: {
-            text: '연도별 Star',
+            text: '학과별 평균 Commit 수',
             textStyle: {
                 fontSize: '20'
             },
@@ -70,7 +68,7 @@ export default {
         xAxis: [
           {
             type: 'category',
-            data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            data: [],
             axisLabel: {
                 fontWeight: '700'
             },
@@ -99,21 +97,52 @@ export default {
         ],
         series: [
           {
-            name: 'Direct',
+            name: 'Average Commit',
             type: 'bar',
             barWidth: '50%',
-            data: [10, 52, 200, 334, 390, 330, 220],
+            data: [],
             emphasis: {
               itemStyle: {
                     borderRadius: [5, 5]
                 },
                     borderRadius: [5, 5, 0, 0]
-                
             }
           }
         ]
       }
     }
-  }
-}
+  },
+  methods: {
+    async fetchCourseInfo() {
+      try {
+        const response = await getCourseInfo();
+        const data = response.data; // 데이터가 response.data에 있다고 가정
+        this.processData(data);
+      } catch (error) {
+        console.error("Error fetching course info:", error);
+      }
+    },
+    processData(data) {
+      const departmentCommitMap = data.reduce((acc, course) => {
+        const department = course.department;
+        if (!department) return acc;
+        if (!acc[department]) {
+          acc[department] = { sum: 0, count: 0 };
+        }
+        acc[department].sum += course.commit;
+        acc[department].count += 1;
+        return acc;
+      }, {});
+
+      const departments = Object.keys(departmentCommitMap).sort();
+      const avgCommits = departments.map(department => (departmentCommitMap[department].sum / departmentCommitMap[department].count).toFixed(2));
+
+      this.option.xAxis[0].data = departments;
+      this.option.series[0].data = avgCommits;
+    }
+  },
+  mounted() {
+    this.fetchCourseInfo();
+  },
+};
 </script>

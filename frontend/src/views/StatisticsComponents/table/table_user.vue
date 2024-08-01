@@ -92,7 +92,8 @@
             </template>
           </v-data-table>
         </v-window-item>
-        <v-window-item value="chart" class="chart_user">
+        <portal to="stat_chart_user">
+        <!-- <v-window-item value="chart" class="chart_user"> -->
         <!-- ↓↓↓ 차트 컴포넌트 ↓↓↓ -->
             <v-lazy>
                 <!-- <chart_user/> -->
@@ -106,8 +107,10 @@
                 <!-- <chart_user_example/>  -->
             </v-lazy>
         <!-- ↑↑↑ 차트 컴포넌트 ↑↑↑ -->
-        </v-window-item>
+        <!-- </v-window-item> -->
+      </portal>
       </v-window>
+      
     <!-- </v-card> -->
   </div>
 </template>
@@ -115,8 +118,8 @@
 <script>
 import axios from 'axios';
 import Filters from './Filters.vue';
-import chart_user from './chart_user.vue';
-import chart_user_example from './chart_user_example.vue';
+import chart_user from '../chart/chart_user.vue';
+import chart_user_example from '../chart/chart_user_example.vue';
 export default {
   components: {
     Filters,

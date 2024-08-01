@@ -1,9 +1,8 @@
 <template>
-    <v-chart :option="option"/>
+    <v-chart :option="option" class="echarts"/>
 </template>
 
-<style>
-
+<style scoped>
 .echarts {
   width: 330px;
   height: 330px;
@@ -11,12 +10,9 @@
 </style>
 
 <script>
-// import Vue from 'vue'
 import ECharts from 'vue-echarts'
 import 'echarts-gl'
 import { use } from "echarts/core";
-
-
 import { LineChart, BarChart, ScatterChart, EffectScatterChart } from 'echarts/charts'
 import { GridComponent, TitleComponent, TooltipComponent, LegendComponent, DataZoomComponent, ToolboxComponent } from 'echarts/components'
 import { UniversalTransition } from 'echarts/features'
@@ -36,8 +32,10 @@ use([
     ToolboxComponent,
   ])
 
+import { getCourseInfo } from '@/api.js'
+
 export default {
-  name: 'BarChart3',
+  name: 'BarChart1',
   components: {
     'v-chart': ECharts
   },
@@ -45,7 +43,7 @@ export default {
     return {
       option : {
         title: {
-            text: '연도별 Star',
+            text: '연도별 총 commit 수',
             textStyle: {
                 fontSize: '20'
             },
@@ -70,7 +68,7 @@ export default {
         xAxis: [
           {
             type: 'category',
-            data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            data: [],
             axisLabel: {
                 fontWeight: '700'
             },
@@ -99,21 +97,51 @@ export default {
         ],
         series: [
           {
-            name: 'Direct',
+            name: 'Total Commit',
             type: 'bar',
             barWidth: '50%',
-            data: [10, 52, 200, 334, 390, 330, 220],
+            data: [],
             emphasis: {
               itemStyle: {
                     borderRadius: [5, 5]
                 },
                     borderRadius: [5, 5, 0, 0]
-                
             }
           }
         ]
       }
     }
-  }
-}
+  },
+  methods: {
+    async fetchCourseInfo() {
+      try {
+        const response = await getCourseInfo();
+        const data = response.data; // 데이터가 response.data에 있다고 가정
+        this.processData(data);
+      } catch (error) {
+        console.error("Error fetching course info:", error);
+      }
+    },
+    processData(data) {
+      const yearCommitMap = data.reduce((acc, course) => {
+        const year = course.year;
+        if (!year) return acc;
+        if (!acc[year]) {
+          acc[year] = 0;
+        }
+        acc[year] += course.commit;
+        return acc;
+      }, {});
+
+      const years = Object.keys(yearCommitMap).sort();
+      const commits = years.map(year => yearCommitMap[year]);
+
+      this.option.xAxis[0].data = years;
+      this.option.series[0].data = commits;
+    }
+  },
+  mounted() {
+    this.fetchCourseInfo();
+  },
+};
 </script>

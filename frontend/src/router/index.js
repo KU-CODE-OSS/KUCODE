@@ -7,6 +7,7 @@ import StatisticsCourse from '@/views/StatisticsComponents/StatisticsCourse.vue'
 import StatisticsStudent from '@/views/StatisticsComponents/StatisticsStudent.vue'
 import StatisticsRepos from '@/views/StatisticsComponents/StatisticsRepos.vue'
 import QnA from '../views/QnA.vue'
+import Login from '../views/Login.vue'
 
 const routes = [
   {
@@ -18,6 +19,11 @@ const routes = [
     path: '/info',
     name: 'Information',
     component: Information
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: Login
   },
   {
     path: '/statistics',

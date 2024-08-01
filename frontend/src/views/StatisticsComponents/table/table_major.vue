@@ -7,8 +7,8 @@
     ></filters>
   </portal>
   <div>
-    <!-- <v-toolbar flat color="white">
-      <v-divider class="mx-2" inset vertical></v-divider>
+    <v-toolbar flat color="white">
+      <!-- <v-divider class="mx-2" inset vertical></v-divider>
       <v-spacer></v-spacer>
       <v-col cols="2" align="right">
         <v-text-field
@@ -19,10 +19,12 @@
           hide-details
           single-line          
         ></v-text-field>
-      </v-col>
-      <v-btn color="primary" dark class="mb-2" @click="importDialog = true" prepend-icon="mdi-import">Import</v-btn>
-      <v-btn color="primary" dark class="mb-2" @click="dialog = true" prepend-icon="mdi-plus">New Item</v-btn>
-    </v-toolbar> -->
+      </v-col> -->
+      <div style="margin-left: 90%;">
+        <v-btn color="primary" dark class="mb-2" @click="importDialog = true" prepend-icon="mdi-import">Import</v-btn>
+      </div>
+      <!-- <v-btn color="primary" dark class="mb-2" @click="dialog = true" prepend-icon="mdi-plus">New Item</v-btn> -->
+    </v-toolbar>
     <v-dialog v-model="importDialog" max-width="500px">
       <v-card>
         <v-card-title>

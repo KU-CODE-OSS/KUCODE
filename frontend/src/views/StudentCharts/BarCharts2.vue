@@ -103,13 +103,11 @@ export default {
             type: 'bar',
             barWidth: '50%',
             data: [10, 52, 200, 334, 390, 330, 220],
-            itemStyle: {
-                emphasis: {
-                    barBorderRadius: [5, 5]
+            emphasis: {
+              itemStyle: {
+                    borderRadius: [5, 5]
                 },
-                normal: {
-                    barBorderRadius: [5, 5, 0, 0]
-                }
+                    borderRadius: [5, 5, 0, 0]
             }
           }
         ]

@@ -42,22 +42,25 @@
     <div class="navigation_underline"></div>
     <div class="contents-box">
       <transition name="slide-fade" mode="out-in">
-        <div v-if="!showTable" class="table"> <TableUser/></div>
+        <div v-if="!showTable" class="table"> <IdCommitAvg/></div>
         <div v-else class="chart">
           <div class="year-chart-container">
             <div class="chart-title">연도별 데이터</div>
             <div class="charts">
               <div class="chart-container">
-                <BarChart1></BarChart1>
+                <YearCommit/>
               </div>
               <div class="chart-container">
-                <BarChart2></BarChart2>
+                <YearIssue/>
               </div>
               <div class="chart-container">
-                <BarChart3></BarChart3>
+                <YearPr/>
               </div>
               <div class="chart-container">
-                <BarChart4></BarChart4>
+                <DepartCommit/>
+              </div>
+              <div class="chart-container">
+                <IdCommit/>
               </div>
             </div>
           </div>
@@ -67,6 +70,8 @@
         </div>
       </transition>
     </div>
+    <!-- portal-target을 여기로 이동 -->
+    <!-- <portal-target name="stat_chart_user"></portal-target> -->
   </div>
 </template>
 
@@ -75,8 +80,15 @@ import BarChart1 from '../StudentCharts/BarCharts1.vue';
 import BarChart2 from '../StudentCharts/BarCharts2.vue';
 import BarChart3 from '../StudentCharts/BarCharts3.vue';
 import BarChart4 from '../StudentCharts/BarCharts4.vue';
-
+import chart_user from './chart/chart_user.vue';
 import TableUser from './table/table_user.vue';
+import YearCommit from './chart/year_commit.vue';
+import YearIssue from './chart/year_issue.vue';
+import YearPr from './chart/year_pr.vue';
+import DepartCommit from './chart/depart_commit.vue';
+import IdCommit from './chart/id_commit.vue';
+import IdCommitAvg from './chart/id_commit_avg.vue';
+
 
 export default {
   name: 'StatisticsStudent',
@@ -86,55 +98,63 @@ export default {
     BarChart3,
     BarChart4,
     TableUser,
+    chart_user,
+    YearCommit,
+    YearIssue,
+    YearPr,
+    DepartCommit,
+    IdCommit,
+    IdCommitAvg
+
   },
   data() {
     return {
-            option: {
-              textStyle: {
-                fontFamily: 'Inter, "Helvetica Neue", Arial, sans-serif',
+      option: {
+        textStyle: {
+          fontFamily: 'Inter, "Helvetica Neue", Arial, sans-serif',
+        },
+        title: {
+          text: 'Traffic Sources',
+          left: 'center',
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{a} <br/>{b} : {c} ({d}%)',
+        },
+        legend: {
+          orient: 'vertical',
+          left: 'left',
+          data: [
+            'Direct',
+            'Email',
+            'Ad Networks',
+            'Video Ads',
+            'Search Engines',
+          ],
+        },
+        series: [
+          {
+            name: 'Traffic Sources',
+            type: 'pie',
+            radius: '55%',
+            center: ['50%', '60%'],
+            data: [
+              { value: 335, name: 'Direct' },
+              { value: 310, name: 'Email' },
+              { value: 234, name: 'Ad Networks' },
+              { value: 135, name: 'Video Ads' },
+              { value: 1548, name: 'Search Engines' },
+            ],
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)',
               },
-              title: {
-                text: 'Traffic Sources',
-                left: 'center',
-              },
-              tooltip: {
-                trigger: 'item',
-                formatter: '{a} <br/>{b} : {c} ({d}%)',
-              },
-              legend: {
-                orient: 'vertical',
-                left: 'left',
-                data: [
-                  'Direct',
-                  'Email',
-                  'Ad Networks',
-                  'Video Ads',
-                  'Search Engines',
-                ],
-              },
-              series: [
-                {
-                  name: 'Traffic Sources',
-                  type: 'pie',
-                  radius: '55%',
-                  center: ['50%', '60%'],
-                  data: [
-                    { value: 335, name: 'Direct' },
-                    { value: 310, name: 'Email' },
-                    { value: 234, name: 'Ad Networks' },
-                    { value: 135, name: 'Video Ads' },
-                    { value: 1548, name: 'Search Engines' },
-                  ],
-                  emphasis: {
-                    itemStyle: {
-                      shadowBlur: 10,
-                      shadowOffsetX: 0,
-                      shadowColor: 'rgba(0, 0, 0, 0.5)',
-                    },
-                  },
-                },
-              ],
             },
+          },
+        ],
+      },
       showTable: false,
       searchField: '',
     };
@@ -150,209 +170,209 @@ export default {
 <style scoped>
 .container {
   max-width: 1600px;
+}
 
-  .navigation {
-    min-height: 41px;
-    padding-left: 56px;
-    padding-right: 56px;
-    /* margin-left: 56px; */
-    display: flex;
-    align-items: center;
+.navigation {
+  min-height: 41px;
+  padding-left: 56px;
+  padding-right: 56px;
+  display: flex;
+  align-items: center;
+}
 
-    .menu {
-      width: 101px;
-      margin-right: 30px !important;
-      font-size: 18px;
-      align-items: center;
-      text-align: center;
+.menu {
+  width: 101px;
+  margin-right: 30px !important;
+  font-size: 18px;
+  align-items: center;
+  text-align: center;
+}
 
-      .plan-text {
-        margin: 0 auto;
-        line-height: 41px;
-      }
+.plan-text {
+  margin: 0 auto;
+  line-height: 41px;
+}
 
-      .current-tab {
-        color: #862633 !important;
-        border-bottom: solid 4px #862633;
-      }
-    }
-  }
-  .contents-box {
-    padding: 0 56px;
+.current-tab {
+  color: #862633 !important;
+  border-bottom: solid 4px #862633;
+}
 
-    .slide-fade-enter-active {
-      transition: all 0.3s ease-out;
-    }
+.contents-box {
+  padding: 0 56px;
+}
 
-    .slide-fade-leave-active {
-      transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
-    }
+.slide-fade-enter-active {
+  transition: all 0.3s ease-out;
+}
 
-    .slide-fade-enter-from,
-    .slide-fade-leave-to {
-      transform: translateX(50px);
-      opacity: 0;
-    }
-  }
-  .search-box {
-    min-height: 44px;
-    margin-left: auto;
-    align-self: flex-end;
-    padding-bottom: 4px;
-    margin-right: 26px;
+.slide-fade-leave-active {
+  transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+}
 
-    .form__group {
-      position: relative;
-      width: 100%;
-    }
-    
-    .form-field {
-      font-family: inherit;
-      width: 230px;
-      height: 40px;
-      border: 0;
-      border-bottom: 2px solid #9b9b9b;
-      outline: 0;
-      color: #86263300;
-      padding: 1px 0;
-      background: transparent;
-      transition: border-bottom 0.2s ease-in-out;;
-      transition: border-image 0.2s ease-in-out;
-      font-size: 1.1rem;
-      &::placeholder {
-        color: transparent;
-      }
-    
-      &:placeholder-shown ~ .form__label {
-        font-size: 1.0rem;
-        cursor: text;
-      }
-    }
-    
-    .form__label {
-      position: absolute;
-      top: 5px;
-      display: block;
-      transition: 0.2s;
-      color: #9b9b9b;
-      font-size: 1.3rem;
-      pointer-events: none;
-    }
-    
-    .form-field:focus {
-      ~ .form__label {
-        position: absolute;
-        top: -25px;
-        display: block;
-        transition: 0.2s;
-        font-size: 1rem;
-        color: #CB385C;
-        font-weight: 700;
-      }
-      padding-bottom: 6px;
-      font-weight: 700;
-      border-width: 3px;
-      border-image: linear-gradient(to right, #CB385C, #FFF4F5);
-      transition: opacity 1s;
-      border-image-slice: 1;
-      color: #862633;
-    }
-    .form-field:focus::before, .form-field:focus::after{
-        transition: 0.2s ease-in-out;
-    }
-    /* reset input */
-    .form-field {
-      &:required,
-      &:invalid {
-        box-shadow: none;
-      }
-    }
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateX(50px);
+  opacity: 0;
+}
 
-  }
+.search-box {
+  min-height: 44px;
+  margin-left: auto;
+  align-self: flex-end;
+  padding-bottom: 4px;
+  margin-right: 26px;
+}
 
-  .toggle-box {
-    .wrapper {
-      width: 150px;
-      height: 44px;
-      text-align: center;
-      margin: 0 auto;
-      position: relative;
-    }
+.form__group {
+  position: relative;
+  width: 100%;
+}
 
-    #switch {
-      display: none;
-    }
+.form-field {
+  font-family: inherit;
+  width: 230px;
+  height: 40px;
+  border: 0;
+  border-bottom: 2px solid #9b9b9b;
+  outline: 0;
+  color: #86263300;
+  padding: 1px 0;
+  background: transparent;
+  transition: border-bottom 0.2s ease-in-out;
+  transition: border-image 0.2s ease-in-out;
+  font-size: 1.1rem;
+}
 
-    .switch_label {
-      position: relative;
-      cursor: pointer;
-      display: inline-block;
-      width: 150px;
-      height: 41px;
-      background: #ffe2e5;
-      border-radius: 20px;
-      transition: 0.4s;
-    }
+.form-field::placeholder {
+  color: transparent;
+}
 
-    .onf_btn {
-      position: absolute;
-      top: 4px;
-      left: 3px;
-      width: 75px;
-      height: 33px;
-      border-radius: 20px;
-      background: white;
-      transition: 0.2s;
-      box-shadow: 1px 2px 3px #00000020;
-    }
-    .toggle_img {
-        position: absolute;
-        line-height: 41px;
-        height: 41px;
-        width: 150px;
-        display: flex;
-        justify-content: flex-start;
-        vertical-align: middle;
-        padding: 6px 26px;
-        & svg {
-            width: 29px;
-            height: 29px;
-        }
-        .img1, .img2 {
-            .toggle-image-1 {
-                & path {
-                    transition: 0.2s;
-                    stroke: #CB385C;
-                }
-            }
-            .toggle-image-2 {
-                & path {
-                    transition: 0.2s;
-                    stroke: #E9D8D9;
-                }
-            }
+.form-field:placeholder-shown ~ .form__label {
+  font-size: 1.0rem;
+  cursor: text;
+}
 
-        }
-        .img1 {
-            margin-right: auto;
-        }
-    }
-    #switch:checked + .switch_label .onf_btn {
-        left: 70px;
-        background: #fff;
-        box-shadow: 1px 2px 3px #00000020;
-    }
-    #switch:checked + .switch_label .toggle-image-1 {
-        & path {
-            stroke: #E9D8D9;
-        }
-    }
-    #switch:checked + .switch_label .toggle-image-2 {
-        & path {
-            stroke: #CB385C;
-        }
-    }
-  }
+.form__label {
+  position: absolute;
+  top: 5px;
+  display: block;
+  transition: 0.2s;
+  color: #9b9b9b;
+  font-size: 1.3rem;
+  pointer-events: none;
+}
+
+.form-field:focus ~ .form__label {
+  position: absolute;
+  top: -25px;
+  display: block;
+  transition: 0.2s;
+  font-size: 1rem;
+  color: #CB385C;
+  font-weight: 700;
+}
+
+.form-field:focus {
+  padding-bottom: 6px;
+  font-weight: 700;
+  border-width: 3px;
+  border-image: linear-gradient(to right, #CB385C, #FFF4F5);
+  transition: opacity 1s;
+  border-image-slice: 1;
+  color: #862633;
+}
+
+.form-field:focus::before, .form-field:focus::after {
+  transition: 0.2s ease-in-out;
+}
+
+/* reset input */
+.form-field:required,
+.form-field:invalid {
+  box-shadow: none;
+}
+
+.toggle-box .wrapper {
+  width: 150px;
+  height: 44px;
+  text-align: center;
+  margin: 0 auto;
+  position: relative;
+}
+
+#switch {
+  display: none;
+}
+
+.switch_label {
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+  width: 150px;
+  height: 41px;
+  background: #ffe2e5;
+  border-radius: 20px;
+  transition: 0.4s;
+}
+
+.onf_btn {
+  position: absolute;
+  top: 4px;
+  left: 3px;
+  width: 75px;
+  height: 33px;
+  border-radius: 20px;
+  background: white;
+  transition: 0.2s;
+  box-shadow: 1px 2px 3px #00000020;
+}
+
+.toggle_img {
+  position: absolute;
+  line-height: 41px;
+  height: 41px;
+  width: 150px;
+  display: flex;
+  justify-content: flex-start;
+  vertical-align: middle;
+  padding: 6px 26px;
+}
+
+.toggle_img svg {
+  width: 29px;
+  height: 29px;
+}
+
+.toggle_img .img1 .toggle-image-1 path,
+.toggle_img .img2 .toggle-image-2 path {
+  transition: 0.2s;
+}
+
+.toggle_img .img1 .toggle-image-1 path {
+  stroke: #CB385C;
+}
+
+.toggle_img .img2 .toggle-image-2 path {
+  stroke: #E9D8D9;
+}
+
+.img1 {
+  margin-right: auto;
+}
+
+#switch:checked + .switch_label .onf_btn {
+  left: 70px;
+  background: #fff;
+  box-shadow: 1px 2px 3px #00000020;
+}
+
+#switch:checked + .switch_label .toggle-image-1 path {
+  stroke: #E9D8D9;
+}
+
+#switch:checked + .switch_label .toggle-image-2 path {
+  stroke: #CB385C;
 }
 
 .navigation_underline {
@@ -368,27 +388,26 @@ export default {
   border-radius: 4px;
   height: 100%;
 }
-.chart {
-  .year-chart-container {
-  
-    
-  }
-  .category-chart-container {
-    margin-top: 60px;
-  }
-  & .chart-title {
-    font-size: 22px;
-    font-weight: 700;
-    margin: 0 0 30px 0;
-  }
-  .charts {
-    display: flex;
-    min-height: 300px;
-    justify-content: space-between;
-    .chart-container {
-      width: 330px;
-      /* margin-right: 30px; */
-    }
-  }
+
+.chart .year-chart-container {}
+
+.chart .category-chart-container {
+  margin-top: 60px;
+}
+
+.chart .chart-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 30px 0;
+}
+
+.chart .charts {
+  display: flex;
+  min-height: 300px;
+  justify-content: space-between;
+}
+
+.chart .chart-container {
+  width: 330px;
 }
 </style>
