@@ -21,18 +21,12 @@
           <input type="checkbox" id="switch" v-model="showTable">
           <label for="switch" class="switch_label">
             <span class="onf_btn"></span>
-            <div class="toggle_img">
-                <div class="img1">
-                    <svg class="toggle-image-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g id="Huge-icon">
-                            <path id="Vector" d="M10 6H16M10 14H16M10 10H22M10 18H22M3 10H5C5.55228 10 6 9.55228 6 9V7C6 6.44772 5.55228 6 5 6H3C2.44772 6 2 6.44772 2 7V9C2 9.55228 2.44772 10 3 10ZM3 18H5C5.55228 18 6 17.5523 6 17V15C6 14.4477 5.55228 14 5 14H3C2.44772 14 2 14.4477 2 15V17C2 17.5523 2.44772 18 3 18Z"  stroke-width="1.5" stroke-linecap="round"/>
-                        </g>
-                    </svg>
+            <div class="toggle-text">
+                <div class="toggle-total">
+                  전체
                 </div>
-                <div class="img2">
-                    <svg class="toggle-image-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-                        <path d="M8 14L9.08225 12.1963C9.72077 11.132 11.2247 11.0309 12 12C12.7753 12.9691 14.2792 12.8679 14.9178 11.8037L16 10M12 18V22M4 6H20C21.1046 6 22 5.10457 22 4C22 2.89543 21.1046 2 20 2H4C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6ZM3 6H21V16C21 17.1046 20.1046 18 19 18H5C3.89543 18 3 17.1046 3 16V6Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                <div class="toggle-indiv">
+                    개별
                 </div>
             </div>
           </label>
@@ -61,13 +55,24 @@
             </tbody>
           </table>
         </div>
-        <div v-else class="chart">
-          <div class="year-chart-container">
-            <div class="title">연도별 데이터</div>
-          </div>
-          <div class="category-chart-container">
-            <div class="title">카테고리별 상세 데이터</div>
-          </div>
+        <div v-else class="table">
+          <table class="table-over" style="table-layout: fixed"> 
+            <thead class="table-header-wrapper"><th class="table-header" v-for="item in header" v-bind:style="{width: tablewidth(item[1])}">{{item[0]}}</th></thead>
+            <tbody>
+              <tr v-for="item in posts" class="table-row">
+                <!-- {{item}} -->
+                <td>{{item.yearandsemester}}</td>
+                <td>{{item.course_name}}</td>
+                <td>{{item.course_id}}</td>
+                <td>{{item.prof}}</td>
+                <td>{{item.students}}</td>
+                <td>{{item.commit}}</td>
+                <td>{{item.pr}}</td>
+                <td>{{item.issue}}</td>
+                <td>{{item.num_repos}}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </transition>
     </div>
@@ -306,7 +311,7 @@ export default {
       transition: 0.2s;
       box-shadow: 1px 2px 3px #00000020;
     }
-    .toggle_img {
+    .toggle-text {
         position: absolute;
         line-height: 41px;
         height: 41px;
@@ -315,27 +320,24 @@ export default {
         justify-content: flex-start;
         vertical-align: middle;
         padding: 6px 26px;
-        & svg {
-            width: 29px;
-            height: 29px;
+        .toggle-total, .toggle-indiv {
+          color: var(--Primary_medium, #CB385C);
+          height: 29px;
+          line-height: 29px;
+          /* color: var(--Primary_disabled, #E9D8D9); */
+          /* text-sm */
+          font-family: Pretendard;
+          font-size: 16px;
+          font-weight: 600;
         }
-        .img1, .img2 {
-            .toggle-image-1 {
-                & path {
-                    transition: 0.2s;
-                    stroke: #CB385C;
-                }
-            }
-            .toggle-image-2 {
-                & path {
-                    transition: 0.2s;
-                    stroke: #E9D8D9;
-                }
-            }
-
+        .toggle-total {
+          color: var(--Primary_medium, #CB385C);
+          margin-right: auto;
+          transition: color 0.2s linear;
         }
-        .img1 {
-            margin-right: auto;
+        .toggle-indiv {
+          color: var(--Primary_disabled, #E9D8D9);
+          transition: color 0.2s linear;
         }
     }
     #switch:checked + .switch_label .onf_btn {
@@ -343,15 +345,14 @@ export default {
         background: #fff;
         box-shadow: 1px 2px 3px #00000020;
     }
-    #switch:checked + .switch_label .toggle-image-1 {
+    #switch:checked + .switch_label .toggle-total {
+      color: var(--Primary_disabled, #E9D8D9);
         & path {
             stroke: #E9D8D9;
         }
     }
-    #switch:checked + .switch_label .toggle-image-2 {
-        & path {
-            stroke: #CB385C;
-        }
+    #switch:checked + .switch_label .toggle-indiv {
+        color: var(--Primary_medium, #CB385C);
     }
   }
 }
@@ -391,7 +392,7 @@ export default {
 .chart {
   margin: 20px 0;
   padding: 20px 0;
-  /* border: 1px solid #dce2ed; */
+  border: 1px solid #dce2ed;
   border-radius: 4px;
   height: 100%;
   .year-chart-container {
