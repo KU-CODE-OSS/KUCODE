@@ -115,7 +115,7 @@
         {{titles}}
       </div>
       <router-view :postss="courseFilteredPosts" v-if="$route.path === '/info/course'"></router-view>
-      <router-view :postss="coursePosts" v-if="$route.path === '/info/students'"></router-view>
+      <router-view :postss="courseFilteredPosts" v-if="$route.path === '/info/students'"></router-view>
       <router-view :postss="coursePosts" v-if="$route.path === '/info/repos'"></router-view>
     </div>
   </div> 
@@ -132,6 +132,8 @@ export default {
       yearDropped: false,
       semesterDropped: false,
       coursenameDropped: false,
+
+      // course data
       coursePosts: [],
       courseFilteredPosts: [],
       courseFilteredPostsforYear: [],
@@ -143,6 +145,8 @@ export default {
       selectedYearItems: [],
       selectedSemesterItems: [],
       selectedCourseNameItems: [],
+
+      // student data
     };
   },
   mounted() {

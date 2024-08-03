@@ -80,76 +80,57 @@
 </template>
 
 <script>
-import BarChart1 from '../StudentCharts/BarCharts1.vue';
-import BarChart2 from '../StudentCharts/BarCharts2.vue';
-import BarChart3 from '../StudentCharts/BarCharts3.vue';
-import BarChart4 from '../StudentCharts/BarCharts4.vue';
+import {getCourseInfo, postCourseUpload} from '@/api.js'
 
 export default {
   name: 'InformationStudent',
-  components: {
-    BarChart1,
-    BarChart2,
-    BarChart3,
-    BarChart4,
-  },
+  props: ["postss"],
   data() {
     return {
-            option: {
-              textStyle: {
-                fontFamily: 'Inter, "Helvetica Neue", Arial, sans-serif',
-              },
-              title: {
-                text: 'Traffic Sources',
-                left: 'center',
-              },
-              tooltip: {
-                trigger: 'item',
-                formatter: '{a} <br/>{b} : {c} ({d}%)',
-              },
-              legend: {
-                orient: 'vertical',
-                left: 'left',
-                data: [
-                  'Direct',
-                  'Email',
-                  'Ad Networks',
-                  'Video Ads',
-                  'Search Engines',
-                ],
-              },
-              series: [
-                {
-                  name: 'Traffic Sources',
-                  type: 'pie',
-                  radius: '55%',
-                  center: ['50%', '60%'],
-                  data: [
-                    { value: 335, name: 'Direct' },
-                    { value: 310, name: 'Email' },
-                    { value: 234, name: 'Ad Networks' },
-                    { value: 135, name: 'Video Ads' },
-                    { value: 1548, name: 'Search Engines' },
-                  ],
-                  emphasis: {
-                    itemStyle: {
-                      shadowBlur: 10,
-                      shadowOffsetX: 0,
-                      shadowColor: 'rgba(0, 0, 0, 0.5)',
-                    },
-                  },
-                },
-              ],
-            },
       showTable: false,
       searchField: '',
+      pannelLoading: false,
+      posts: [],
+      currentPage: 1,
+      postsPerPage: 10,
+      header : [['개설학기', '9%'], 
+                ['과목명', '14%'], 
+                ['학수번호', '11%'], 
+                ['지도교수', '11%'], 
+                ['수강생', '11%'],
+                ['Commit', '11%'], 
+                ['PR', '11%'], 
+                ['Issue', '11%'], 
+                ['Repos', '11%']],
     };
   },
+  computed: {
+    totalPages() {
+      return Math.ceil(this.posts.length / this.postsPerPage)
+    },
+  },
   methods: {
+    selectFile(e) {
+      this.selectedFile = e.target.files[0];
+      this.selectedFileName = this.selectedFile.name
+      console.log(this.selectedFile)
+    },
     toggle() {
       this.showTable = !this.showTable;
     },
+    tablewidth(length) {
+      return length
+    },
   },
+  mounted() {
+    this.posts = this.postss
+  },
+  watch: {
+    postss(to, from) {
+      const vm = this
+      this.posts = vm.postss
+    },
+  }
 };
 </script>
 
