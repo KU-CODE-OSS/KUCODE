@@ -42,27 +42,31 @@
     <div class="navigation_underline"></div>
     <div class="contents-box">
       <transition name="slide-fade" mode="out-in">
-        <div v-if="!showTable" class="table">Table Content</div>
+        <div v-if="!showTable" class="table">
+          <table class="table-over" style="table-layout: fixed"> 
+            <thead class="table-header-wrapper"><th class="table-header" v-for="item in header" v-bind:style="{width: tablewidth(item[1])}">{{item[0]}}</th></thead>
+            <tbody>
+              <tr v-for="item in posts" class="table-row">
+                <!-- {{item}} -->
+                <td>{{item.yearandsemester}}</td>
+                <td>{{item.course_name}}</td>
+                <td>{{item.course_id}}</td>
+                <td>{{item.prof}}</td>
+                <td>{{item.students}}</td>
+                <td>{{item.commit}}</td>
+                <td>{{item.pr}}</td>
+                <td>{{item.issue}}</td>
+                <td>{{item.num_repos}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <div v-else class="chart">
           <div class="year-chart-container">
-            <div class="chart-title">연도별 데이터</div>
-            <div class="charts">
-              <div class="chart-container">
-                <BarChart1></BarChart1>
-              </div>
-              <div class="chart-container">
-                <BarChart2></BarChart2>
-              </div>
-              <div class="chart-container">
-                <BarChart3></BarChart3>
-              </div>
-              <div class="chart-container">
-                <BarChart4></BarChart4>
-              </div>
-            </div>
+            <div class="title">연도별 데이터</div>
           </div>
           <div class="category-chart-container">
-            <div class="chart-title">카테고리별 상세 데이터</div>
+            <div class="title">카테고리별 상세 데이터</div>
           </div>
         </div>
       </transition>
@@ -358,36 +362,49 @@ export default {
   width: calc(1920px - 586px) !important;
 }
 
+
+.table-over {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 16px;
+  .table-header-wrapper{
+    border-top: solid 1px #F9D2D6;
+    border-bottom: solid 1px #F9D2D6; 
+  }
+  .table-header {
+    color: var(--Primary_normal, #910024);
+    font-weight: 600;
+    height: 43px;
+    vertical-align: middle;
+  }
+  .table-row {
+    height: 70px;
+    border-bottom: solid 1px #DCE2ED;
+    text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+}
+
 .table,
 .chart {
   margin: 20px 0;
   padding: 20px 0;
-  border: 1px solid #dce2ed;
+  /* border: 1px solid #dce2ed; */
   border-radius: 4px;
   height: 100%;
-}
-.chart {
   .year-chart-container {
   
     
   }
   .category-chart-container {
-    margin-top: 60px;
+
   }
-  & .chart-title {
+  & .title {
     font-size: 22px;
     font-weight: 700;
-    margin: 0 0 30px 0;
-  }
-  .charts {
-    display: flex;
-    min-height: 260px;
-    justify-content: space-between;
-    .chart-container {
-      width: 280px;
-      /* width: calc(1222px / 4)px; */
-      /* margin-right: 30px; */
-    }
+    
   }
 }
 

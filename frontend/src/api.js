@@ -26,6 +26,10 @@ export function getCourseInfo() {
   return ajax(ip_for_develop + '/account/student_read_course_info', 'get')
 }
 
+export function getCourseTotalInfo() {
+  return ajax(ip_for_develop + '/account/student_read_total', 'get')
+}
+
 export function postCourseUpload(formData) {
   return ajax(ip_for_develop + '/account/student_excel_import', 'post', { data: formData, headers })
 }
