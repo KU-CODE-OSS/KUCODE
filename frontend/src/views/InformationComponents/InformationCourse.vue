@@ -515,6 +515,11 @@ export default {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+    & td {
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
   }
 }
 

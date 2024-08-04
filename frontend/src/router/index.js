@@ -36,6 +36,7 @@ const routes = [
         path: 'students',
         name: 'InformationStudent',
         component: InformationStudent,
+        props: true,
       },
       {
         path: 'repos',
@@ -82,5 +83,28 @@ const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
 });
+
+router.beforeEach((to, from, next) => {
+
+  const defaultQuery = { page: '1', type: 'summary' };
+
+  if (to.name === "InformationStudent") {
+    const query = { ...to.query };
+    if (!query.page) {
+      query.page = defaultQuery.page;
+    }
+    if (!query.type) {
+      query.type = defaultQuery.type;
+    }
+    if (query.page !== to.query.page || query.type !== to.query.type) {
+      next({ name: to.name, params: to.params, query: query });
+    } else {
+      next();
+    }
+  } else {
+    next();
+  }
+});
+
 
 export default router;

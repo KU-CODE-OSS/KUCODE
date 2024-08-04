@@ -32,7 +32,7 @@
             <ul class="year-filter no-dot" v-if="yearDropped">
               <li class="item" v-for="(year, index) in courseFilterYearsCheckbox">
                 <label :for="'year' + index" class="checkbox-label">
-                  <input :id="'year' + index" type="checkbox" class="checkbox" :value="year" v-model="selectedYearItems" @change="yearFilterEventChange(year, $event)">
+                  <input :id="'year' + index" type="checkbox" class="checkbox" :value="year" v-model="selectedYearItemsforCourse" @change="yearFilterEventChange(year, $event)">
                   <p v-if="year === '-1' || year === ''" class="label-text">기타</p>
                   <p v-else class="label-text">{{year}}</p>
                 </label>
@@ -66,7 +66,7 @@
             <ul class="year-filter no-dot" v-if="semesterDropped">
               <li class="item" v-for="(semester, index) in courseFilterSemesterCheckbox" :key="index">
                 <label :for="'semester' + index" class="checkbox-label">
-                  <input :id="'semester' + index" type="checkbox" class="checkbox" :value="semester" v-model="selectedSemesterItems" @change="semesterFilterEventChange(semester, $event)">
+                  <input :id="'semester' + index" type="checkbox" class="checkbox" :value="semester" v-model="selectedSemesterItemsforCourse" @change="semesterFilterEventChange(semester, $event)">
                   <p v-if="semester === '-1' || semester === ''" class="label-text">기타</p>
                   <p v-else class="label-text">{{semester}} 학기</p>
                 </label>
@@ -99,7 +99,7 @@
             <ul class="year-filter no-dot" v-if="coursenameDropped">
               <li class="item" v-for="(coursename, index) in courseFilterCourseNameCheckbox" :key="index">
                 <label :for="'course' + index" class="checkbox-label">
-                  <input :id="'course' + index" type="checkbox" class="checkbox" :value="coursename" v-model="selectedCourseNameItems" @change="courseNameFilterEventChange(semester, $event)">
+                  <input :id="'course' + index" type="checkbox" class="checkbox" :value="coursename" v-model="selectedCourseNameItemsforCourse" @change="courseNameFilterEventChange(semester, $event)">
                   <p v-if="coursename === '기타' || coursename === ''" class="label-text">기타</p>
                   <p v-else class="label-text">{{coursename}}</p>
                 </label>
@@ -115,7 +115,7 @@
         {{titles}}
       </div>
       <router-view :postss="courseFilteredPosts" v-if="$route.path === '/info/course'"></router-view>
-      <router-view :postss="courseFilteredPosts" v-if="$route.path === '/info/students'"></router-view>
+      <router-view :postss="studentsFilteredPosts" @fetch="setInit" v-if="$route.path === '/info/students'"></router-view>
       <router-view :postss="coursePosts" v-if="$route.path === '/info/repos'"></router-view>
     </div>
   </div> 
@@ -142,11 +142,22 @@ export default {
       courseFilterYearsCheckbox: [],
       courseFilterSemesterCheckbox: [],
       courseFilterCourseNameCheckbox: [],
-      selectedYearItems: [],
-      selectedSemesterItems: [],
-      selectedCourseNameItems: [],
+      selectedYearItemsforCourse: [],
+      selectedSemesterItemsforCourse: [],
+      selectedCourseNameItemsforCourse: [],
 
       // student data
+      studentsPosts: [],
+      studentsFilteredPosts: [],
+      studentsFilteredPostsforYear: [],
+      studentsFilteredPostsforSemester: [],
+      studentsFilteredPostsforCourseName: [],
+      studentsFilterYearsCheckbox: [],
+      studentsFilterSemesterCheckbox: [],
+      studentsFilterCourseNameCheckbox: [],
+      selectedYearItemsforStudents: [],
+      selectedSemesterItemsforStudents: [],
+      selectedStudentsNameItemsforStudents: [],
     };
   },
   mounted() {
@@ -154,25 +165,34 @@ export default {
     
   },
   methods: {
-    setInit() {
+    async setInit() {
       if(this.$route.name === "InformationCourse") {
         this.titles = '과목 통계'
-        if (this.coursePosts.length === 0){
-          getCourseInfo().then(res => {
-            this.coursePosts = res.data
-            this.coursePosts = this.coursePreprocessingTableData(this.coursePosts)
-            this.courseFilteredPosts = this.coursePosts
-            this.courseFiltering(this.coursePosts)
-            console.log(this.coursePosts)
-            this.courseFilteredPostsforYear = this.coursePosts
-            this.courseFilteredPostsforSemester = this.coursePosts
-            this.courseFilteredPostsforCourseName = this.coursePosts
-            this.yearSort()
-          })
-        }
       }
-      else if(this.$route.name === "InformationStudent") {
+      if (this.coursePosts.length === 0) {
+        getCourseInfo().then(res => {
+          this.coursePosts = res.data
+          this.coursePosts = this.coursePreprocessingTableData(this.coursePosts)
+          this.courseFilteredPosts = this.coursePosts
+          this.courseFiltering(this.coursePosts)
+          // console.log(this.coursePosts)
+          this.courseFilteredPostsforYear = this.coursePosts
+          this.courseFilteredPostsforSemester = this.coursePosts
+          this.courseFilteredPostsforCourseName = this.coursePosts
+          this.coursePosts = this.yearSort(this.coursePosts)
+        })
+      }
+      if(this.$route.name === "InformationStudent") {
         this.titles = '학생 통계'
+      }
+      if (this.coursePosts.length === 0) {
+        getCourseInfo().then(res => {
+          this.studentsPosts = res.data
+          this.studentsPosts = this.studentsPreprocessingTableData(this.studentsPosts)
+          console.log(this.studentsPosts)
+          this.studentsPosts = this.yearandCommitSort(this.studentsPosts)
+          this.studentsFilteredPosts = this.studentsPosts
+        })
       }
       else if(this.$route.name === "InformationRepos") {
         this.titles = '레포지토리 통계'
@@ -234,8 +254,35 @@ export default {
       });
       return li;
     },
-    yearSort(){
-      this.coursePosts.sort(function(a,b){
+    studentsPreprocessingTableData(datalist) {
+      var li = []
+      datalist.forEach(element => {
+          var newData = new Object()
+          if(element.year === '' || !element.year) {
+            newData.year = '-1'
+          } else {
+            newData.year = element.year
+          }
+          newData.id = element.id
+          newData.github = element.github_id
+          newData.name = element.name
+          newData.semester = element.semester
+          newData.department = element.department
+          newData.enrollment = element.enrollment
+          newData.yearandsemester = element.year + '-' + element.semester
+          newData.course_name = element.course_name
+          newData.course_id = element.course_id
+          newData.prof = element.prof
+          newData.commit = element.commit
+          newData.pr = element.pr
+          newData.issue = element.issue
+          newData.num_repos = element.num_repos
+          li.push(newData)
+      });
+      return li;
+    },
+    yearSort(li){
+      li.sort(function(a,b){
         if( !a.year ) {
           a.year = -1
         }
@@ -244,6 +291,23 @@ export default {
         }
         return b.year - a.year
       });
+      return li
+    },
+    yearandCommitSort(li) {
+      li.sort(function(a, b) {
+        // year 값이 없는 경우 -1로 설정
+        const yearA = a.year || -1;
+        const yearB = b.year || -1;
+
+        // year가 같은 경우 commit 값을 기준으로 정렬
+        if (yearA === yearB) {
+          return b.commit - a.commit;
+        }
+
+        // year를 기준으로 정렬
+        return yearB - yearA;
+      });
+      return li;
     },
     combineFilterData() {
       const allData = [this.courseFilteredPostsforYear, this.courseFilteredPostsforSemester, this.courseFilteredPostsforCourseName];
@@ -259,33 +323,33 @@ export default {
       return common;
     },
     yearFilterEventChange(item, event) {
-      if(this.selectedYearItems.length === 0) {
+      if(this.selectedYearItemsforCourse.length === 0) {
         this.courseFilteredPostsforYear = this.coursePosts
       } else {
-        this.courseFilteredPostsforYear = this.coursePosts.filter(item => this.selectedYearItems.includes(item.year));
+        this.courseFilteredPostsforYear = this.coursePosts.filter(item => this.selectedYearItemsforCourse.includes(item.year));
       }
       this.courseFilteredPosts = this.combineFilterData()
     },
     semesterFilterEventChange(item, event) {
-      if(this.selectedSemesterItems.length === 0) {
+      if(this.selectedSemesterItemsforCourse.length === 0) {
         this.courseFilteredPostsforSemester = this.coursePosts
       } else {
-        this.courseFilteredPostsforSemester = this.coursePosts.filter(item => this.selectedSemesterItems.includes(item.semester));
+        this.courseFilteredPostsforSemester = this.coursePosts.filter(item => this.selectedSemesterItemsforCourse.includes(item.semester));
       }
       this.courseFilteredPosts = this.combineFilterData()
     },
     courseNameFilterEventChange(item, event) {
-      if(this.selectedCourseNameItems.length === 0) {
+      if(this.selectedCourseNameItemsforCourse.length === 0) {
         this.courseFilteredPostsforCourseName = this.coursePosts
       } else {
-        this.courseFilteredPostsforCourseName = this.coursePosts.filter(item => this.selectedCourseNameItems.includes(item.course_name));
+        this.courseFilteredPostsforCourseName = this.coursePosts.filter(item => this.selectedCourseNameItemsforCourse.includes(item.course_name));
       }
       this.courseFilteredPosts = this.combineFilterData()
     },
     resetFilter() {
-      this.selectedYearItems = []
-      this.selectedSemesterItems = []
-      this.selectedCourseNameItems = []
+      this.selectedYearItemsforCourse = []
+      this.selectedSemesterItemsforCourse = []
+      this.selectedCourseNameItemsforCourse = []
       this.courseFilteredPostsforYear = this.coursePosts
       this.courseFilteredPostsforSemester = this.coursePosts
       this.courseFilteredPostsforCourseName = this.coursePosts
@@ -301,7 +365,9 @@ export default {
   },
   watch: {
     $route(to, from) {
-      if (to.path !== from.path) this.setInit()
+      if (to.path !== from.path) {
+        this.setInit()
+      }
     }
   }
 }

@@ -23,10 +23,10 @@
             <span class="onf_btn"></span>
             <div class="toggle-text">
                 <div class="toggle-total">
-                  전체
+                  요약
                 </div>
                 <div class="toggle-indiv">
-                    개별
+                  전체
                 </div>
             </div>
           </label>
@@ -40,39 +40,55 @@
           <table class="table-over" style="table-layout: fixed"> 
             <thead class="table-header-wrapper"><th class="table-header" v-for="item in header" v-bind:style="{width: tablewidth(item[1])}">{{item[0]}}</th></thead>
             <tbody>
-              <tr v-for="item in posts" class="table-row">
+              <tr v-for="(item, index) in sclicedPosts" @v-model="sclicedPosts" class="table-row">
                 <!-- {{item}} -->
-                <td>{{item.yearandsemester}}</td>
-                <td>{{item.course_name}}</td>
-                <td>{{item.course_id}}</td>
-                <td>{{item.prof}}</td>
-                <td>{{item.students}}</td>
-                <td>{{item.commit}}</td>
-                <td>{{item.pr}}</td>
-                <td>{{item.issue}}</td>
-                <td>{{item.num_repos}}</td>
+                <!-- :title is tooltip -->
+                <td :title="item.yearandsemester">{{item.yearandsemester}}</td>
+                <td :title="item.name">{{item.name}}</td>
+                <td :title="item.department">{{item.department}}</td>
+                <td :title="item.id">{{item.id}}</td>
+                <td :title="item.enrollment">{{item.enrollment}}</td>
+                <td :title="item.github">{{item.github}}</td>
+                <td :title="item.course_name">{{item.course_name}}</td>
+                <td :title="item.course_id">{{item.course_id}}</td>
+                <td :title="item.commit">{{item.commit}}</td>
+                <td :title="item.pr">{{item.pr}}</td>
+                <td :title="item.issue">{{item.issue}}</td>
+                <td :title="item.num_repos">{{item.num_repos}}</td>
               </tr>
             </tbody>
           </table>
+          <!-- <div class="pagenation-container">
+            <button @click="prevPage" class="btn prev-btn">Previous</button>
+            <button @click="nextPage" class="btn next-btn">Next</button>
+          </div> -->
         </div>
         <div v-else class="table">
           <table class="table-over" style="table-layout: fixed"> 
             <thead class="table-header-wrapper"><th class="table-header" v-for="item in header" v-bind:style="{width: tablewidth(item[1])}">{{item[0]}}</th></thead>
             <tbody>
-              <tr v-for="item in posts" class="table-row">
+              <tr v-for="(item, index) in sclicedPosts" @v-model="sclicedPosts" class="table-row">
                 <!-- {{item}} -->
-                <td>{{item.yearandsemester}}</td>
-                <td>{{item.course_name}}</td>
-                <td>{{item.course_id}}</td>
-                <td>{{item.prof}}</td>
-                <td>{{item.students}}</td>
-                <td>{{item.commit}}</td>
-                <td>{{item.pr}}</td>
-                <td>{{item.issue}}</td>
-                <td>{{item.num_repos}}</td>
+                <!-- :title is tooltip -->
+                <td :title="item.yearandsemester">{{item.yearandsemester}}</td>
+                <td :title="item.name">{{item.name}}</td>
+                <td :title="item.department">{{item.department}}</td>
+                <td :title="item.id">{{item.id}}</td>
+                <td :title="item.enrollment">{{item.enrollment}}</td>
+                <td :title="item.github">{{item.github}}</td>
+                <td :title="item.course_name">{{item.course_name}}</td>
+                <td :title="item.course_id">{{item.course_id}}</td>
+                <td :title="item.commit">{{item.commit}}</td>
+                <td :title="item.pr">{{item.pr}}</td>
+                <td :title="item.issue">{{item.issue}}</td>
+                <td :title="item.num_repos">{{item.num_repos}}</td>
               </tr>
             </tbody>
           </table>
+          <div class="pagenation-container">
+            <button @click="prevPage" class="btn prev-btn">Previous</button>
+            <button @click="nextPage" class="btn next-btn">Next</button>
+          </div>
         </div>
       </transition>
     </div>
@@ -91,17 +107,21 @@ export default {
       searchField: '',
       pannelLoading: false,
       posts: [],
+      sclicedPosts: [],
       currentPage: 1,
       postsPerPage: 10,
-      header : [['개설학기', '9%'], 
-                ['과목명', '14%'], 
-                ['학수번호', '11%'], 
-                ['지도교수', '11%'], 
-                ['수강생', '11%'],
-                ['Commit', '11%'], 
-                ['PR', '11%'], 
-                ['Issue', '11%'], 
-                ['Repos', '11%']],
+      header : [['개설학기', '6%'], 
+                ['이름', '10%'], 
+                ['학과', '12%'], 
+                ['학번', '8%'], 
+                ['학적', '5%'],
+                ['Github ID', '11%'], 
+                ['과목명', '8%'], 
+                ['학수번호', '8%'], 
+                ['Commit', '8%'], 
+                ['PR', '8%'], 
+                ['Issue', '8%'], 
+                ['Repos', '8%']],
     };
   },
   computed: {
@@ -121,14 +141,89 @@ export default {
     tablewidth(length) {
       return length
     },
+    updatePage(page) {
+      const query = { ...this.$route.query, page: page };
+      this.$router.replace({ path: this.$route.path, query: query });
+    },
+    nextPage() {
+      if (this.currentPage * this.postsPerPage < this.posts.length) {
+        this.updatePage(this.currentPage + 1);
+      }
+    },
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.updatePage(this.currentPage - 1);
+      }
+    },
+    slicing() {
+      const start = (this.currentPage - 1) * this.postsPerPage;
+      const end = start + this.postsPerPage;
+      this.sclicedPosts = this.posts.slice(start, end);
+    }
   },
   mounted() {
     this.posts = this.postss
+    this.currentPage = parseInt(this.$route.query.page)
+    this.slicing()
+  },
+  beforeMount() {
+    const query = this.$route.query;
+    const newQuery = { ...query };
+    let needsReplace = false;
+
+    if (!query.page) {
+      newQuery.page = 1;
+      needsReplace = true;
+    }
+    if (!query.type) {
+      newQuery.type = 'summary';
+      needsReplace = true;
+    }
+    if (query.type && query.type !== 'summary' && query.type !== 'all') {
+      newQuery.type = 'summary';
+      needsReplace = true;
+    }
+    if (needsReplace) {
+      this.$router.replace({ path: this.$route.path, query: newQuery });
+    }
+
+    this.currentPage = parseInt(query.page) || 1;
+
+    if (newQuery.type === 'summary') {
+      this.showTable = false;
+    } else if (newQuery.type === 'all') {
+      this.showTable = true;
+    }
+
+    console.log(query.page);
   },
   watch: {
     postss(to, from) {
       const vm = this
       this.posts = vm.postss
+      this.slicing()
+    },
+    $route(to, from) {
+      const vm = this
+      this.currentPage = parseInt(to.query.page) || 1;
+
+      // type이 변경된 경우 currentPage를 1로 설정
+      if (to.query.type !== from.query.type) {
+        this.currentPage = 1;
+      }
+    },
+    currentPage(to, from) {
+      const vm = this
+      this.slicing()
+    },
+    showTable(newVal, oldVal) {
+      const vm = this
+      if (newVal === false) {
+        this.$router.replace({ path: this.$route.path, query: { page: 1, type: 'summary' } });
+      } else if (newVal === true) {
+        this.$router.replace({ path: this.$route.path, query: { page: 1, type: 'all' } });
+      }
+      this.slicing()
     },
   }
 };
@@ -366,6 +461,27 @@ export default {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+    & td {
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+  }
+}
+
+.table {
+  .pagenation-container {
+    height: 44px;
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    .btn {
+      margin: 0 20px;
+
+    }
+    .next-btn {
+      /* margin: 0 auto; */
+    }
   }
 }
 
