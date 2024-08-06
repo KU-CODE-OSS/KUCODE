@@ -142,8 +142,8 @@
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="yearDropped">
               <li class="item" v-for="(year, index) in studentsFilterYearsCheckbox">
-                <label :for="'year' + index" class="checkbox-label">
-                  <input :id="'year' + index" type="checkbox" class="checkbox" :value="year" v-model="selectedYearItemsforStudents" @change="yearFilterEventChangeforStudents(year, $event)">
+                <label :for="'year-student' + index" class="checkbox-label">
+                  <input :id="'year-student' + index" type="checkbox" class="checkbox" :value="year" v-model="selectedYearItemsforStudents" @change="yearFilterEventChangeforStudents(year, $event)">
                   <p v-if="year === '-1' || year === ''" class="label-text">기타</p>
                   <p v-else class="label-text">{{year}}</p>
                 </label>
@@ -176,8 +176,8 @@
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="semesterDropped">
               <li class="item" v-for="(semester, index) in studentsFilterSemesterCheckbox" :key="index">
-                <label :for="'semester' + index" class="checkbox-label">
-                  <input :id="'semester' + index" type="checkbox" class="checkbox" :value="semester" v-model="selectedSemesterItemsforStudents" @change="semesterFilterEventChangeforStudents(semester, $event)">
+                <label :for="'semester-student' + index" class="checkbox-label">
+                  <input :id="'semester-student' + index" type="checkbox" class="checkbox" :value="semester" v-model="selectedSemesterItemsforStudents" @change="semesterFilterEventChangeforStudents(semester, $event)">
                   <p v-if="semester === '-1' || semester === ''" class="label-text">기타</p>
                   <p v-else class="label-text">{{semester}} 학기</p>
                 </label>
@@ -209,8 +209,8 @@
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="coursenameDropped">
               <li class="item" v-for="(coursename, index) in studentsFilterCourseNameCheckbox" :key="index">
-                <label :for="'course' + index" class="checkbox-label">
-                  <input :id="'course' + index" type="checkbox" class="checkbox" :value="coursename" v-model="selectedCourseNameItemsforStudents" @change="courseNameFilterEventChangeforStudents(semester, $event)">
+                <label :for="'course-student' + index" class="checkbox-label">
+                  <input :id="'course-student' + index" type="checkbox" class="checkbox" :value="coursename" v-model="selectedCourseNameItemsforStudents" @change="courseNameFilterEventChangeforStudents(semester, $event)">
                   <p v-if="coursename === '기타' || coursename === ''" class="label-text">기타</p>
                   <p v-else class="label-text">{{coursename}}</p>
                 </label>
@@ -533,7 +533,7 @@ export default {
       this.studentsFilteredPostsforYear = this.studentsPosts
       this.studentsFilteredPostsforSemester = this.studentsPosts
       this.studentsFilteredPostsforCourseName = this.studentsPosts
-      this.studentsFilteredPosts = this.coursePosts
+      this.studentsFilteredPosts = this.studentsPosts
     }
   },
   computed: {

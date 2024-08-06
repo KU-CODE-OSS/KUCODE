@@ -324,12 +324,12 @@ export default {
     slicingforall() {
       const start = (this.currentPageforAll - 1) * this.postsPerPage;
       const end = start + this.postsPerPage;
-      this.sclicedPosts = this.commitSort(this.posts.slice(start, end));
+      this.sclicedPosts = this.yearandCommitSort(this.posts.slice(start, end));
     },
     slicingforsummary() {
       const start = (this.currentPageforSummary - 1) * this.postsPerPage;
       const end = start + this.postsPerPage;
-      this.slicedsummarizedStudents = this.summarizedStudents.slice(start, end);
+      this.slicedsummarizedStudents = this.commitSort(this.summarizedStudents.slice(start, end));
     },
     commitSort(li){
       li.sort(function(a,b){
@@ -342,6 +342,22 @@ export default {
         return b.commit - a.commit
       });
       return li
+    },
+    yearandCommitSort(li) {
+      li.sort(function(a, b) {
+        // year 값이 없는 경우 -1로 설정
+        const yearA = a.year || -1;
+        const yearB = b.year || -1;
+
+        // year가 같은 경우 commit 값을 기준으로 정렬
+        if (yearA === yearB) {
+          return b.commit - a.commit;
+        }
+
+        // year를 기준으로 정렬
+        return yearB - yearA;
+      });
+      return li;
     },
     toSummarized(li) {
       var ret = []
