@@ -441,8 +441,14 @@ export default {
     postss(to, from) {
       this.posts = to;
       this.slicingforall();
+      if (this.$route.query.type === 'all' && this.$route.query.page > this.totalPagesforAll) {
+        this.changePageforAll(this.totalPagesforAll);
+      }
       this.toSummarized(this.posts);
       this.slicingforsummary();
+      if (this.$route.query.type === 'summary' && this.$route.query.page > this.totalPagesforSummary) {
+        this.changePageforSummary(this.totalPagesforSummary);
+      }
     },
     $route(to, from) {
       this.currentPageforAll = parseInt(to.query.page) || 1;

@@ -95,35 +95,59 @@
     </div>
     <div class="navigation_underline"></div>
     <div class="contents-box">
-      <transition name="slide-fade" mode="out-in">
-        <div v-if="!showTable" class="table">
-          <table class="table-over" style="table-layout: fixed"> 
-            <thead class="table-header-wrapper"><th class="table-header" v-for="item in header" v-bind:style="{width: tablewidth(item[1])}">{{item[0]}}</th></thead>
-            <tbody>
-              <tr v-for="item in posts" class="table-row">
-                <!-- {{item}} -->
-                <td>{{item.yearandsemester}}</td>
-                <td>{{item.course_name}}</td>
-                <td>{{item.course_id}}</td>
-                <td>{{item.prof}}</td>
-                <td>{{item.students}}</td>
-                <td>{{item.commit}}</td>
-                <td>{{item.pr}}</td>
-                <td>{{item.issue}}</td>
-                <td>{{item.num_repos}}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div v-else class="chart">
-          <div class="year-chart-container">
-            <div class="title">연도별 데이터</div>
+      <div class="table">
+        <table class="table-over" style="table-layout: fixed"> 
+          <thead class="table-header-wrapper"><th class="table-header" v-for="item in header" v-bind:style="{width: tablewidth(item[1])}">{{item[0]}}</th></thead>
+          <tbody>
+            <tr v-for="item in posts" class="table-row">
+              <!-- {{item}} -->
+              <td>{{item.yearandsemester}}</td>
+              <td>{{item.course_name}}</td>
+              <td>{{item.course_id}}</td>
+              <td>{{item.prof}}</td>
+              <td>{{item.students}}</td>
+              <td>{{item.commit}}</td>
+              <td>{{item.pr}}</td>
+              <td>{{item.issue}}</td>
+              <td>{{item.num_repos}}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="pagenation-container">
+          <div class="pagenation-wrapper">
+            <button @click="firstPageforAll" :disabled="firstPageDisabledforAll" class="prev-button">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path class="prev-pointer" d="M15 18L9 12L15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path class="prev-pointer" d="M19 18L13 12L19 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button @click="prevPageforAll" :disabled="prevPageDisabledforAll" class="prev-button">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path class="prev-pointer" d="M15 18L9 12L15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button
+              v-for="page in pagesToShowforAll"
+              :key="page"
+              @click="changePageforAll(page)"
+              :class="{ active: page === currentPageforAll }"
+              class="number-list-btn">
+              {{ page }}
+            </button>
+            <button @click="nextPageforAll" :disabled="nextPageDisabledforAll" class="next-button">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path class="next-pointer" d="M9 18L15 12L9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button @click="lastPageforAll" :disabled="lastPageDisabledforAll" class="next-button">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path class="next-pointer" d="M9 18L15 12L9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path class="next-pointer" d="M5 18L11 12L5 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
-          <div class="category-chart-container">
-            <div class="title">카테고리별 상세 데이터</div>
-          </div>
         </div>
-      </transition>
+      </div>
     </div>
   </div>
 </template>
@@ -142,6 +166,7 @@ export default {
       selectedFile: null,
       pannelLoading: false,
       posts: [],
+      sclicedPosts: [],
       currentPage: 1,
       postsPerPage: 10,
       header : [['개설학기', '9%'], 
@@ -174,11 +199,68 @@ export default {
     };
   },
   computed: {
-    totalPages() {
-      return Math.ceil(this.posts.length / this.postsPerPage)
+    totalPagesforAll() {
+      return Math.ceil(this.postss.length / this.postsPerPage);
+    },
+    totalPagesPerListforAll() {
+      return  Math.floor(Math.ceil(this.postss.length / this.postsPerPage) / 10) + 1;
+    },
+    prevPageDisabledforAll() {
+      return Math.floor((this.currentPageforAll - 1) / 10) === 0
+    },
+    nextPageDisabledforAll() {
+      return Math.floor((this.currentPageforAll - 1) / 10) + 1 >= this.totalPagesPerListforAll
+    },
+    firstPageDisabledforAll() {
+      return this.currentPageforAll === 1
+    },
+    lastPageDisabledforAll() {
+      return this.currentPageforAll === this.totalPagesforAll
+    },
+    pagesToShowforAll() {
+      const startPage = Math.floor((this.currentPageforAll - 1) / 10) * 10 + 1;
+      const endPage = Math.min(startPage + 9, this.totalPagesforAll);
+      const pages = [];
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+      return pages;
     },
   },
   methods: {
+    changePageforAll(page) {
+      let toPage = 0
+      if (page < 1) {
+        toPage = 1;  
+      } else if (page > this.totalPagesforAll) {
+        toPage = this.totalPagesforAll;
+      } else {
+        toPage = page;
+      }
+      const query = { ...this.$route.query, page: toPage };
+      this.$router.replace({ path: this.$route.path, query: query });
+      this.currentPageforAll = toPage;
+    },
+    firstPageforAll() {
+      if (this.currentPageforAll > 1) {
+        this.changePageforAll(1);
+      }
+    },
+    prevPageforAll() {
+      if (this.currentPageforAll > 1) {
+        this.changePageforAll(Math.floor((this.currentPageforAll - 1) / 10));
+      }
+    },
+    nextPageforAll() {
+      if (Math.floor((this.currentPageforAll - 1) / 10) + 1 < this.totalPagesPerListforAll) {
+        this.changePageforAll(Math.floor((this.currentPageforAll - 1) / 10) + 11);
+      }
+    },
+    lastPageforAll() {
+      if (this.currentPageforAll < this.totalPagesforAll) {
+        this.changePageforAll(this.totalPagesforAll);
+      }
+    },
     selectFile(e) {
       this.selectedFile = e.target.files[0];
       this.selectedFileName = this.selectedFile.name
@@ -186,6 +268,11 @@ export default {
     },
     toggle() {
       this.showTable = !this.showTable;
+    },
+    slicingforall() {
+      const start = (this.currentPageforAll - 1) * this.postsPerPage;
+      const end = start + this.postsPerPage;
+      this.sclicedPosts = this.yearandCommitSort(this.posts.slice(start, end));
     },
     checkInput() {
       let onormore = false;
@@ -315,14 +402,56 @@ export default {
       this.selectedFile = null;
       this.pannelLoading = false
     },
+    yearandCommitSort(li) {
+      li.sort(function(a, b) {
+        // year 값이 없는 경우 -1로 설정
+        const yearA = a.year || -1;
+        const yearB = b.year || -1;
+
+        // year가 같은 경우 commit 값을 기준으로 정렬
+        if (yearA === yearB) {
+          return b.commit - a.commit;
+        }
+
+        // year를 기준으로 정렬
+        return yearB - yearA;
+      });
+      return li;
+    },
   },
   mounted() {
     this.posts = this.postss
+    this.currentPageforAll = parseInt(this.$route.query.page) || 1;
+    this.slicingforall();
+  },
+  beforeMount() {
+    const query = this.$route.query;
+    const newQuery = { ...query };
+    let needsReplace = false;
+    if (!query.page) {
+      newQuery.page = 1;
+      needsReplace = true;
+    }
+
+    if (needsReplace) {
+      this.$router.replace({ path: this.$route.path, query: newQuery });
+    }
+    this.currentPageforAll = parseInt(query.page) || 1;
   },
   watch: {
     postss(to, from) {
-      const vm = this
-      this.posts = vm.postss
+      this.posts = to;
+      this.slicingforall();
+      if (this.$route.query.page > this.totalPagesforAll) {
+        this.changePageforAll(this.totalPagesforAll);
+      }
+    },
+    $route(to, from) {
+      this.currentPageforAll = parseInt(to.query.page) || 1;
+      this.slicingforall();
+    },
+    currentPageforAll(to, from) {
+      this.slicingforall();
     },
   }
 };
@@ -519,6 +648,78 @@ export default {
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
+    }
+  }
+}
+
+.table {
+  .pagenation-container {
+    height: 44px;
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .pagenation-wrapper {
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      
+      .btn {
+        margin: 0 20px;
+      }
+
+      .prev-button, .next-button {
+        display: inline-flex;
+        align-items: center;
+        border: none;
+        background: none;
+        cursor: pointer;
+        height: 44px;
+        line-height: 44px;
+        /* padding: 0.5rem; */
+        margin: 0;
+        transition: color 0.3s ease;
+
+        .prev-pointer, .next-pointer {
+          width: 44px;
+          height: 44px;
+          display: inline-block;
+
+          & svg {
+            height: 44px;
+            display: inline-block;
+            vertical-align: middle;
+          }
+          stroke: #262626;
+        }
+        &:not(:disabled):hover .prev-pointer {
+          stroke: #CB385C;
+        }
+        &:disabled {
+          pointer-events : none;
+        }
+        &:not(:disabled):hover .next-pointer {
+          stroke: #CB385C;
+        }
+        &:disabled {
+          pointer-events : none;
+        }
+      }
+      .number-list-btn {
+        height: 44px;
+        line-height: 44px;
+        margin-left: 10px;
+        margin-right: 10px;
+        font-size: 16px;
+        &:hover {
+          color: #CB385C;
+        }
+      }
+      .active {
+        font-weight: 700;
+        color: #CB385C;
+      }
     }
   }
 }
