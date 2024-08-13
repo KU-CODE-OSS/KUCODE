@@ -51,7 +51,7 @@
                 <YearCommit/>
               </div>
               <div class="chart-container">
-                <YearIssue/>
+                <YearAll/>
               </div>
               <div class="chart-container">
                 <YearPr/>
@@ -88,6 +88,7 @@ import YearPr from './chart/year_pr.vue';
 import DepartCommit from './chart/depart_commit.vue';
 import IdCommit from './chart/id_commit.vue';
 import IdCommitAvg from './chart/id_commit_avg.vue';
+import YearAll from './chart/x-year_y-all_.vue';
 
 
 export default {
@@ -104,7 +105,9 @@ export default {
     YearPr,
     DepartCommit,
     IdCommit,
-    IdCommitAvg
+    IdCommitAvg,
+    YearAll,
+
 
   },
   data() {
