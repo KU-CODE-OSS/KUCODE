@@ -18,8 +18,8 @@
       </div>
       <div class="toggle-box" @click.self.prevent="toggle">
         <div class="wrapper">
-          <input type="checkbox" id="switch" v-model="showTable">
-          <label for="switch" class="switch_label">
+          <input type="checkbox" id="infoswitchrepos" v-model="showTable">
+          <label for="infoswitchrepos" class="switch_label">
             <span class="onf_btn"></span>
             <div class="toggle_img">
                 <div class="img1">
@@ -205,7 +205,7 @@ export default {
       position: relative;
     }
 
-    #switch {
+    #infoswitchrepos {
       display: none;
     }
 
@@ -263,17 +263,17 @@ export default {
             margin-right: auto;
         }
     }
-    #switch:checked + .switch_label .onf_btn {
+    #infoswitchrepos:checked + .switch_label .onf_btn {
         left: 70px;
         background: #fff;
         box-shadow: 1px 2px 3px #00000020;
     }
-    #switch:checked + .switch_label .toggle-image-1 {
+    #infoswitchrepos:checked + .switch_label .toggle-image-1 {
         & path {
             stroke: #E9D8D9;
         }
     }
-    #switch:checked + .switch_label .toggle-image-2 {
+    #infoswitchrepos:checked + .switch_label .toggle-image-2 {
         & path {
             stroke: #CB385C;
         }

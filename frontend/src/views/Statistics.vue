@@ -2,10 +2,11 @@
   <div class="default-container">
     <div class="left-split">
       <div class="empty-box"></div>
-      <div class="filter-box">
+      <!-- 전체 Filter -->
+      <div v-show="getRouteType() === 1" class="filter-box">
         <div class="filter-title-box">
           <div class="title">필터</div>
-          <v-btn class="init" variant="outlined" v-on:click="resetFilter" color="#f5d6de">초기화</v-btn>
+          <v-btn class="init" variant="outlined" v-on:click="resetFilterforStudent" color="#f5d6de">초기화</v-btn>
         </div>
         <div class="filter-container">
           <!-- year 필터 한 개 시작 -->
@@ -30,9 +31,9 @@
           </div>
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="yearDropped">
-              <li class="item" v-for="(year, index) in courseFilterYearsCheckbox">
-                <label :for="'year' + index" class="checkbox-label">
-                  <input :id="'year' + index" type="checkbox" class="checkbox" :value="year" v-model="selectedYearItems" @change="yearFilterEventChange(year, $event)">
+              <li class="item" v-for="(year, index) in studentFilterYearsCheckbox">
+                <label :for="'year' + index + 'student'" class="checkbox-label">
+                  <input :id="'year' + index + 'student'" type="checkbox" class="checkbox" :value="year" v-model="selectedYearItemsforStudent" @change="yearFilterEventChangeforStudent(year, $event)">
                   <p v-if="year === '-1' || year === ''" class="label-text">기타</p>
                   <p v-else class="label-text">{{year}}</p>
                 </label>
@@ -64,9 +65,9 @@
           </div>
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="semesterDropped">
-              <li class="item" v-for="(semester, index) in courseFilterSemesterCheckbox" :key="index">
-                <label :for="'semester' + index" class="checkbox-label">
-                  <input :id="'semester' + index" type="checkbox" class="checkbox" :value="semester" v-model="selectedSemesterItems" @change="semesterFilterEventChange(semester, $event)">
+              <li class="item" v-for="(semester, index) in studentFilterSemesterCheckbox" :key="index">
+                <label :for="'semester' + index + 'student'" class="checkbox-label">
+                  <input :id="'semester' + index + 'student'" type="checkbox" class="checkbox" :value="semester" v-model="selectedSemesterItemsforStudent" @change="semesterFilterEventChangeforStudent(semester, $event)">
                   <p v-if="semester === '-1' || semester === ''" class="label-text">기타</p>
                   <p v-else class="label-text">{{semester}} 학기</p>
                 </label>
@@ -97,9 +98,9 @@
           </div>
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="coursenameDropped">
-              <li class="item" v-for="(coursename, index) in courseFilterCourseNameCheckbox" :key="index">
-                <label :for="'course' + index" class="checkbox-label">
-                  <input :id="'course' + index" type="checkbox" class="checkbox" :value="coursename" v-model="selectedCourseNameItems" @change="courseNameFilterEventChange(semester, $event)">
+              <li class="item" v-for="(coursename, index) in studentFilterCourseNameCheckbox" :key="index">
+                <label :for="'course' + index + 'student'" class="checkbox-label">
+                  <input :id="'course' + index + 'student'" type="checkbox" class="checkbox" :value="coursename" v-model="selectedCourseNameItemsforStudent" @change="courseNameFilterEventChangeforStudent(coursename, $event)">
                   <p v-if="coursename === '기타' || coursename === ''" class="label-text">기타</p>
                   <p v-else class="label-text">{{coursename}}</p>
                 </label>
@@ -109,14 +110,169 @@
            <!-- 과목명 필터 한 개 끝 -->
         </div>
       </div>
+      <!-- 전체 filter 끝 -->
+
+
+      <!-- 과목별 Filter -->
+      <div v-show="getRouteType() === 2" class="filter-box">
+        <div class="filter-title-box">
+          <div class="title">필터</div>
+          <v-btn class="init" variant="outlined" v-on:click="resetFilterforCourse" color="#f5d6de">초기화</v-btn>
+        </div>
+        <div class="filter-container">
+          <!-- 과목명 필터 한 개 시작 -->
+          <div class=types :class="[this.coursenameDropped ? 'types-focused' :'types-unfocused']">
+            <svg id="type-svg"  xmlns="http://www.w3.org/2000/svg" v-show="this.coursenameDropped" width="24" height="25" viewBox="0 0 24 25" fill="none">
+              <path d="M12 6.55337V20.8025M5 8.75464C6.26578 8.95067 7.67778 9.27657 9 9.78788M5 12.7546C5.63949 12.8537 6.3163 12.9859 7 13.1584M3.99433 3.51127C6.21271 3.76195 9.19313 4.43632 11.3168 5.92445C11.725 6.21045 12.275 6.21045 12.6832 5.92445C14.8069 4.43632 17.7873 3.76195 20.0057 3.51127C21.1036 3.38721 22 4.30402 22 5.43518V16.7C22 17.8311 21.1036 18.7483 20.0057 18.8723C17.7873 19.123 14.8069 19.7974 12.6832 21.2855C12.275 21.5715 11.725 21.5715 11.3168 21.2855C9.19313 19.7974 6.21271 19.123 3.99433 18.8723C2.89642 18.7483 2 17.8311 2 16.7V5.43518C2 4.30402 2.89642 3.38721 3.99433 3.51127Z" stroke="#910024" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <svg id="type-svg"  xmlns="http://www.w3.org/2000/svg" v-show="!this.coursenameDropped" width="24" height="25" viewBox="0 0 24 25" fill="none">
+              <path d="M12 6.55337V20.8025M5 8.75464C6.26578 8.95067 7.67778 9.27657 9 9.78788M5 12.7546C5.63949 12.8537 6.3163 12.9859 7 13.1584M3.99433 3.51127C6.21271 3.76195 9.19313 4.43632 11.3168 5.92445C11.725 6.21045 12.275 6.21045 12.6832 5.92445C14.8069 4.43632 17.7873 3.76195 20.0057 3.51127C21.1036 3.38721 22 4.30402 22 5.43518V16.7C22 17.8311 21.1036 18.7483 20.0057 18.8723C17.7873 19.123 14.8069 19.7974 12.6832 21.2855C12.275 21.5715 11.725 21.5715 11.3168 21.2855C9.19313 19.7974 6.21271 19.123 3.99433 18.8723C2.89642 18.7483 2 17.8311 2 16.7V5.43518C2 4.30402 2.89642 3.38721 3.99433 3.51127Z" stroke="#262626" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <p class="type-title">
+              과목
+            </p>
+            <button class="drop-btn"><i class="drop-btn-container" v-on:click="coursenamebtnclick">
+              <svg class="toggle-btn" v-show="this.coursenameDropped" xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                <path d="M1 6.5L5.29289 2.20711C5.68342 1.81658 6.31658 1.81658 6.70711 2.20711L11 6.5" stroke="#910024" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <svg class="toggle-btn" v-show="!this.coursenameDropped" xmlns="http://www.w3.org/2000/svg" width="13" height="7" viewBox="0 0 13 7" fill="none">
+                <path d="M11.4521 1L7.15925 5.29289C6.76873 5.68342 6.13557 5.68342 5.74504 5.29289L1.45215 0.999999" stroke="#CDCDCD" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </i></button>
+          </div>
+          <transition name="slide">
+            <ul class="year-filter no-dot" v-if="coursenameDropped">
+              <li class="item" v-for="(coursename, index) in courseFilterCourseNameCheckbox" :key="index">
+                <label :for="'course' + index + 'course'" class="checkbox-label">
+                  <input :id="'course' + index + 'course'" type="checkbox" class="checkbox" :value="coursename" :checked="isCheckedforCourse(coursename)" @change="courseNameFilterEventChangeforCourse(coursename, $event)">
+                  <p v-if="coursename === '기타' || coursename === ''" class="label-text">기타</p>
+                  <p v-else class="label-text">{{coursename}}</p>
+                </label>
+              </li>
+            </ul>
+          </transition>
+           <!-- 과목명 필터 한 개 끝 -->
+        </div>
+      </div>
+      <!-- 과목별 filter 끝 -->
+
+      <!-- 학과별 Filter -->
+      <div v-show="getRouteType() === 3" class="filter-box">
+        <div class="filter-title-box">
+          <div class="title">필터</div>
+          <v-btn class="init" variant="outlined" v-on:click="resetFilterforDepartment" color="#f5d6de">초기화</v-btn>
+        </div>
+        <div class="filter-container">
+          <!-- year 필터 한 개 시작 -->
+          <div class=types :class="[this.yearDropped ? 'types-focused' :'types-unfocused']">
+            <svg v-show="this.yearDropped" id="type-svg" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M3 9V18C3 20.2091 4.79086 22 7 22H17C19.2091 22 21 20.2091 21 18V9M3 9V7.5C3 5.29086 4.79086 3.5 7 3.5H17C19.2091 3.5 21 5.29086 21 7.5V9M3 9H21M16 2V5M8 2V5" stroke="#910024" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <svg v-show="!this.yearDropped" id="type-svg" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M3 9V18C3 20.2091 4.79086 22 7 22H17C19.2091 22 21 20.2091 21 18V9M3 9V7.5C3 5.29086 4.79086 3.5 7 3.5H17C19.2091 3.5 21 5.29086 21 7.5V9M3 9H21M16 2V5M8 2V5" stroke="#262626" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <p class="type-title">
+              연도
+            </p>
+            <button class="drop-btn"><i class="drop-btn-container" v-on:click="yearbtnclick">
+              <svg class="toggle-btn" v-show="this.yearDropped" xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                <path d="M1 6.5L5.29289 2.20711C5.68342 1.81658 6.31658 1.81658 6.70711 2.20711L11 6.5" stroke="#910024" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <svg class="toggle-btn" v-show="!this.yearDropped" xmlns="http://www.w3.org/2000/svg" width="13" height="7" viewBox="0 0 13 7" fill="none">
+                <path d="M11.4521 1L7.15925 5.29289C6.76873 5.68342 6.13557 5.68342 5.74504 5.29289L1.45215 0.999999" stroke="#CDCDCD" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </i></button>
+          </div>
+          <transition name="slide">
+            <ul class="year-filter no-dot" v-if="yearDropped">
+              <li class="item" v-for="(year, index) in departmentFilterYearsCheckbox">
+                <label :for="'year' + index + 'department'" class="checkbox-label">
+                  <input :id="'year' + index + 'department'" type="checkbox" class="checkbox" :value="year" v-model="selectedYearItemsforDepartment" @change="yearFilterEventChangeforDepartment(year, $event)">
+                  <p v-if="year === '-1' || year === ''" class="label-text">기타</p>
+                  <p v-else class="label-text">{{year}}</p>
+                </label>
+              </li>
+            </ul>
+          </transition>
+           <!-- year 필터 한 개 끝 -->
+
+          <!-- 학기 필터 한 개 시작 -->
+          <div class=types :class="[this.semesterDropped ? 'types-focused' :'types-unfocused']">
+
+            <svg v-show="this.semesterDropped" id="type-svg"  xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+              <path d="M7.9405 9.5H11.9109M7.9405 13.5H15.8812M7.9405 17.5H15.8812M15.8808 2.5V5.5M7.94002 2.5V5.5M6.94791 4H16.8738C19.0666 4 20.8442 5.79086 20.8442 8V18.5C20.8442 20.7091 19.0666 22.5 16.8738 22.5H6.94791C4.75513 22.5 2.97754 20.7091 2.97754 18.5V8C2.97754 5.79086 4.75513 4 6.94791 4Z" stroke="#910024" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg v-show="!this.semesterDropped" id="type-svg"  xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+              <path d="M7.9405 9.5H11.9109M7.9405 13.5H15.8812M7.9405 17.5H15.8812M15.8808 2.5V5.5M7.94002 2.5V5.5M6.94791 4H16.8738C19.0666 4 20.8442 5.79086 20.8442 8V18.5C20.8442 20.7091 19.0666 22.5 16.8738 22.5H6.94791C4.75513 22.5 2.97754 20.7091 2.97754 18.5V8C2.97754 5.79086 4.75513 4 6.94791 4Z" stroke="#262626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p class="type-title">
+              학기
+            </p>
+            <button class="drop-btn"><i class="drop-btn-container" v-on:click="semesterbtnclick">
+              <svg class="toggle-btn" v-show="this.semesterDropped" xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                <path d="M1 6.5L5.29289 2.20711C5.68342 1.81658 6.31658 1.81658 6.70711 2.20711L11 6.5" stroke="#910024" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <svg class="toggle-btn" v-show="!this.semesterDropped" xmlns="http://www.w3.org/2000/svg" width="13" height="7" viewBox="0 0 13 7" fill="none">
+                <path d="M11.4521 1L7.15925 5.29289C6.76873 5.68342 6.13557 5.68342 5.74504 5.29289L1.45215 0.999999" stroke="#CDCDCD" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </i></button>
+          </div>
+          <transition name="slide">
+            <ul class="year-filter no-dot" v-if="semesterDropped">
+              <li class="item" v-for="(semester, index) in departmentFilterSemesterCheckbox" :key="index">
+                <label :for="'semester' + index + 'department'" class="checkbox-label">
+                  <input :id="'semester' + index + 'department'" type="checkbox" class="checkbox" :value="semester" v-model="selectedSemesterItemsforDepartment" @change="semesterFilterEventChangeforDepartment(semester, $event)">
+                  <p v-if="semester === '-1' || semester === ''" class="label-text">기타</p>
+                  <p v-else class="label-text">{{semester}} 학기</p>
+                </label>
+              </li>
+            </ul>
+          </transition>
+           <!-- 학기 필터 한 개 끝 -->
+
+          <!-- 과목명 필터 한 개 시작 -->
+          <div class=types :class="[this.coursenameDropped ? 'types-focused' :'types-unfocused']">
+            <svg id="type-svg"  xmlns="http://www.w3.org/2000/svg" v-show="this.coursenameDropped" width="24" height="25" viewBox="0 0 24 25" fill="none">
+              <path d="M12 6.55337V20.8025M5 8.75464C6.26578 8.95067 7.67778 9.27657 9 9.78788M5 12.7546C5.63949 12.8537 6.3163 12.9859 7 13.1584M3.99433 3.51127C6.21271 3.76195 9.19313 4.43632 11.3168 5.92445C11.725 6.21045 12.275 6.21045 12.6832 5.92445C14.8069 4.43632 17.7873 3.76195 20.0057 3.51127C21.1036 3.38721 22 4.30402 22 5.43518V16.7C22 17.8311 21.1036 18.7483 20.0057 18.8723C17.7873 19.123 14.8069 19.7974 12.6832 21.2855C12.275 21.5715 11.725 21.5715 11.3168 21.2855C9.19313 19.7974 6.21271 19.123 3.99433 18.8723C2.89642 18.7483 2 17.8311 2 16.7V5.43518C2 4.30402 2.89642 3.38721 3.99433 3.51127Z" stroke="#910024" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <svg id="type-svg"  xmlns="http://www.w3.org/2000/svg" v-show="!this.coursenameDropped" width="24" height="25" viewBox="0 0 24 25" fill="none">
+              <path d="M12 6.55337V20.8025M5 8.75464C6.26578 8.95067 7.67778 9.27657 9 9.78788M5 12.7546C5.63949 12.8537 6.3163 12.9859 7 13.1584M3.99433 3.51127C6.21271 3.76195 9.19313 4.43632 11.3168 5.92445C11.725 6.21045 12.275 6.21045 12.6832 5.92445C14.8069 4.43632 17.7873 3.76195 20.0057 3.51127C21.1036 3.38721 22 4.30402 22 5.43518V16.7C22 17.8311 21.1036 18.7483 20.0057 18.8723C17.7873 19.123 14.8069 19.7974 12.6832 21.2855C12.275 21.5715 11.725 21.5715 11.3168 21.2855C9.19313 19.7974 6.21271 19.123 3.99433 18.8723C2.89642 18.7483 2 17.8311 2 16.7V5.43518C2 4.30402 2.89642 3.38721 3.99433 3.51127Z" stroke="#262626" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <p class="type-title">
+              학과
+            </p>
+            <button class="drop-btn"><i class="drop-btn-container" v-on:click="coursenamebtnclick">
+              <svg class="toggle-btn" v-show="this.coursenameDropped" xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                <path d="M1 6.5L5.29289 2.20711C5.68342 1.81658 6.31658 1.81658 6.70711 2.20711L11 6.5" stroke="#910024" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <svg class="toggle-btn" v-show="!this.coursenameDropped" xmlns="http://www.w3.org/2000/svg" width="13" height="7" viewBox="0 0 13 7" fill="none">
+                <path d="M11.4521 1L7.15925 5.29289C6.76873 5.68342 6.13557 5.68342 5.74504 5.29289L1.45215 0.999999" stroke="#CDCDCD" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </i></button>
+          </div>
+          <transition name="slide">
+            <ul class="year-filter no-dot" v-if="coursenameDropped">
+              <li class="item" v-for="(department, index) in departmentFilterDepartmentCheckbox" :key="index">
+                <label :for="'course' + index + 'department'" class="checkbox-label">
+                  <input :id="'course' + index + 'department'" type="checkbox" class="checkbox" :value="department" v-model="selectedDepartmentItemsforDepartment" @change="departmentFilterEventChangeforDepartment(department, $event)">
+                  <p v-if="department === '기타' || department === ''" class="label-text">기타</p>
+                  <p v-else class="label-text">{{department}}</p>
+                </label>
+              </li>
+            </ul>
+          </transition>
+           <!-- 학과별 필터 한 개 끝 -->
+        </div>
+      </div>
+      <!-- 전체 filter 끝 -->
     </div>
     <div class="right-split">
       <div class="title">
         {{titles}}
       </div>
-      <router-view :postss="courseFilteredPosts" v-if="$route.path === '/statistics/course'"></router-view>
-      <router-view :postss="coursePosts" v-if="$route.path === '/statistics/students'"></router-view>
-      <router-view :postss="coursePosts" v-if="$route.path === '/statistics/repos'"></router-view>
+      <StatisticsStudent v-show="$route.path === '/statistics/students'" :course="studentFilteredPosts"></StatisticsStudent>
+      <StatisticsCourse v-show="$route.path === '/statistics/course'" :course="courseFilteredPosts"></StatisticsCourse>
+      <StatisticsDepartment v-show="$route.path === '/statistics/department'" :course="departmentFilteredPosts"></StatisticsDepartment>
     </div>
   </div> 
 </template>
@@ -124,14 +280,36 @@
 <script>
 import {getCourseInfo} from '@/api.js'
 import StatisticsCourse from '@/views/StatisticsComponents/StatisticsCourse.vue'
+import StatisticsStudent from '@/views/StatisticsComponents/StatisticsStudent.vue'
+import StatisticsDepartment from '@/views/StatisticsComponents/StatisticsDepartment.vue'
 export default {
   name: 'Statistics',
+  components: {
+    StatisticsCourse,
+    StatisticsStudent,
+    StatisticsDepartment
+  },
   data() {
     return {
       titles: '',
       yearDropped: false,
       semesterDropped: false,
       coursenameDropped: false,
+
+      // 전체 data
+      studentPosts: [],
+      studentFilteredPosts: [],
+      studentFilteredPostsforYear: [],
+      studentFilteredPostsforSemester: [],
+      studentFilteredPostsforCourseName: [],
+      studentFilterYearsCheckbox: [],
+      studentFilterSemesterCheckbox: [],
+      studentFilterCourseNameCheckbox: [],
+      selectedYearItemsforStudent: [],
+      selectedSemesterItemsforStudent: [],
+      selectedCourseNameItemsforStudent: [],
+
+      // 과목별 data
       coursePosts: [],
       courseFilteredPosts: [],
       courseFilteredPostsforYear: [],
@@ -140,9 +318,22 @@ export default {
       courseFilterYearsCheckbox: [],
       courseFilterSemesterCheckbox: [],
       courseFilterCourseNameCheckbox: [],
-      selectedYearItems: [],
-      selectedSemesterItems: [],
-      selectedCourseNameItems: [],
+      selectedYearItemsforCourse: [],
+      selectedSemesterItemsforCourse: [],
+      selectedCourseNameItemsforCourse: [],
+
+      // 학과별 data
+      departmentPosts: [],
+      departmentFilteredPosts: [],
+      departmentFilteredPostsforYear: [],
+      departmentFilteredPostsforSemester: [],
+      departmentFilteredPostsforDepartment: [],
+      departmentFilterYearsCheckbox: [],
+      departmentFilterSemesterCheckbox: [],
+      departmentFilterDepartmentCheckbox: [],
+      selectedYearItemsforDepartment: [],
+      selectedSemesterItemsforDepartment: [],
+      selectedDepartmentItemsforDepartment: [],
     };
   },
   mounted() {
@@ -150,30 +341,69 @@ export default {
     
   },
   methods: {
-    setInit() {
-      if(this.$route.name === "StatisticsCourse") {
-        this.titles = '과목 통계'
-        if (this.coursePosts.length === 0){
-          getCourseInfo().then(res => {
-            this.coursePosts = res.data
-            this.coursePosts = this.coursePreprocessingTableData(this.coursePosts)
-            this.courseFilteredPosts = this.coursePosts
-            this.courseFiltering(this.coursePosts)
-            console.log(this.coursePosts)
-            this.courseFilteredPostsforYear = this.coursePosts
-            this.courseFilteredPostsforSemester = this.coursePosts
-            this.courseFilteredPostsforCourseName = this.coursePosts
-            this.yearSort()
-          })
-        }
+    getRouteType () {
+      if (this.$route.name === 'StatisticsStudent') {
+        return 1
       }
-      else if(this.$route.name === "StatisticsStudent") {
-        this.titles = '학생 통계'
+      if (this.$route.name === 'StatisticsCourse') {
+        return 2
       }
-      else if(this.$route.name === "StatisticsRepos") {
-        this.titles = '레포지토리 통계'
+      if (this.$route.name === 'StatisticsDepartment') {
+        return 3
       }
     },
+    async setInit() {
+      if(this.$route.name === "StatisticsStudent") {
+        this.titles = '전체 통계'
+      }
+      if(this.$route.name === "StatisticsCourse") {
+        this.titles = '과목 통계'
+      }
+      if(this.$route.name === "StatisticsDepartment") {
+        this.titles = '학과별 통계'
+      }
+
+      // 전체통계
+      if (this.studentPosts.length === 0) {
+        getCourseInfo().then(res => {
+          this.studentPosts = res.data
+          this.studentPosts = this.coursePreprocessingTableData(this.studentPosts)
+          this.studentFilteredPosts = this.studentPosts
+          this.studentFiltering(this.studentPosts)
+          this.studentFilteredPostsforYear = this.studentPosts
+          this.studentFilteredPostsforSemester = this.studentPosts
+          this.studentFilteredPostsforCourseName = this.studentPosts
+          this.studentPosts = this.yearSort(this.studentPosts)
+        })
+      }
+
+      // 과목통계
+      if (this.coursePosts.length === 0) {
+        getCourseInfo().then(res => {
+          this.coursePosts = res.data
+          this.coursePosts = this.coursePreprocessingTableData(this.coursePosts)
+          this.courseFilteredPosts = []
+          this.courseFiltering(this.coursePosts)
+          this.courseFilteredPostsforCourseName = this.coursePosts
+          this.coursePosts = this.yearSort(this.coursePosts)
+        })
+      }
+
+      // 학과통계
+      if (this.departmentPosts.length === 0) {
+        getCourseInfo().then(res => {
+          this.departmentPosts = res.data
+          this.departmentPosts = this.departmentPreprocessingTableData(this.departmentPosts)
+          this.departmentFilteredPosts = this.departmentPosts
+          this.departmentFiltering(this.departmentPosts)
+          this.departmentFilteredPostsforYear = this.departmentPosts
+          this.departmentFilteredPostsforSemester = this.departmentPosts
+          this.departmentFilteredPostsforDepartment = this.departmentPosts
+        })
+      }
+    },
+
+    // 공용
     yearbtnclick() {
       this.yearDropped = !this.yearDropped
     },
@@ -183,55 +413,258 @@ export default {
     coursenamebtnclick() {
       this.coursenameDropped = !this.coursenameDropped
     },
-    courseFiltering(courses) {
+    studentFiltering(courses) {
       const yearset = new Set(courses.map(row=>row.year));
-      this.courseFilterYearsCheckbox = [...yearset];
+      this.studentFilterYearsCheckbox = [...yearset];
       const semesterset = new Set(courses.map(row=>row.semester));
-      this.courseFilterSemesterCheckbox = [...semesterset];
+      this.studentFilterSemesterCheckbox = [...semesterset];
       const courseset = new Set(courses.map(row=>row.course_name));
+      this.studentFilterCourseNameCheckbox = [...courseset];
+    },
+    courseFiltering(courses) {
+      const courseset = new Set(courses.map(row=>row.course_id));
       this.courseFilterCourseNameCheckbox = [...courseset];
     },
+
+    // 전체 및 과목용 전처리
     coursePreprocessingTableData(datalist) {
       var li = []
-      const set = new Set(datalist.map(row=>row.course_id));
-      // console.log(li)
+      const set = new Set(datalist.map(row => row.course_id));
       const uniqueArr = [...set];
+
       datalist.forEach(element => {
-        let index = uniqueArr.indexOf(element.course_id)
-        
+        let index = uniqueArr.indexOf(element.course_id);
+      
         if (li[index] === undefined) {
-          var newData = new Object()
-          if(element.year === '' || !element.year) {
-            newData.year = '-1'
+          var newData = {};
+          if (element.year === '' || !element.year) {
+            newData.year = '-1';
+            newData.course_id_for_stats = '기타';
           } else {
-            newData.year = element.year
+            newData.year = element.year;
+            newData.course_id_for_stats = element.course_id + ' (' + element.year + '-' + element.semester + ')';
           }
-          newData.semester = element.semester
-          newData.yearandsemester = element.year + '-' + element.semester
-          newData.course_name = element.course_name
-          newData.course_id = element.course_id
-          newData.prof = element.prof
-          newData.students = 1
-          newData.commit = element.commit
-          newData.pr = element.pr
-          newData.issue = element.issue
-          newData.num_repos = element.num_repos
-          li[index] = newData
-        }
-        else {
-          var appendData = li[index]
-          appendData.students = appendData.students + 1
-          appendData.commit = appendData.commit + element.commit
-          appendData.pr = appendData.pr + element.pr
-          appendData.issue = appendData.issue + element.issue
-          appendData.num_repos = appendData.num_repos + element.num_repos
-          li[index] = appendData   
+          newData.semester = element.semester;
+          newData.yearandsemester = element.year + '-' + element.semester;
+          newData.course_name = element.course_name;
+          newData.course_id = element.course_id;
+          newData.prof = element.prof;
+          newData.students = 1;
+
+          // Commits, PRs, Issues, Stars 등을 배열로 저장
+          newData.commit = [element.commit];
+          newData.pr = [element.pr];
+          newData.issue = [element.issue];
+          newData.num_repos = [element.num_repos];
+          newData.stars = [element.star_count];
+
+          li[index] = newData;
+        } else {
+          var appendData = li[index];
+          appendData.students = appendData.students + 1;
+
+          // 배열에 데이터를 추가
+          appendData.commit.push(element.commit);
+          appendData.pr.push(element.pr);
+          appendData.issue.push(element.issue);
+          appendData.num_repos.push(element.num_repos);
+          appendData.stars.push(element.star_count);
+
+          li[index] = appendData;
         }
       });
+
+      li = this.yearSort(li)
+    
+      // 통계값 계산
+      li.forEach(course => {
+        course.commit_stats = calculateStats(course.commit);
+        course.pr_stats = calculateStats(course.pr);
+        course.issue_stats = calculateStats(course.issue);
+        course.num_repos_stats = calculateStats(course.num_repos);
+        course.stars_stats = calculateStats(course.stars);
+      });
+    
       return li;
+    
+      // 통계 함수 정의
+      function calculateStats(arr) {
+        arr.sort((a, b) => a - b);
+        const n = arr.length;
+      
+        const sum = arr.reduce((acc, val) => acc + val, 0);
+        const mean = (sum / n).toFixed(2);
+        const variance = (arr.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / n).toFixed(2);
+        const stdDev = Math.sqrt(variance).toFixed(2);
+        const max = arr[Math.floor((n - 1) * 1)]; 
+        const min = arr[Math.floor((n - 1) * 0)]; 
+        const q1 = arr[Math.floor((n - 1) * 0.25)];
+        const q2 = arr[Math.floor((n - 1) * 0.5)];
+        const q3 = arr[Math.floor((n - 1) * 0.75)];
+      
+        return {
+          sum: sum,
+          max: max,
+          min: min,
+          q1: q1,
+          median: q2,
+          q3: q3,
+          mean: mean,
+          variance: variance,
+          stdDev: stdDev
+        };
+      }
     },
-    yearSort(){
-      this.coursePosts.sort(function(a,b){
+
+
+    // 학과용 전처리
+    departmentPreprocessingTableData(datalist) {
+      var li = [];
+      const departmentSet = new Set(datalist.map((row) => row.department));
+      const uniqueDepartments = [...departmentSet];
+
+      uniqueDepartments.forEach((department) => {
+        li.push({
+          department: department,
+          years: {},
+          total: {
+            students: 0,
+            commits: [],
+            prs: [],
+            issues: [],
+            num_repos: [],
+            stars: [],
+            commit_stats: null,
+            pr_stats: null,
+            issue_stats: null,
+            num_repos_stats: null,
+            stars_stats: null,
+          },
+          ids: new Set(),
+        });
+      });
+    
+      datalist.forEach((element) => {
+        let departmentIndex = uniqueDepartments.indexOf(element.department);
+        let departmentData = li[departmentIndex];
+      
+        // year와 semester가 빈 값일 경우 -1로 설정
+        const year = element.year === '' ? -1 : element.year;
+        const semester = element.semester === '' ? -1 : element.semester;
+      
+        if (!departmentData.years[year]) {
+          departmentData.years[year] = {
+            year: year,
+            semesters: {},
+            commit_stats: null,
+            pr_stats: null,
+            issue_stats: null,
+            num_repos_stats: null,
+            stars_stats: null,
+          };
+        }
+      
+        if (!departmentData.years[year].semesters[semester]) {
+          departmentData.years[year].semesters[semester] = {
+            students: 0,
+            commits: [],
+            prs: [],
+            issues: [],
+            num_repos: [],
+            stars: [],
+            commit_stats: null,
+            pr_stats: null,
+            issue_stats: null,
+            num_repos_stats: null,
+            stars_stats: null,
+            ids: new Set(),
+          };
+        }
+      
+        let semesterData = departmentData.years[year].semesters[semester];
+      
+        if (!semesterData.ids.has(element.id)) {
+          semesterData.students += 1;
+          semesterData.ids.add(element.id);
+        }
+        semesterData.commits.push(element.commit);
+        semesterData.prs.push(element.pr);
+        semesterData.issues.push(element.issue);
+        semesterData.num_repos.push(element.num_repos);
+        semesterData.stars.push(element.star_count);
+      
+        if (!departmentData.ids.has(element.id)) {
+          departmentData.total.students += 1;
+          departmentData.ids.add(element.id);
+        }
+        departmentData.total.commits.push(element.commit);
+        departmentData.total.prs.push(element.pr);
+        departmentData.total.issues.push(element.issue);
+        departmentData.total.num_repos.push(element.num_repos);
+        departmentData.total.stars.push(element.star_count);
+      });
+    
+      li.forEach((departmentData) => {
+        Object.keys(departmentData.years).forEach((year) => {
+          let yearData = departmentData.years[year];
+          Object.keys(yearData.semesters).forEach((semester) => {
+            let semesterData = yearData.semesters[semester];
+            semesterData.commit_stats = calculateStats(semesterData.commits);
+            semesterData.pr_stats = calculateStats(semesterData.prs);
+            semesterData.issue_stats = calculateStats(semesterData.issues);
+            semesterData.num_repos_stats = calculateStats(semesterData.num_repos);
+            semesterData.stars_stats = calculateStats(semesterData.stars);
+          });
+        });
+      
+        departmentData.total.commit_stats = calculateStats(departmentData.total.commits);
+        departmentData.total.pr_stats = calculateStats(departmentData.total.prs);
+        departmentData.total.issue_stats = calculateStats(departmentData.total.issues);
+        departmentData.total.num_repos_stats = calculateStats(departmentData.total.num_repos);
+        departmentData.total.stars_stats = calculateStats(departmentData.total.stars);
+      
+        delete departmentData.ids;
+        Object.keys(departmentData.years).forEach((year) => {
+          Object.keys(departmentData.years[year].semesters).forEach((semester) => {
+            delete departmentData.years[year].semesters[semester].ids;
+          });
+        });
+      });
+    
+      console.log(li);
+      return li;
+    
+      function calculateStats(arr) {
+        arr.sort((a, b) => a - b);
+        const n = arr.length;
+      
+        const sum = arr.reduce((acc, val) => acc + val, 0);
+        const mean = (sum / n).toFixed(2);
+        const variance = (arr.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / n).toFixed(2);
+        const stdDev = Math.sqrt(variance).toFixed(2);
+        const max = arr[Math.floor((n - 1) * 1)];
+        const min = arr[Math.floor((n - 1) * 0)];
+        const q1 = arr[Math.floor((n - 1) * 0.25)];
+        const median = arr[Math.floor((n - 1) * 0.5)];
+        const q3 = arr[Math.floor((n - 1) * 0.75)];
+      
+        return {
+          sum: sum,
+          max: max,
+          min: min,
+          q1: q1,
+          median: median,
+          q3: q3,
+          mean: mean,
+          variance: variance,
+          stdDev: stdDev,
+        };
+      }
+    },
+
+
+    yearSort(li){
+      li.sort(function(a,b){
         if( !a.year ) {
           a.year = -1
         }
@@ -240,10 +673,31 @@ export default {
         }
         return b.year - a.year
       });
+      return li
     },
-    combineFilterData() {
-      const allData = [this.courseFilteredPostsforYear, this.courseFilteredPostsforSemester, this.courseFilteredPostsforCourseName];
-      if (allData.length === 0) return this.coursePosts;
+    yearandCommitSort(li) {
+      li.sort(function(a, b) {
+        // year 값이 없는 경우 -1로 설정
+        const yearA = a.year || -1;
+        const yearB = b.year || -1;
+
+        // year가 같은 경우 commit 값을 기준으로 정렬
+        if (yearA === yearB) {
+          return b.commit - a.commit;
+        }
+
+        // year를 기준으로 정렬
+        return yearB - yearA;
+      });
+      return li;
+    },
+
+    /////////////////////////
+    // 전체용 필터
+    /////////////////////////
+    combineFilterDataforStudent() {
+      const allData = [this.studentFilteredPostsforYear, this.studentFilteredPostsforSemester, this.studentFilteredPostsforCourseName];
+      if (allData.length === 0) return this.studentPosts;
 
       let common = allData[0];
       
@@ -254,51 +708,229 @@ export default {
       }
       return common;
     },
-    yearFilterEventChange(item, event) {
-      if(this.selectedYearItems.length === 0) {
-        this.courseFilteredPostsforYear = this.coursePosts
+    yearFilterEventChangeforStudent(item, event) {
+      if(this.selectedYearItemsforStudent.length === 0) {
+        this.studentFilteredPostsforYear = this.studentPosts
       } else {
-        this.courseFilteredPostsforYear = this.coursePosts.filter(item => this.selectedYearItems.includes(item.year));
+        this.studentFilteredPostsforYear = this.studentPosts.filter(item => this.selectedYearItemsforStudent.includes(item.year));
       }
-      this.courseFilteredPosts = this.combineFilterData()
+      this.studentFilteredPosts = this.combineFilterDataforStudent()
     },
-    semesterFilterEventChange(item, event) {
-      if(this.selectedSemesterItems.length === 0) {
-        this.courseFilteredPostsforSemester = this.coursePosts
+    semesterFilterEventChangeforStudent(item, event) {
+      if(this.selectedSemesterItemsforStudent.length === 0) {
+        this.studentFilteredPostsforSemester = this.studentPosts
       } else {
-        this.courseFilteredPostsforSemester = this.coursePosts.filter(item => this.selectedSemesterItems.includes(item.semester));
+        this.studentFilteredPostsforSemester = this.studentPosts.filter(item => this.selectedSemesterItemsforStudent.includes(item.semester));
       }
-      this.courseFilteredPosts = this.combineFilterData()
+      this.studentFilteredPosts = this.combineFilterDataforStudent()
     },
-    courseNameFilterEventChange(item, event) {
-      if(this.selectedCourseNameItems.length === 0) {
-        this.courseFilteredPostsforCourseName = this.coursePosts
+    courseNameFilterEventChangeforStudent(item, event) {
+      if(this.selectedCourseNameItemsforStudent.length === 0) {
+        this.studentFilteredPostsforCourseName = this.studentPosts
       } else {
-        this.courseFilteredPostsforCourseName = this.coursePosts.filter(item => this.selectedCourseNameItems.includes(item.course_name));
+        this.studentFilteredPostsforCourseName = this.studentPosts.filter(item => this.selectedCourseNameItemsforStudent.includes(item.course_name));
       }
-      this.courseFilteredPosts = this.combineFilterData()
+      this.studentFilteredPosts = this.combineFilterDataforStudent()
     },
-    resetFilter() {
-      this.selectedYearItems = []
-      this.selectedSemesterItems = []
-      this.selectedCourseNameItems = []
-      this.courseFilteredPostsforYear = this.coursePosts
-      this.courseFilteredPostsforSemester = this.coursePosts
-      this.courseFilteredPostsforCourseName = this.coursePosts
-      this.courseFilteredPosts = this.coursePosts
-    }
+    resetFilterforStudent() {
+      this.selectedYearItemsforStudent = []
+      this.selectedSemesterItemsforStudent = []
+      this.selectedCourseNameItemsforStudent = []
+      this.studentFilteredPostsforYear = this.studentPosts
+      this.studentFilteredPostsforSemester = this.studentPosts
+      this.studentFilteredPostsforCourseName = this.studentPosts
+      this.studentFilteredPosts = this.studentPosts
+    },
+
+    //////////////////
+    // 과목용 필터
+    //////////////////
+    courseNameFilterEventChangeforCourse(item, event) {
+      
+      if(this.selectedCourseNameItemsforCourse.includes(item)) {
+        var idx = this.selectedCourseNameItemsforCourse.indexOf(item)
+        this.selectedCourseNameItemsforCourse.splice(idx, 1)
+      } else {
+        this.selectedCourseNameItemsforCourse = []
+        this.selectedCourseNameItemsforCourse.push(item)
+      }
+      if(this.selectedCourseNameItemsforCourse.length === 0) {
+        this.courseFilteredPostsforCourseName = []
+      } else {
+        this.courseFilteredPostsforCourseName = this.coursePosts.filter(item => this.selectedCourseNameItemsforCourse.includes(item.course_id));
+      }
+      this.courseFilteredPosts = this.combineFilterDataforCourse()
+    },
+    combineFilterDataforCourse() {
+
+      const allData = [this.courseFilteredPostsforCourseName];
+
+      let common = allData[0];
+      
+      for (let i = 1; i < allData.length; i++) {
+        common = common.filter(item1 => 
+          allData[i].some(item2 => item1.year === item2.year && item1.semester === item2.semester && item1.course_id === item2.course_id)
+        );
+      }
+      return common;
+    },
+    resetFilterforCourse() {
+      this.selectedYearItemsforCourse = []
+      this.selectedSemesterItemsforCourse = []
+      this.selectedCourseNameItemsforCourse = []
+      this.courseFilteredPostsforCourseName = []
+      this.courseFilteredPosts = []
+    },
+    isCheckedforCourse(courseID) {
+      return this.selectedCourseNameItemsforCourse.includes(courseID)
+    },
+
+    /////////////////////////
+    // 학과용 필터
+    /////////////////////////
+    departmentFiltering(departmentData) {
+      const yearset = new Set(departmentData.flatMap((row) => Object.keys(row.years)));
+      this.departmentFilterYearsCheckbox = [...yearset];
+      const semesterset = new Set(departmentData.flatMap((row) => Object.values(row.years).flatMap((year) => Object.keys(year.semesters))));
+      this.departmentFilterSemesterCheckbox = [...semesterset];
+      const departmentset = new Set(departmentData.map((row) => row.department));
+      this.departmentFilterDepartmentCheckbox = [...departmentset];
+    },
+    combineFilterDataforDepartment() {
+      let common = this.departmentPosts;  // 초기 데이터 설정
+        
+      // 연도와 학기 필터링을 동시에 고려하여 total 업데이트
+      if (this.selectedYearItemsforDepartment.length > 0 || this.selectedSemesterItemsforDepartment.length > 0) {
+        common = common.map((department) => {
+          let filteredDepartment = { ...department, total: { ...department.total }, years: { ...department.years } };
+          filteredDepartment.total.commits = [];
+          filteredDepartment.total.prs = [];
+          filteredDepartment.total.issues = [];
+          filteredDepartment.total.num_repos = [];
+          filteredDepartment.total.stars = [];
+          filteredDepartment.total.students = 0;
+        
+          Object.keys(filteredDepartment.years).forEach(year => {
+            if (this.selectedYearItemsforDepartment.length === 0 || this.selectedYearItemsforDepartment.includes(year)) {
+              Object.keys(filteredDepartment.years[year].semesters).forEach(semester => {
+                if (this.selectedSemesterItemsforDepartment.length === 0 || this.selectedSemesterItemsforDepartment.includes(semester)) {
+                  const semesterData = filteredDepartment.years[year].semesters[semester];
+                  filteredDepartment.total.commits.push(...semesterData.commits);
+                  filteredDepartment.total.prs.push(...semesterData.prs);
+                  filteredDepartment.total.issues.push(...semesterData.issues);
+                  filteredDepartment.total.num_repos.push(...semesterData.num_repos);
+                  filteredDepartment.total.stars.push(...semesterData.stars);
+                  filteredDepartment.total.students += semesterData.students;
+                }
+              });
+            }
+          });
+        
+          // 통계값 재계산
+          filteredDepartment.total.commit_stats = calculateStats(filteredDepartment.total.commits);
+          filteredDepartment.total.pr_stats = calculateStats(filteredDepartment.total.prs);
+          filteredDepartment.total.issue_stats = calculateStats(filteredDepartment.total.issues);
+          filteredDepartment.total.num_repos_stats = calculateStats(filteredDepartment.total.num_repos);
+          filteredDepartment.total.stars_stats = calculateStats(filteredDepartment.total.stars);
+        
+          return filteredDepartment;
+        });
+      }
+    
+      // 학과 필터링
+      if (this.selectedDepartmentItemsforDepartment.length > 0) {
+        common = common.filter((department) =>
+          this.selectedDepartmentItemsforDepartment.includes(department.department)
+        );
+      }
+    
+      console.log(common);
+      return common;
+    
+      function calculateStats(arr) {
+        arr.sort((a, b) => a - b);
+        const n = arr.length;
+      
+        const sum = arr.reduce((acc, val) => acc + val, 0);
+        const mean = (sum / n).toFixed(2);
+        const variance = (arr.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / n).toFixed(2);
+        const stdDev = Math.sqrt(variance).toFixed(2);
+        const max = arr[Math.floor((n - 1) * 1)];
+        const min = arr[Math.floor((n - 1) * 0)];
+        const q1 = arr[Math.floor((n - 1) * 0.25)];
+        const median = arr[Math.floor((n - 1) * 0.5)];
+        const q3 = arr[Math.floor((n - 1) * 0.75)];
+      
+        return {
+          sum: sum,
+          max: max,
+          min: min,
+          q1: q1,
+          median: median,
+          q3: q3,
+          mean: mean,
+          variance: variance,
+          stdDev: stdDev,
+        };
+      }
+    },
+    yearFilterEventChangeforDepartment(item, event) {
+      console.log(item);
+      if (this.selectedYearItemsforDepartment.length === 0) {
+        this.departmentFilteredPostsforYear = this.departmentPosts;
+      } else {
+        this.departmentFilteredPostsforYear = this.departmentPosts.filter((department) => {
+          // department.years가 정의되어 있는지 확인
+          return department.years && Object.keys(department.years).includes(item);
+        });
+      }
+      this.departmentFilteredPosts = this.combineFilterDataforDepartment();
+    },
+    semesterFilterEventChangeforDepartment(item, event) {
+      if (this.selectedSemesterItemsforDepartment.length === 0) {
+        this.departmentFilteredPostsforSemester = this.departmentPosts;
+      } else {
+        this.departmentFilteredPostsforSemester = this.departmentPosts.filter((department) =>
+          Object.values(department.years).some((year) =>
+            Object.keys(year.semesters).includes(item)
+          )
+        );
+      }
+      this.departmentFilteredPosts = this.combineFilterDataforDepartment();
+    },
+    departmentFilterEventChangeforDepartment(item, event) {
+      if (this.selectedDepartmentItemsforDepartment.length === 0) {
+        this.departmentFilteredPostsforDepartment = this.departmentPosts;
+      } else {
+        this.departmentFilteredPostsforDepartment = this.departmentPosts.filter((department) =>
+          this.selectedDepartmentItemsforDepartment.includes(department.department)
+        );
+      }
+      this.departmentFilteredPosts = this.combineFilterDataforDepartment();
+    },
+    resetFilterforDepartment() {
+      this.selectedYearItemsforDepartment = [];
+      this.selectedSemesterItemsforDepartment = [];
+      this.selectedDepartmentItemsforDepartment = [];
+      this.departmentFilteredPostsforYear = this.departmentPosts;
+      this.departmentFilteredPostsforSemester = this.departmentPosts;
+      this.departmentFilteredPostsforDepartment = this.departmentPosts;
+      this.departmentFilteredPosts = this.departmentPosts;
+    },
   },
   computed: {
   },
   beforeMount() {
     if(this.$route.fullPath === "/statistics") {
-      this.$router.replace('/statistics/course')
+      this.$router.replace('/statistics/students')
     }
   },
   watch: {
     $route(to, from) {
-      if (to.path !== from.path) this.setInit()
-    }
+      if (to.path !== from.path) {
+        this.setInit()
+      }
+    },
   }
 }
 </script>
@@ -311,8 +943,8 @@ export default {
   align-items: center;
   width: 100%;
   margin-top: 120px;
-  height: 100vh;
-  background: var(--White, #FCFCFC);
+  height: 120vh;
+  background: #FFF;
   overflow: hidden; /* Ensure no overflow issues */
 }
 
@@ -321,7 +953,7 @@ export default {
   margin-left: 320px;
   width: 268px !important;
   min-width: 268px;
-  height: 100vh;
+  height: inherit;
   border-right: 2px solid;
   border-right-color: #DCE2ED;
   .empty-box {
@@ -408,7 +1040,7 @@ export default {
 .right-split {
   width: 100%;
   margin-right: 320px;
-  height: 100vh;
+  height: inherit;
   .title {
     font-size: 28px;
     font-weight: 700;
@@ -470,7 +1102,8 @@ ul {
 .year-filter {
   transform-origin: top;
   transition: transform .2s ease-in-out;
-  overflow: hidden;
+  max-height: 250px;
+  overflow-y: auto;
   background: var(--Primary_background, #FFFBFB);
 }
 .slide-enter {

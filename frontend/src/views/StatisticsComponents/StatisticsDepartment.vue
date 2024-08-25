@@ -2,18 +2,18 @@
   <div class="container" :class="{cursorblock: pannelLoading === true}">
     <div class="navigation">
       <div class="menu">
-        <div class="default-router plan-text current-tab">전체</div>
+        <router-link v-bind:to="'/statistics/students'" class="default-router plan-text" append>전체</router-link>
       </div>
       <div class="menu">
         <router-link v-bind:to="'/statistics/course'" class="default-router plan-text" append>과목별</router-link>
       </div>
       <div class="menu">
-        <router-link v-bind:to="'/statistics/department'" class="default-router plan-text" append>학과별</router-link>
+        <div class="default-router plan-text current-tab">학과별</div>
       </div>
       <div class="toggle-box" @click.self.prevent="toggle">
         <div class="wrapper">
-          <input type="checkbox" id="switchstudent" v-model="showTable">
-          <label for="switchstudent" class="switch_label">
+          <input type="checkbox" id="switchdepartment" v-model="showTable">
+          <label for="switchdepartment" class="switch_label">
             <span class="onf_btn"></span>
             <div class="toggle_img">
                 <div class="img1">
@@ -48,13 +48,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th>학수번호</th>
+                      <th>학과</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
-                        <td :title="item.students">{{item.students}}</td>
+                        <td :title="item.department">{{ item.department }}</td>
+                        <td :title="item.students">{{item.total.students}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -65,13 +65,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th>학수번호</th>
+                      <th>학과</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
-                        <td :title="item.students">{{item.num_repos_stats.sum}}</td>
+                        <td :title="item.department">{{ item.department }}</td>
+                        <td :title="item.students">{{item.total.num_repos_stats.sum}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -83,13 +83,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th>학수번호</th>
+                      <th>학과</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
-                        <td :title="item.commit">{{item.commit_stats.sum}}</td>
+                        <td :title="item.department">{{ item.department }}</td>
+                        <td :title="item.total.commit">{{item.total.commit_stats.sum}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -100,13 +100,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th>학수번호</th>
+                      <th>학과</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
-                        <td :title="item.issue">{{item.issue_stats.sum}}</td>
+                        <td :title="item.department">{{ item.department }}</td>
+                        <td :title="item.total.issue">{{item.total.issue_stats.sum}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -118,13 +118,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th>학수번호</th>
+                      <th>학과</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
-                        <td :title="item.pr">{{item.pr_stats.sum}}</td>
+                        <td :title="item.department">{{ item.department }}</td>
+                        <td :title="item.total.pr_stats.sum">{{item.total.pr_stats.sum}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -135,13 +135,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th>학수번호</th>
+                      <th>학과</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
-                        <td :title="item.issue">{{item.stars_stats.sum}}</td>
+                        <td :title="item.department">{{ item.department }}</td>
+                        <td :title="item.total.stars_stats.sum">{{item.total.stars_stats.sum}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -155,7 +155,7 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학수번호</th>
+                      <th width="203px">학과</th>
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
@@ -164,12 +164,12 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.course_id">{{ item.course_id_for_stats }}</td>
-                        <td width="58px" :title="item.num_repos_stats.q1">{{item.num_repos_stats.q1}}</td>
-                        <td width="58px" :title="item.num_repos_stats.median">{{item.num_repos_stats.median}}</td>
-                        <td width="58px" :title="item.num_repos_stats.q3">{{item.num_repos_stats.q3}}</td>
-                        <td width="87px" :title="item.num_repos_stats.mean">{{item.num_repos_stats.mean}}</td>
-                        <td width="87px" :title="item.num_repos_stats.stdDev">{{item.num_repos_stats.stdDev}}</td>
+                        <td width="203px" :title="item.department">{{ item.department }}</td>
+                        <td width="58px" :title="item.total.num_repos_stats.q1">{{item.total.num_repos_stats.q1}}</td>
+                        <td width="58px" :title="item.total.num_repos_stats.median">{{item.total.num_repos_stats.median}}</td>
+                        <td width="58px" :title="item.total.num_repos_stats.q3">{{item.total.num_repos_stats.q3}}</td>
+                        <td width="87px" :title="item.total.num_repos_stats.mean">{{item.total.num_repos_stats.mean}}</td>
+                        <td width="87px" :title="item.total.num_repos_stats.stdDev">{{item.total.num_repos_stats.stdDev}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -180,7 +180,7 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학수번호</th>
+                      <th width="203px">학과</th>
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
@@ -189,12 +189,12 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.course_id">{{ item.course_id_for_stats }}</td>
-                        <td width="58px" :title="item.commit_stats.q1">{{item.commit_stats.q1}}</td>
-                        <td width="58px" :title="item.commit_stats.median">{{item.commit_stats.median}}</td>
-                        <td width="58px" :title="item.commit_stats.q3">{{item.commit_stats.q3}}</td>
-                        <td width="87px" :title="item.commit_stats.mean">{{item.commit_stats.mean}}</td>
-                        <td width="87px" :title="item.commit_stats.stdDev">{{item.commit_stats.stdDev}}</td>
+                        <td width="203px" :title="item.department">{{ item.department }}</td>
+                        <td width="58px" :title="item.total.commit_stats.q1">{{item.total.commit_stats.q1}}</td>
+                        <td width="58px" :title="item.total.commit_stats.median">{{item.total.commit_stats.median}}</td>
+                        <td width="58px" :title="item.total.commit_stats.q3">{{item.total.commit_stats.q3}}</td>
+                        <td width="87px" :title="item.total.commit_stats.mean">{{item.total.commit_stats.mean}}</td>
+                        <td width="87px" :title="item.total.commit_stats.stdDev">{{item.total.commit_stats.stdDev}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -206,7 +206,7 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학수번호</th>
+                      <th width="203px">학과</th>
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
@@ -215,12 +215,12 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.course_id">{{ item.course_id_for_stats }}</td>
-                        <td width="58px" :title="item.issue_stats.q1">{{item.issue_stats.q1}}</td>
-                        <td width="58px" :title="item.issue_stats.median">{{item.issue_stats.median}}</td>
-                        <td width="58px" :title="item.issue_stats.q3">{{item.issue_stats.q3}}</td>
-                        <td width="87px" :title="item.issue_stats.mean">{{item.issue_stats.mean}}</td>
-                        <td width="87px" :title="item.issue_stats.stdDev">{{item.issue_stats.stdDev}}</td>
+                        <td width="203px" :title="item.department">{{ item.department }}</td>
+                        <td width="58px" :title="item.total.issue_stats.q1">{{item.total.issue_stats.q1}}</td>
+                        <td width="58px" :title="item.total.issue_stats.median">{{item.total.issue_stats.median}}</td>
+                        <td width="58px" :title="item.total.issue_stats.q3">{{item.total.issue_stats.q3}}</td>
+                        <td width="87px" :title="item.total.issue_stats.mean">{{item.total.issue_stats.mean}}</td>
+                        <td width="87px" :title="item.total.issue_stats.stdDev">{{item.total.issue_stats.stdDev}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -231,7 +231,7 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학수번호</th>
+                      <th width="203px">학과</th>
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
@@ -240,12 +240,12 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.course_id">{{ item.course_id_for_stats }}</td>
-                        <td width="58px" :title="item.pr_stats.q1">{{item.pr_stats.q1}}</td>
-                        <td width="58px" :title="item.pr_stats.median">{{item.pr_stats.median}}</td>
-                        <td width="58px" :title="item.pr_stats.q3">{{item.pr_stats.q3}}</td>
-                        <td width="87px" :title="item.pr_stats.mean">{{item.pr_stats.mean}}</td>
-                        <td width="87px" :title="item.pr_stats.stdDev">{{item.pr_stats.stdDev}}</td>
+                        <td width="203px" :title="item.department">{{ item.department }}</td>
+                        <td width="58px" :title="item.total.pr_stats.q1">{{item.total.pr_stats.q1}}</td>
+                        <td width="58px" :title="item.total.pr_stats.median">{{item.total.pr_stats.median}}</td>
+                        <td width="58px" :title="item.total.pr_stats.q3">{{item.total.pr_stats.q3}}</td>
+                        <td width="87px" :title="item.total.pr_stats.mean">{{item.total.pr_stats.mean}}</td>
+                        <td width="87px" :title="item.total.pr_stats.stdDev">{{item.total.pr_stats.stdDev}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -257,7 +257,7 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학수번호</th>
+                      <th width="203px">학과</th>
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
@@ -266,12 +266,12 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.course_id">{{ item.course_id_for_stats }}</td>
-                        <td width="58px" :title="item.stars_stats.q1">{{item.stars_stats.q1}}</td>
-                        <td width="58px" :title="item.stars_stats.median">{{item.stars_stats.median}}</td>
-                        <td width="58px" :title="item.stars_stats.q3">{{item.stars_stats.q3}}</td>
-                        <td width="87px" :title="item.stars_stats.mean">{{item.stars_stats.mean}}</td>
-                        <td width="87px" :title="item.stars_stats.stdDev">{{item.stars_stats.stdDev}}</td>
+                        <td width="203px" :title="item.department">{{ item.department }}</td>
+                        <td width="58px" :title="item.total.stars_stats.q1">{{item.total.stars_stats.q1}}</td>
+                        <td width="58px" :title="item.total.stars_stats.median">{{item.total.stars_stats.median}}</td>
+                        <td width="58px" :title="item.total.stars_stats.q3">{{item.total.stars_stats.q3}}</td>
+                        <td width="87px" :title="item.total.stars_stats.mean">{{item.total.stars_stats.mean}}</td>
+                        <td width="87px" :title="item.total.stars_stats.stdDev">{{item.total.stars_stats.stdDev}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -282,7 +282,7 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학수번호</th>
+                      <th width="203px">학과</th>
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
@@ -291,7 +291,7 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                        <td width="203px" :title="item.department">{{ item.department }}</td>
                         <td width="58px" :title="item.num_repos_stats.q1">{{item.num_repos_stats.q1}}</td>
                         <td width="58px" :title="item.num_repos_stats.median">{{item.num_repos_stats.median}}</td>
                         <td width="58px" :title="item.num_repos_stats.q3">{{item.num_repos_stats.q3}}</td>
@@ -320,7 +320,7 @@
 
 <script>
 export default {
-  name: 'StatisticsStudent',
+  name: 'StatisticsDepartment',
   props: ["course"],
   data() {
     return {
@@ -334,7 +334,7 @@ export default {
       postsPerPage: 10,
       header : [['개설학기', '9%'], 
                 ['과목명', '14%'], 
-                ['학수번호', '11%'], 
+                ['학과', '11%'], 
                 ['지도교수', '11%'], 
                 ['수강생', '11%'],
                 ['Commit', '11%'], 
@@ -390,6 +390,7 @@ export default {
     course(to, from) {
       const vm = this
       this.posts = vm.course
+
     },
   }
 };
@@ -674,7 +675,7 @@ export default {
       position: relative;
     }
 
-    #switchstudent {
+    #switchdepartment {
       display: none;
     }
 
@@ -732,17 +733,17 @@ export default {
             margin-right: auto;
         }
     }
-    #switchstudent:checked + .switch_label .onf_btn {
+    #switchdepartment:checked + .switch_label .onf_btn {
         left: 70px;
         background: #fff;
         box-shadow: 1px 2px 3px #00000020;
     }
-    #switchstudent:checked + .switch_label .toggle-image-1 {
+    #switchdepartment:checked + .switch_label .toggle-image-1 {
         & path {
             stroke: #E9D8D9;
         }
     }
-    #switchstudent:checked + .switch_label .toggle-image-2 {
+    #switchdepartment:checked + .switch_label .toggle-image-2 {
         & path {
             stroke: #CB385C;
         }

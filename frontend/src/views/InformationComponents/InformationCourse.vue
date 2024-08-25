@@ -13,33 +13,27 @@
         </div>
         <div class="pannel-body">
           <div class="import-container">
-            <input class="input-for-import" v-model="importItem.course_id" @focus="clearErrorMessageforCourseID" type="text" id="course_id" placeholder="학수번호" required>
-            </input>
+            <input class="input-for-import" v-model="importItem.course_id" @focus="clearErrorMessageforCourseID" type="text" id="course_id" placeholder="학수번호" required />
             <p class="err-msg">{{this.ValidationItem.course_id}}</p>
           </div>
           <div class="import-container">
-            <input class="input-for-import" v-model="importItem.year" @focus="clearErrorMessageforYear" type="text" id="year" placeholder="연도" required>
-            </input>
+            <input class="input-for-import" v-model="importItem.year" @focus="clearErrorMessageforYear" type="text" id="year" placeholder="연도" required />
             <p class="err-msg">{{this.ValidationItem.year}}</p>
           </div>
           <div class="import-container">
-            <input class="input-for-import" v-model="importItem.semester" @focus="clearErrorMessageforSemester" type="text" id="semester" placeholder="학기" required>
-            </input>
+            <input class="input-for-import" v-model="importItem.semester" @focus="clearErrorMessageforSemester" type="text" id="semester" placeholder="학기" required />
             <p class="err-msg">{{this.ValidationItem.semester}}</p>
           </div>
           <div class="import-container">
-            <input class="input-for-import" v-model="importItem.course_name" @focus="clearErrorMessageforCourseName" type="text" id="course_name" placeholder="과목명" required>
-            </input>
+            <input class="input-for-import" v-model="importItem.course_name" @focus="clearErrorMessageforCourseName" type="text" id="course_name" placeholder="과목명" required />
             <p class="err-msg">{{this.ValidationItem.course_name}}</p>
           </div>
           <div class="import-container">
-            <input class="input-for-import" v-model="importItem.prof" @focus="clearErrorMessageforProf" type="text" id="prof" placeholder="교수" required>
-            </input>
+            <input class="input-for-import" v-model="importItem.prof" @focus="clearErrorMessageforProf" type="text" id="prof" placeholder="교수" required />
             <p class="err-msg">{{this.ValidationItem.prof}}</p>
           </div>
           <div class="import-container">
-            <input class="input-for-import" v-model="importItem.ta" @focus="clearErrorMessageforTA" type="text" id="ta" placeholder="조교" required>
-            </input>
+            <input class="input-for-import" v-model="importItem.ta" @focus="clearErrorMessageforTA" type="text" id="ta" placeholder="조교" required />
             <p class="err-msg">{{this.ValidationItem.ta}}</p>
           </div>
           <div class="import-container">
@@ -115,31 +109,31 @@
         </table>
         <div class="pagenation-container">
           <div class="pagenation-wrapper">
-            <button @click="firstPageforAll" :disabled="firstPageDisabledforAll" class="prev-button">
+            <button @click="firstPageforAll" :disabled="firstPageDisabled" class="prev-button">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path class="prev-pointer" d="M15 18L9 12L15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <path class="prev-pointer" d="M19 18L13 12L19 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
-            <button @click="prevPageforAll" :disabled="prevPageDisabledforAll" class="prev-button">
+            <button @click="prevPageforAll" :disabled="prevPageDisabled" class="prev-button">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path class="prev-pointer" d="M15 18L9 12L15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
             <button
-              v-for="page in pagesToShowforAll"
+              v-for="page in pagesToShow"
               :key="page"
               @click="changePageforAll(page)"
-              :class="{ active: page === currentPageforAll }"
+              :class="{ active: page === currentPage }"
               class="number-list-btn">
               {{ page }}
             </button>
-            <button @click="nextPageforAll" :disabled="nextPageDisabledforAll" class="next-button">
+            <button @click="nextPageforAll" :disabled="nextPageDisabled" class="next-button">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path class="next-pointer" d="M9 18L15 12L9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
-            <button @click="lastPageforAll" :disabled="lastPageDisabledforAll" class="next-button">
+            <button @click="lastPageforAll" :disabled="lastPageDisabled" class="next-button">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path class="next-pointer" d="M9 18L15 12L9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <path class="next-pointer" d="M5 18L11 12L5 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -199,27 +193,27 @@ export default {
     };
   },
   computed: {
-    totalPagesforAll() {
+    totalPages() {
       return Math.ceil(this.postss.length / this.postsPerPage);
     },
-    totalPagesPerListforAll() {
+    totalPagesPerList() {
       return  Math.floor(Math.ceil(this.postss.length / this.postsPerPage) / 10) + 1;
     },
-    prevPageDisabledforAll() {
-      return Math.floor((this.currentPageforAll - 1) / 10) === 0
+    prevPageDisabled() {
+      return Math.floor((this.currentPage - 1) / 10) === 0
     },
-    nextPageDisabledforAll() {
-      return Math.floor((this.currentPageforAll - 1) / 10) + 1 >= this.totalPagesPerListforAll
+    nextPageDisabled() {
+      return Math.floor((this.currentPage - 1) / 10) + 1 >= this.totalPagesPerList
     },
-    firstPageDisabledforAll() {
-      return this.currentPageforAll === 1
+    firstPageDisabled() {
+      return this.currentPage === 1
     },
-    lastPageDisabledforAll() {
-      return this.currentPageforAll === this.totalPagesforAll
+    lastPageDisabled() {
+      return this.currentPage === this.totalPages
     },
-    pagesToShowforAll() {
-      const startPage = Math.floor((this.currentPageforAll - 1) / 10) * 10 + 1;
-      const endPage = Math.min(startPage + 9, this.totalPagesforAll);
+    pagesToShow() {
+      const startPage = Math.floor((this.currentPage - 1) / 10) * 10 + 1;
+      const endPage = Math.min(startPage + 9, this.totalPages);
       const pages = [];
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
@@ -232,33 +226,33 @@ export default {
       let toPage = 0
       if (page < 1) {
         toPage = 1;  
-      } else if (page > this.totalPagesforAll) {
-        toPage = this.totalPagesforAll;
+      } else if (page > this.totalPages) {
+        toPage = this.totalPages;
       } else {
         toPage = page;
       }
       const query = { ...this.$route.query, page: toPage };
       this.$router.replace({ path: this.$route.path, query: query });
-      this.currentPageforAll = toPage;
+      this.currentPage = toPage;
     },
     firstPageforAll() {
-      if (this.currentPageforAll > 1) {
+      if (this.currentPage > 1) {
         this.changePageforAll(1);
       }
     },
     prevPageforAll() {
-      if (this.currentPageforAll > 1) {
-        this.changePageforAll(Math.floor((this.currentPageforAll - 1) / 10));
+      if (this.currentPage > 1) {
+        this.changePageforAll(Math.floor((this.currentPage - 1) / 10));
       }
     },
     nextPageforAll() {
-      if (Math.floor((this.currentPageforAll - 1) / 10) + 1 < this.totalPagesPerListforAll) {
-        this.changePageforAll(Math.floor((this.currentPageforAll - 1) / 10) + 11);
+      if (Math.floor((this.currentPage - 1) / 10) + 1 < this.totalPagesPerList) {
+        this.changePageforAll(Math.floor((this.currentPage - 1) / 10) + 11);
       }
     },
     lastPageforAll() {
-      if (this.currentPageforAll < this.totalPagesforAll) {
-        this.changePageforAll(this.totalPagesforAll);
+      if (this.currentPage < this.totalPages) {
+        this.changePageforAll(this.totalPages);
       }
     },
     selectFile(e) {
@@ -270,7 +264,7 @@ export default {
       this.showTable = !this.showTable;
     },
     slicingforall() {
-      const start = (this.currentPageforAll - 1) * this.postsPerPage;
+      const start = (this.currentPage - 1) * this.postsPerPage;
       const end = start + this.postsPerPage;
       this.sclicedPosts = this.yearandCommitSort(this.posts.slice(start, end));
     },
@@ -421,7 +415,7 @@ export default {
   },
   mounted() {
     this.posts = this.postss
-    this.currentPageforAll = parseInt(this.$route.query.page) || 1;
+    this.currentPage = parseInt(this.$route.query.page) || 1;
     this.slicingforall();
   },
   beforeMount() {
@@ -436,21 +430,21 @@ export default {
     if (needsReplace) {
       this.$router.replace({ path: this.$route.path, query: newQuery });
     }
-    this.currentPageforAll = parseInt(query.page) || 1;
+    this.currentPage = parseInt(query.page) || 1;
   },
   watch: {
     postss(to, from) {
       this.posts = to;
       this.slicingforall();
-      if (this.$route.query.page > this.totalPagesforAll) {
-        this.changePageforAll(this.totalPagesforAll);
+      if (this.$route.query.page > this.totalPages) {
+        this.changePageforAll(this.totalPages);
       }
     },
     $route(to, from) {
-      this.currentPageforAll = parseInt(to.query.page) || 1;
+      this.currentPage = parseInt(to.query.page) || 1;
       this.slicingforall();
     },
-    currentPageforAll(to, from) {
+    currentPage(to, from) {
       this.slicingforall();
     },
   }

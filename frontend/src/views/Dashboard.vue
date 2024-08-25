@@ -24,7 +24,7 @@ export default {
   width: 100%;
   margin-top: 120px;
   height: 100vh;
-  background: var(--White, #FCFCFC);
+  background: #FFF;
   overflow: hidden; /* Ensure no overflow issues */
 }
 

@@ -18,8 +18,8 @@
       </div>
       <div class="toggle-box" @click.self.prevent="toggle">
         <div class="wrapper">
-          <input type="checkbox" id="switch" v-model="showTable" @click="changeRoutebyTable">
-          <label for="switch" class="switch_label">
+          <input type="checkbox" id="infoswitchstudent" v-model="showTable" @click="changeRoutebyTable">
+          <label for="infoswitchstudent" class="switch_label">
             <span class="onf_btn"></span>
             <div class="toggle-text">
               <div class="toggle-total">
@@ -587,7 +587,7 @@ export default {
       margin: 0 auto;
       position: relative;
     }
-    #switch {
+    #infoswitchstudent {
       display: none;
     }
     .switch_label {
@@ -639,18 +639,18 @@ export default {
         transition: color 0.2s linear;
       }
     }
-    #switch:checked + .switch_label .onf_btn {
+    #infoswitchstudent:checked + .switch_label .onf_btn {
       left: 70px;
       background: #fff;
       box-shadow: 1px 2px 3px #00000020;
     }
-    #switch:checked + .switch_label .toggle-total {
+    #infoswitchstudent:checked + .switch_label .toggle-total {
       color: var(--Primary_disabled, #E9D8D9);
       & path {
         stroke: #E9D8D9;
       }
     }
-    #switch:checked + .switch_label .toggle-indiv {
+    #infoswitchstudent:checked + .switch_label .toggle-indiv {
       color: var(--Primary_medium, #CB385C);
     }
   }
