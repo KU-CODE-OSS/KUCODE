@@ -166,83 +166,85 @@
           </div>
         </div>
         <div v-else class="chart">
-          <div class="horizontal-chart-container">
-            <div class="left-container">
-              <div class="chart-title">
-                활동 학생 수
+          <div v-if="this.course_id === ''" class="plz-select-course">과목을 선택하세요</div>
+          <div v-else>
+            <div class="horizontal-chart-container">
+              <div class="left-container">
+                <div class="chart-title">
+                  활동 학생 수
+                </div>
+                <!-- 학생 수 차트 -->
+                <CourseGroupStudentBarCharts 
+                  class="charts"
+                  chartTitle="Number of Students by Year" 
+                  yAxisTitle="학생 수"
+                  :courseId=this.course_id 
+                />
               </div>
-              <!-- 학생 수 차트 -->
-              <CourseGroupLineCharts 
-                class="charts"
-                :data="posts" 
-                chartTitle="Number of Students by Year" 
-                yAxisTitle="학생 수"
-                dataKey="students" 
-              />
+              <div class="right-container">
+                <div class="chart-title">
+                  Total Repos
+                </div>
+                <!-- Repos 차트 -->
+                <CourseGroupLineCharts 
+                  :data="posts" 
+                  chartTitle="Number of Repos by Year" 
+                  yAxisTitle="Repos 수"
+                  dataKey="num_repos_stats"
+                />
+              </div>
             </div>
-            <div class="right-container">
-              <div class="chart-title">
-                Total Repos
+            <div class="horizontal-chart-container">
+              <div class="left-container">
+                <div class="chart-title">
+                  Total Commits
+                </div>
+                <!-- Commits 차트 -->
+                <CourseGroupLineCharts 
+                  :data="posts" 
+                  chartTitle="Number of Commits by Year" 
+                  yAxisTitle="Commits 수"
+                  dataKey="commit_stats"
+                />
               </div>
-              <!-- Repos 차트 -->
-              <CourseGroupLineCharts 
-                :data="posts" 
-                chartTitle="Number of Repos by Year" 
-                yAxisTitle="Repos 수"
-                dataKey="num_repos_stats"
-              />
+              <div class="right-container">
+                <div class="chart-title">
+                  Total Issues
+                </div>
+                <!-- Issues 차트 -->
+                <CourseGroupLineCharts 
+                  :data="posts" 
+                  chartTitle="Number of Issues by Year" 
+                  yAxisTitle="Issues 수"
+                  dataKey="issue_stats"
+                />
+              </div>
             </div>
-          </div>
-          <div class="horizontal-chart-container">
-            <div class="left-container">
-              <div class="chart-title">
-                Total Commits
+            <div class="horizontal-chart-container">
+              <div class="left-container">
+                <div class="chart-title">
+                  Total PRs
+                </div>
+                <!-- PRs 차트 -->
+                <CourseGroupLineCharts 
+                  :data="posts" 
+                  chartTitle="Number of PRs by Year" 
+                  yAxisTitle="PR 수"
+                  dataKey="pr_stats"
+                />
               </div>
-              <!-- Commits 차트 -->
-              <CourseGroupLineCharts 
-                :data="posts" 
-                chartTitle="Number of Commits by Year" 
-                yAxisTitle="Commits 수"
-                dataKey="commit_stats"
-              />
-            </div>
-            <div class="right-container">
-              <div class="chart-title">
-                Total Issues
+              <div class="right-container">
+                <div class="chart-title">
+                  Total Stars
+                </div>
+                <!-- Stars 차트 -->
+                <CourseGroupLineCharts 
+                  :data="posts" 
+                  chartTitle="Number of Stars by Year" 
+                  yAxisTitle="Star 수"
+                  dataKey="stars_stats"
+                />
               </div>
-              <!-- Issues 차트 -->
-              <CourseGroupLineCharts 
-                :data="posts" 
-                chartTitle="Number of Issues by Year" 
-                yAxisTitle="Issues 수"
-                dataKey="issue_stats"
-              />
-            </div>
-          </div>
-          <div class="horizontal-chart-container">
-            <div class="left-container">
-              <div class="chart-title">
-                Total PRs
-              </div>
-              <!-- PRs 차트 -->
-              <CourseGroupLineCharts 
-                :data="posts" 
-                chartTitle="Number of PRs by Year" 
-                yAxisTitle="PR 수"
-                dataKey="pr_stats"
-              />
-            </div>
-            <div class="right-container">
-              <div class="chart-title">
-                Total Stars
-              </div>
-              <!-- Stars 차트 -->
-              <CourseGroupLineCharts 
-                :data="posts" 
-                chartTitle="Number of Stars by Year" 
-                yAxisTitle="Star 수"
-                dataKey="stars_stats"
-              />
             </div>
           </div>
         </div>
@@ -253,11 +255,13 @@
 
 <script>
 import CourseGroupLineCharts from '@/views/StatisticsCharts/Courses/CourseGroupLineCharts.vue'
+import CourseGroupStudentBarCharts from '@/views/StatisticsCharts/Courses/CourseGroupStudentBarCharts.vue'
 export default {
   name: 'StatisticsCourse',
   props: ["course"],
   components: {
-    CourseGroupLineCharts
+    CourseGroupLineCharts,
+    CourseGroupStudentBarCharts
   },
   data() {
     return {
@@ -289,6 +293,7 @@ export default {
       selectedFileName: '',
       subToggleButton: false,
       title: '',
+      course_id: ''
     };
   },
   computed: {
@@ -333,6 +338,12 @@ export default {
       this.posts = vm.course
       console.log(JSON.stringify(this.posts))
       this.renamedTitle()
+      console.log('fsefsf', this.posts)
+      if(this.posts.length === 0) {
+        this.course_id = ''  
+      } else {
+        this.course_id = this.posts[0].course_id
+      }
     },
   }
 };
@@ -697,6 +708,12 @@ export default {
   /* border: 1px solid #dce2ed; */
   border-radius: 4px;
   height: 100%;
+  .plz-select-course{
+    font-family: Pretendard;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 700;
+  }
   & .horizontal-chart-container {
     display: flex;
     flex-flow: wrap;
