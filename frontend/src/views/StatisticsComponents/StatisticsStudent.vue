@@ -35,12 +35,12 @@
     </div>
     <div class="navigation_underline"></div>
     <div class="contents-box">
+      <div class="student-sub-toggle">
+        <div class="all dragblock" :class="[this.subToggleButton ? 'all-unclick' :'all-click']" @click="allStudentToggleButton">전체 학생</div>
+        <div class="each dragblock" :class="[this.subToggleButton ? 'each-click' :'each-unclick']" @click="eachStudentToggleButton">학생별</div>
+      </div>
       <transition name="slide-fade" mode="out-in">
         <div v-if="!showTable" class="table">
-          <div class="student-sub-toggle">
-            <div class="all dragblock" :class="[this.subToggleButton ? 'all-unclick' :'all-click']" @click="allStudentToggleButton">전체 학생</div>
-            <div class="each dragblock" :class="[this.subToggleButton ? 'each-click' :'each-unclick']" @click="eachStudentToggleButton">학생별</div>
-          </div>
           <transition name="slide-fade" mode="out-in">
             <div v-if="!subToggleButton" class="all-table">
               <div class="sub-table-left">
@@ -306,12 +306,157 @@
           </transition>
         </div>
         <div v-else class="chart">
-          <div class="year-chart-container">
-            <div class="title">연도별 데이터</div>
-          </div>
-          <div class="category-chart-container">
-            <div class="title">카테고리별 상세 데이터</div>
-          </div>
+          <transition name="slide-fade" mode="out-in">
+            <div v-if="!subToggleButton">
+              <div class="horizontal-chart-container">
+                <div class="left-container">
+                  <div class="chart-title">
+                    활동 학생 수
+                  </div>
+                  <!-- 학생 수 차트 -->
+                  <StudentGroupBarCharts 
+                    class="charts"
+                    :data="posts" 
+                    chartTitle="Number of Students by Year" 
+                    yAxisTitle="학생 수"
+                    dataKey="students" 
+                  />
+                </div>
+                <div class="right-container">
+                  <div class="chart-title">
+                    Total Repos
+                  </div>
+                  <!-- Repos 차트 -->
+                  <StudentGroupBarCharts 
+                    :data="posts" 
+                    chartTitle="Number of Repos by Year" 
+                    yAxisTitle="Repos 수"
+                    dataKey="num_repos"
+                  />
+                </div>
+              </div>
+              <div class="horizontal-chart-container">
+                <div class="left-container">
+                  <div class="chart-title">
+                    Total Commits
+                  </div>
+                  <!-- Commits 차트 -->
+                  <StudentGroupBarCharts 
+                    :data="posts" 
+                    chartTitle="Number of Commits by Year" 
+                    yAxisTitle="Commits 수"
+                    dataKey="commit"
+                  />
+                </div>
+                <div class="right-container">
+                  <div class="chart-title">
+                    Total Issues
+                  </div>
+                  <!-- Issues 차트 -->
+                  <StudentGroupBarCharts 
+                    :data="posts" 
+                    chartTitle="Number of Issues by Year" 
+                    yAxisTitle="Issues 수"
+                    dataKey="issue"
+                  />
+                </div>
+              </div>
+              <div class="horizontal-chart-container">
+                <div class="left-container">
+                  <div class="chart-title">
+                    Total PRs
+                  </div>
+                  <!-- PRs 차트 -->
+                  <StudentGroupBarCharts 
+                    :data="posts" 
+                    chartTitle="Number of PRs by Year" 
+                    yAxisTitle="PR 수"
+                    dataKey="pr"
+                  />
+                </div>
+                <div class="right-container">
+                  <div class="chart-title">
+                    Total Stars
+                  </div>
+                  <!-- Stars 차트 -->
+                  <StudentGroupBarCharts 
+                    :data="posts" 
+                    chartTitle="Number of Stars by Year" 
+                    yAxisTitle="Star 수"
+                    dataKey="stars"
+                  />
+                </div>
+              </div>
+            </div>
+            <div v-else>
+              <div class="horizontal-chart-container">
+                <div class="left-container">
+                  <div class="chart-title">
+                    Total Repos
+                  </div>
+                  <!-- Repos 차트 -->
+                  <StudentGroupBoxCharts 
+                    :data="posts" 
+                    chartTitle="Number of Repos by Year" 
+                    yAxisTitle="Repos 수"
+                    dataKey="num_repos_stats"
+                  />
+                </div>
+                <div class="right-container">
+                  <div class="chart-title">
+                    Total Commits
+                  </div>
+                  <!-- Commits 차트 -->
+                  <StudentGroupBoxCharts 
+                    :data="posts" 
+                    chartTitle="Number of Commits by Year" 
+                    yAxisTitle="Commits 수"
+                    dataKey="commit_stats"
+                  />
+                </div>
+              </div>
+              <div class="horizontal-chart-container">
+                <div class="left-container">
+                  <div class="chart-title">
+                    Total Issues
+                  </div>
+                  <!-- Issues 차트 -->
+                  <StudentGroupBoxCharts 
+                    :data="posts" 
+                    chartTitle="Number of Issues by Year" 
+                    yAxisTitle="Issues 수"
+                    dataKey="issue_stats"
+                  />
+                </div>
+                <div class="right-container">
+                  <div class="chart-title">
+                    Total PRs
+                  </div>
+                  <!-- PRs 차트 -->
+                  <StudentGroupBoxCharts 
+                    :data="posts" 
+                    chartTitle="Number of PRs by Year" 
+                    yAxisTitle="PR 수"
+                    dataKey="pr_stats"
+                  />
+                </div>
+              </div>
+              <div class="horizontal-chart-container">
+                <div class="left-container">
+                  <div class="chart-title">
+                    Total Stars
+                  </div>
+                  <!-- Stars 차트 -->
+                  <StudentGroupBoxCharts 
+                    :data="posts" 
+                    chartTitle="Number of Stars by Year" 
+                    yAxisTitle="Star 수"
+                    dataKey="stars_stats"
+                  />
+                </div>
+              </div>
+            </div>
+          </transition>
         </div>
       </transition>
     </div>
@@ -319,9 +464,15 @@
 </template>
 
 <script>
+import StudentGroupBarCharts from '@/views/StatisticsCharts/Students/StudentGroupBarCharts.vue'
+import StudentGroupBoxCharts from '@/views/StatisticsCharts/Students/StudentGroupBoxCharts.vue'
 export default {
   name: 'StatisticsStudent',
   props: ["course"],
+  components: {
+    StudentGroupBarCharts,
+    StudentGroupBoxCharts,
+  },
   data() {
     return {
       showOverlay: false,
@@ -390,6 +541,7 @@ export default {
     course(to, from) {
       const vm = this
       this.posts = vm.course
+      console.log(this.posts)
     },
   }
 };
@@ -428,6 +580,44 @@ export default {
       }
     }
   }
+
+  .student-sub-toggle{
+        padding-top: 20px;
+        width: 200px;
+        height: 40px;
+        display: inline-flex;
+        
+        .all, .each {
+          width: 100px;
+          height: 40px;
+          text-align: center;
+          line-height: 40px;
+          border-radius: 30px;
+          background: #FFEAEC;
+          color: var(--Primary_medium, #CB385C);
+          font-family: Pretendard;
+          font-size: 16px;
+          font-style: normal;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .all-unclick {
+          background: #FFF;
+          color: #CDCDCD;
+        }
+        .all-click {
+          background: #FFEAEC;
+          color: var(--Primary_medium, #CB385C);
+        }
+        .each-unclick {
+          background: #FFF;
+          color: #CDCDCD;
+        }
+        .each-click {
+          background: #FFEAEC;
+          color: var(--Primary_medium, #CB385C);
+        }
+      } 
   .contents-box {
     padding: 0 56px;
 
@@ -445,7 +635,7 @@ export default {
       opacity: 0;
     }
     .table {
-      margin: 20px 0;
+      margin: 0 0 20px 0;
       padding-bottom: 20px;
       /* border: 1px solid #dce2ed; */
       border-radius: 4px;
@@ -785,9 +975,30 @@ export default {
   /* border: 1px solid #dce2ed; */
   border-radius: 4px;
   height: 100%;
-  .year-chart-container {
-  
-    
+  & .horizontal-chart-container {
+    display: flex;
+    flex-flow: wrap;
+    justify-content: space-between;
+    align-content: flex-start;
+
+    .left-container, .right-container {
+      margin-bottom: 20px;
+      background: var(--Primary_background, #FFFBFB);
+      border-radius: 20px;
+      .chart-title {
+        margin-top: 10px;
+        position: static;
+        color: var(--Black, #262626);
+        font-family: Pretendard;
+        font-size: 18px;
+        font-style: normal;
+        font-weight: 700;
+        margin-left: 40px;
+      }
+      .charts {
+          position: static;
+        }
+    }
   }
   .category-chart-container {
 
@@ -795,7 +1006,6 @@ export default {
   & .title {
     font-size: 22px;
     font-weight: 700;
-    
   }
 }
 

@@ -38,6 +38,7 @@ use([
 
 export default {
   name: 'BarChart1',
+  props: ["data"],
   components: {
     'v-chart': ECharts
   },
