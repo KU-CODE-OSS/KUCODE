@@ -226,9 +226,9 @@
       <div class="title">
         {{titles}}
       </div>
-      <InformationCourse v-show="$route.path === '/info/course'" :postss="courseFilteredPosts"></InformationCourse>
-      <InformationStudent v-show="$route.path === '/info/students'" :postss="studentsFilteredPosts"></InformationStudent>
-      <InformationRepos v-show="$route.path === '/info/repos'" :postss="repoPosts"></InformationRepos>
+      <router-view :postss="courseFilteredPosts" v-if="$route.path === '/info/course'"></router-view>
+      <router-view :postss="studentsFilteredPosts" @fetch="setInit" v-if="$route.path === '/info/students'"></router-view>
+      <router-view :postss="repoFilteredPosts" @fetch="setInit" v-if="$route.path === '/info/repos'"></router-view>
     </div>
   </div> 
 </template>
@@ -236,15 +236,8 @@
 <script>
 import {getCourseInfo, getRepoInfo} from '@/api.js'
 import InformationCourse from '@/views/InformationComponents/InformationCourse.vue'
-import InformationRepos from '@/views/InformationComponents/InformationRepos.vue'
-import InformationStudent from '@/views/InformationComponents/InformationStudent.vue'
 export default {
   name: 'Information',
-  components: {
-    InformationCourse,
-    InformationRepos,
-    InformationStudent
-  },
   data() {
     return {
       titles: '',
@@ -284,15 +277,10 @@ export default {
     };
   },
   mounted() {
-    // this.setInit()
-  },
-  created() {
     this.setInit()
+    
   },
   computed: {
-    isVisible() {
-
-    }
   },
   methods: {
     getRouteType () {
@@ -306,26 +294,12 @@ export default {
         return 3
       }
     },
-    async currentPost() {
-      console.log('helelell')
-      console.log(this.coursePosts)
-      switch (this.$route.path) {
-        case '/info/course':
-          return this.coursePosts;
-        case '/info/students':
-          return this.studentsFilteredPosts;
-        case '/info/repos':
-          return this.coursePosts;
-        default:
-          return false;
-      }
-    },
     async setInit() {
       if(this.$route.name === "InformationCourse") {
         this.titles = '과목 통계'
       }
       if (this.coursePosts.length === 0) {
-        await getCourseInfo().then(res => {
+        getCourseInfo().then(res => {
           this.coursePosts = res.data
           this.coursePosts = this.coursePreprocessingTableData(this.coursePosts)
           this.courseFilteredPosts = this.coursePosts
@@ -340,7 +314,7 @@ export default {
         this.titles = '학생 통계'
       }
       if (this.studentsPosts.length === 0) {
-        await getCourseInfo().then(res => {
+        getCourseInfo().then(res => {
           this.studentsPosts = res.data
           this.studentsPosts = this.studentsPreprocessingTableData(this.studentsPosts)
           this.studentsPosts = this.yearandCommitSort(this.studentsPosts)
@@ -354,7 +328,6 @@ export default {
       if(this.$route.name === "InformationRepos") {
         this.titles = '레포지토리 통계'
       }
-      // this.repoPosts.length !== 0 조건 없으면 다른 페이지 갔다와야 데이터 로딩됨
       if(this.repoPosts.length === 0 || this.repoPosts.length !== 0 ) {
         getRepoInfo().then(res => {
           this.repoPosts = res.data
@@ -609,6 +582,7 @@ export default {
   watch: {
     $route(to, from) {
       if (to.path !== from.path) {
+        console.log(this.repoPosts)
         this.setInit()
       }
     }
@@ -625,7 +599,7 @@ export default {
   width: 100%;
   margin-top: 120px;
   height: 100vh;
-  background: #FFF;
+  background: var(--White, #FCFCFC);
   overflow: hidden; /* Ensure no overflow issues */
 }
 
