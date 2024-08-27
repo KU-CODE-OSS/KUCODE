@@ -38,6 +38,10 @@ export function postCourseUpload(formData) {
   return ajax(ip_for_develop + '/account/student_excel_import', 'post', { data: formData, headers })
 }
 
+export function getRepoInfo() {
+  return ajax(ip_for_develop + '/repo/repo_read_db', 'get')
+}
+
 // ajax 함수
 function ajax(url, method, { params = {}, data = {}, headers = {} } = {}) {
   return new Promise((resolve, reject) => {
