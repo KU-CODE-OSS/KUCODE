@@ -519,14 +519,15 @@ export default {
 
     // 학과용 전처리
     departmentPreprocessingTableData(datalist) {
-      var li = [];
-      const departmentSet = new Set(datalist.map((row) => row.department));
+      const li = [];
+      const departmentSet = new Set(datalist.map(row => row.department));
       const uniqueDepartments = [...departmentSet];
 
-      uniqueDepartments.forEach((department) => {
+      uniqueDepartments.forEach(department => {
         li.push({
           department: department,
           years: {},
+          departmentByYear: {}, // 새로운 구조 추가
           total: {
             students: 0,
             commits: [],
@@ -544,14 +545,15 @@ export default {
         });
       });
     
-      datalist.forEach((element) => {
+      datalist.forEach(element => {
         let departmentIndex = uniqueDepartments.indexOf(element.department);
         let departmentData = li[departmentIndex];
       
-        // year와 semester가 빈 값일 경우 -1로 설정
+        // year와 semester 처리, 값이 없으면 -1로 기본 설정
         const year = element.year === '' ? -1 : element.year;
         const semester = element.semester === '' ? -1 : element.semester;
       
+        // `years` 데이터 처리
         if (!departmentData.years[year]) {
           departmentData.years[year] = {
             year: year,
@@ -593,6 +595,7 @@ export default {
         semesterData.num_repos.push(element.num_repos);
         semesterData.stars.push(element.star_count);
       
+        // 전체 통계 업데이트
         if (!departmentData.ids.has(element.id)) {
           departmentData.total.students += 1;
           departmentData.ids.add(element.id);
@@ -602,12 +605,46 @@ export default {
         departmentData.total.issues.push(element.issue);
         departmentData.total.num_repos.push(element.num_repos);
         departmentData.total.stars.push(element.star_count);
+      
+        // `departmentByYear` 데이터 처리
+        if (!departmentData.departmentByYear[year]) {
+          departmentData.departmentByYear[year] = {
+            students: 0,
+            commits: [],
+            prs: [],
+            issues: [],
+            num_repos: [],
+            stars: [],
+            commit_stats: null,
+            pr_stats: null,
+            issue_stats: null,
+            num_repos_stats: null,
+            stars_stats: null,
+          };
+        }
+      
+        let departmentYearData = departmentData.departmentByYear[year];
+      
+        if (!departmentYearData.ids) {
+          departmentYearData.ids = new Set();
+        }
+      
+        if (!departmentYearData.ids.has(element.id)) {
+          departmentYearData.students += 1;
+          departmentYearData.ids.add(element.id);
+        }
+        departmentYearData.commits.push(element.commit);
+        departmentYearData.prs.push(element.pr);
+        departmentYearData.issues.push(element.issue);
+        departmentYearData.num_repos.push(element.num_repos);
+        departmentYearData.stars.push(element.star_count);
       });
     
-      li.forEach((departmentData) => {
-        Object.keys(departmentData.years).forEach((year) => {
+      // 통계 계산
+      li.forEach(departmentData => {
+        Object.keys(departmentData.years).forEach(year => {
           let yearData = departmentData.years[year];
-          Object.keys(yearData.semesters).forEach((semester) => {
+          Object.keys(yearData.semesters).forEach(semester => {
             let semesterData = yearData.semesters[semester];
             semesterData.commit_stats = calculateStats(semesterData.commits);
             semesterData.pr_stats = calculateStats(semesterData.prs);
@@ -623,17 +660,23 @@ export default {
         departmentData.total.num_repos_stats = calculateStats(departmentData.total.num_repos);
         departmentData.total.stars_stats = calculateStats(departmentData.total.stars);
       
-        delete departmentData.ids;
-        Object.keys(departmentData.years).forEach((year) => {
-          Object.keys(departmentData.years[year].semesters).forEach((semester) => {
-            delete departmentData.years[year].semesters[semester].ids;
-          });
+        // `departmentByYear` 통계 계산
+        Object.keys(departmentData.departmentByYear).forEach(year => {
+          let yearData = departmentData.departmentByYear[year];
+          yearData.commit_stats = calculateStats(yearData.commits);
+          yearData.pr_stats = calculateStats(yearData.prs);
+          yearData.issue_stats = calculateStats(yearData.issues);
+          yearData.num_repos_stats = calculateStats(yearData.num_repos);
+          yearData.stars_stats = calculateStats(yearData.stars);
+          delete yearData.ids;  // 임시 ids 세트 삭제
         });
+      
+        delete departmentData.ids;  // 임시 ids 세트 삭제
       });
     
-      console.log(li);
       return li;
     
+      // 통계 계산 유틸리티 함수
       function calculateStats(arr) {
         arr.sort((a, b) => a - b);
         const n = arr.length;
@@ -661,7 +704,6 @@ export default {
         };
       }
     },
-
 
     yearSort(li){
       li.sort(function(a,b){
@@ -796,13 +838,20 @@ export default {
       const departmentset = new Set(departmentData.map((row) => row.department));
       this.departmentFilterDepartmentCheckbox = [...departmentset];
     },
+
     combineFilterDataforDepartment() {
-      let common = this.departmentPosts;  // 초기 데이터 설정
-        
-      // 연도와 학기 필터링을 동시에 고려하여 total 업데이트
+      let common = this.departmentPosts; // 초기 데이터 설정
+
+      // 연도와 학기 필터링을 동시에 고려하여 total 및 departmentByYear 업데이트
       if (this.selectedYearItemsforDepartment.length > 0 || this.selectedSemesterItemsforDepartment.length > 0) {
-        common = common.map((department) => {
-          let filteredDepartment = { ...department, total: { ...department.total }, years: { ...department.years } };
+        common = common.map(department => {
+          let filteredDepartment = { 
+            ...department, 
+            total: { ...department.total }, 
+            years: { ...department.years }, 
+            departmentByYear: {} // 선택된 연도만 포함하도록 초기화
+          };
+        
           filteredDepartment.total.commits = [];
           filteredDepartment.total.prs = [];
           filteredDepartment.total.issues = [];
@@ -810,11 +859,29 @@ export default {
           filteredDepartment.total.stars = [];
           filteredDepartment.total.students = 0;
         
-          Object.keys(filteredDepartment.years).forEach(year => {
+          // 연도 및 학기별로 필터링 적용
+          Object.keys(department.departmentByYear).forEach(year => {
             if (this.selectedYearItemsforDepartment.length === 0 || this.selectedYearItemsforDepartment.includes(year)) {
-              Object.keys(filteredDepartment.years[year].semesters).forEach(semester => {
+              let yearData = { ...department.departmentByYear[year] };
+              yearData.students = 0;
+              yearData.commits = [];
+              yearData.prs = [];
+              yearData.issues = [];
+              yearData.num_repos = [];
+              yearData.stars = [];
+            
+              // 학기 필터링
+              Object.keys(department.years[year]?.semesters || {}).forEach(semester => {
                 if (this.selectedSemesterItemsforDepartment.length === 0 || this.selectedSemesterItemsforDepartment.includes(semester)) {
-                  const semesterData = filteredDepartment.years[year].semesters[semester];
+                  const semesterData = department.years[year].semesters[semester];
+                  yearData.commits.push(...semesterData.commits);
+                  yearData.prs.push(...semesterData.prs);
+                  yearData.issues.push(...semesterData.issues);
+                  yearData.num_repos.push(...semesterData.num_repos);
+                  yearData.stars.push(...semesterData.stars);
+                  yearData.students += semesterData.students;
+                
+                  // 전체 통계에도 추가
                   filteredDepartment.total.commits.push(...semesterData.commits);
                   filteredDepartment.total.prs.push(...semesterData.prs);
                   filteredDepartment.total.issues.push(...semesterData.issues);
@@ -823,10 +890,20 @@ export default {
                   filteredDepartment.total.students += semesterData.students;
                 }
               });
+            
+              // 연도별 통계 계산
+              yearData.commit_stats = calculateStats(yearData.commits);
+              yearData.pr_stats = calculateStats(yearData.prs);
+              yearData.issue_stats = calculateStats(yearData.issues);
+              yearData.num_repos_stats = calculateStats(yearData.num_repos);
+              yearData.stars_stats = calculateStats(yearData.stars);
+            
+              // 선택된 연도만 포함되도록 필터링된 departmentByYear 업데이트
+              filteredDepartment.departmentByYear[year] = yearData;
             }
           });
         
-          // 통계값 재계산
+          // 전체 통계 재계산
           filteredDepartment.total.commit_stats = calculateStats(filteredDepartment.total.commits);
           filteredDepartment.total.pr_stats = calculateStats(filteredDepartment.total.prs);
           filteredDepartment.total.issue_stats = calculateStats(filteredDepartment.total.issues);
@@ -839,7 +916,7 @@ export default {
     
       // 학과 필터링
       if (this.selectedDepartmentItemsforDepartment.length > 0) {
-        common = common.filter((department) =>
+        common = common.filter(department =>
           this.selectedDepartmentItemsforDepartment.includes(department.department)
         );
       }
@@ -847,6 +924,7 @@ export default {
       console.log(common);
       return common;
     
+      // 통계 계산 유틸리티 함수
       function calculateStats(arr) {
         arr.sort((a, b) => a - b);
         const n = arr.length;
@@ -874,8 +952,8 @@ export default {
         };
       }
     },
+
     yearFilterEventChangeforDepartment(item, event) {
-      console.log(item);
       if (this.selectedYearItemsforDepartment.length === 0) {
         this.departmentFilteredPostsforYear = this.departmentPosts;
       } else {

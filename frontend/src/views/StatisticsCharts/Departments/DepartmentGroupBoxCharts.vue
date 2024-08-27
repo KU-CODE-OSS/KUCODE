@@ -13,7 +13,7 @@ import { defineComponent } from 'vue';
 import { GChart } from 'vue-google-charts';
 
 export default defineComponent({
-  name: 'StudentGroupBoxCharts',
+  name: 'DepartmentGroupBoxCharts',
   components: {
     GChart,
   },
@@ -36,11 +36,7 @@ export default defineComponent({
     },
     groupKey: {
       type: String,
-      default: 'course_name',
-    },
-    yearKey: {
-      type: String,
-      default: 'year',
+      default: 'department',
     },
   },
   data() {
@@ -59,25 +55,24 @@ export default defineComponent({
         },
         fontSize: 12,
         hAxis: {
-          gridlines: { color: 'transparent' }, // x축 그리드 제거
+          gridlines: { color: 'transparent' },
           baselineColor: '#FFEAEC',
           format: 'none',
         },
         vAxis: {
-          // title: this.yAxisTitle,
           gridlines: { color: '#FFEAEC' },
           minorGridlines: {
             color: '#FFEAEC'
           },
         },
         legend: {
-          position: 'bottom', // legend를 차트 아래로 위치
+          position: 'bottom',
           fillOpacity: '0.5',
         },
         seriesType: 'bars',
         intervals: {
           style: 'boxes',
-          boxWidth: '1',
+          boxWidth: '1.0',
           fillOpacity: '0.7',
         },
         interval: {
@@ -114,15 +109,13 @@ export default defineComponent({
   },
   methods: {
     updateChartData(data) {
-      // 차트 데이터를 헤더 행으로 초기화
       const chartData = [['Year']];
-      
-      const courses = [...new Set(data.map(item => item[this.groupKey]))];
 
-      // 각 과목에 대해 과목 이름과 5개의 interval 역할을 위한 열을 추가
-      courses.forEach(course => {
+      const departments = [...new Set(data.map(item => item[this.groupKey]))];
+
+      departments.forEach(department => {
         chartData[0].push(
-          course,
+          department,
           { id: 'min', role: 'interval' }, // Min
           { id: 'q1', role: 'interval' }, // Q1
           { id: 'median', role: 'interval' }, // Median
@@ -133,43 +126,40 @@ export default defineComponent({
 
       const yearGroups = {};
       data.forEach(item => {
-        let year = item[this.yearKey].toString();
-        if (year === '-1') {
-          year = '기타';
+        for (let [year, stats] of Object.entries(item.departmentByYear)) {
+          year = year === '-1' ? '기타' : year.toString();
+          if (!yearGroups[year]) {
+            yearGroups[year] = { year };
+            departments.forEach(department => {
+              yearGroups[year][department] = [null, null, null, null, null];
+            });
+          }
+
+          const nestedStats = stats[this.dataKey]; // stats에서 dataKey (예: num_repos_stats)를 가져옴
+
+          if (nestedStats) {
+            yearGroups[year][item[this.groupKey]] = [
+              0,  // start init point로 시작은 0이어야 함.
+              nestedStats.min,
+              nestedStats.q1,
+              nestedStats.median,
+              nestedStats.q3,
+              nestedStats.max,
+            ];
+          }
         }
-        if (!yearGroups[year]) {
-          yearGroups[year] = { year };
-          courses.forEach(course => {
-            yearGroups[year][course] = [null, null, null, null, null]; 
-          });
-        }
-        const stats = item[this.dataKey];
-        // 해당 연도 그룹 내 특정 과목에 대해 값 할당
-        yearGroups[year][item[this.groupKey]] = [
-          0,  // start init point로 시작은 0이어야 함.
-          stats.min, 
-          stats.q1,
-          stats.median,
-          stats.q3, 
-          stats.max
-        ];
       });
 
-      // 차트 데이터 행 채우기
       for (const year in yearGroups) {
         const row = [year];
-        courses.forEach(course => {
-          // 각 과목 항목에 5개의 요소(min, q1, median, q3, max)가 있는지 확인
-          const courseData = yearGroups[year][course];
+        departments.forEach(department => {
+          const courseData = yearGroups[year][department];
           if (courseData.length === 5) {
             courseData.unshift(0)
           }
           row.push(...courseData);
         });
-        // 행의 열 수가 올바른지 확인
         if (row.length !== chartData[0].length) {
-          console.error(`연도 ${year}에 대한 행에 ${row.length}개의 열이 있으며, ${chartData[0].length}개가 필요함`);
-          // 누락된 열을 null로 채우기
           while (row.length < chartData[0].length) {
             row.push(null);
           }

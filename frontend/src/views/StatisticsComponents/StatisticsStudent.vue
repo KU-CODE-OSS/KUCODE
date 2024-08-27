@@ -277,31 +277,6 @@
                   </table>
                 </div>
               </div>
-              <!-- <div class="sub-table-right">
-                <div class="title">Total Repos</div>
-                <div class="sub-table">
-                  <table>
-                    <thead class="table-header-wrapper">
-                      <th width="203px">학수번호</th>
-                      <th width="58px">Q1</th>
-                      <th width="58px">Q2</th>
-                      <th width="58px">Q3</th>
-                      <th width="87px">평균</th>
-                      <th width="87px">표준편차</th>
-                    </thead>
-                    <tbody class="table-body-wrapper">
-                      <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.course_id">{{ item.course_id_for_stats }}</td>
-                        <td width="58px" :title="item.num_repos_stats.q1">{{item.num_repos_stats.q1}}</td>
-                        <td width="58px" :title="item.num_repos_stats.median">{{item.num_repos_stats.median}}</td>
-                        <td width="58px" :title="item.num_repos_stats.q3">{{item.num_repos_stats.q3}}</td>
-                        <td width="87px" :title="item.num_repos_stats.mean">{{item.num_repos_stats.mean}}</td>
-                        <td width="87px" :title="item.num_repos_stats.stdDev">{{item.num_repos_stats.stdDev}}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div> -->
             </div>
           </transition>
         </div>
@@ -541,7 +516,7 @@ export default {
     course(to, from) {
       const vm = this
       this.posts = vm.course
-      console.log(this.posts)
+      // console.log(this.posts)
     },
   }
 };
@@ -581,45 +556,45 @@ export default {
     }
   }
 
-  .student-sub-toggle{
-        padding-top: 20px;
-        width: 200px;
-        height: 40px;
-        display: inline-flex;
-        
-        .all, .each {
-          width: 100px;
-          height: 40px;
-          text-align: center;
-          line-height: 40px;
-          border-radius: 30px;
-          background: #FFEAEC;
-          color: var(--Primary_medium, #CB385C);
-          font-family: Pretendard;
-          font-size: 16px;
-          font-style: normal;
-          font-weight: 600;
-          cursor: pointer;
-        }
-        .all-unclick {
-          background: #FFF;
-          color: #CDCDCD;
-        }
-        .all-click {
-          background: #FFEAEC;
-          color: var(--Primary_medium, #CB385C);
-        }
-        .each-unclick {
-          background: #FFF;
-          color: #CDCDCD;
-        }
-        .each-click {
-          background: #FFEAEC;
-          color: var(--Primary_medium, #CB385C);
-        }
-      } 
   .contents-box {
     padding: 0 56px;
+    .student-sub-toggle{
+      padding-top: 20px;
+      width: 200px;
+      height: 40px;
+      display: inline-flex;
+      
+      .all, .each {
+        width: 100px;
+        height: 40px;
+        text-align: center;
+        line-height: 40px;
+        border-radius: 30px;
+        background: #FFEAEC;
+        color: var(--Primary_medium, #CB385C);
+        font-family: Pretendard;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .all-unclick {
+        background: #FFF;
+        color: #CDCDCD;
+      }
+      .all-click {
+        background: #FFEAEC;
+        color: var(--Primary_medium, #CB385C);
+      }
+      .each-unclick {
+        background: #FFF;
+        color: #CDCDCD;
+      }
+      .each-click {
+        background: #FFEAEC;
+        color: var(--Primary_medium, #CB385C);
+      }
+    } 
 
     .slide-fade-enter-active {
       transition: all 0.3s ease-out;
