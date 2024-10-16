@@ -197,7 +197,7 @@ def student_excel_import(request):
             return JsonResponse({"status": "Error", "message": "Course information has to be included"}, status=400)
 
         if Course.objects.filter(course_id=course_id,year=year,semester=semester).exists():
-            print("The course already exists.")
+            print("The course already exists.!")
         else:
             course = Course.objects.create(
             course_id = df.iloc[0, 0],
