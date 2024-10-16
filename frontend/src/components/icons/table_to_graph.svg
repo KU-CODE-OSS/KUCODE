@@ -1,0 +1,12 @@
+<svg width="150" height="44" viewBox="0 0 150 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="toggleBtn">
+<rect id="Rectangle 63" width="150" height="44" rx="22" fill="#FFF4F5"/>
+<rect id="Rectangle 64" x="4.5" y="4.5" width="71" height="35" rx="17.5" fill="#FCFCFC" stroke="#FFE2E5"/>
+<g id="Huge-icon">
+<path id="Vector" d="M38 16H44M38 24H44M38 20H50M38 28H50M31 20H33C33.5523 20 34 19.5523 34 19V17C34 16.4477 33.5523 16 33 16H31C30.4477 16 30 16.4477 30 17V19C30 19.5523 30.4477 20 31 20ZM31 28H33C33.5523 28 34 27.5523 34 27V25C34 24.4477 33.5523 24 33 24H31C30.4477 24 30 24.4477 30 25V27C30 27.5523 30.4477 28 31 28Z" stroke="#CB385C" stroke-width="1.5" stroke-linecap="round"/>
+</g>
+<g id="Huge-icon_2">
+<path id="Vector_2" d="M104 24L105.082 22.1963C105.721 21.132 107.225 21.0309 108 22C108.775 22.9691 110.279 22.8679 110.918 21.8037L112 20M108 28V32M100 16H116C117.105 16 118 15.1046 118 14C118 12.8954 117.105 12 116 12H100C98.8954 12 98 12.8954 98 14C98 15.1046 98.8954 16 100 16ZM99 16H117V26C117 27.1046 116.105 28 115 28H101C99.8954 28 99 27.1046 99 26V16Z" stroke="#E9D8D9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+</svg>

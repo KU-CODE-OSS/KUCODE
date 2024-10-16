@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: ./compose/local/django/Dockerfile
+    command: bash -c "
+          python manage.py migrate --no-input &&
+          python manage.py runserver 0.0.0.0:8000"
+    environment:
+      - PUBLIC_IP=${PUBLIC_IP}
+      - FASTAPI_PORT=${FASTAPI_PORT}
+      - VUE_APP_API_URL=http://${PUBLIC_IP}:8000
+      - CORS_ALLOWED_ORIGIN=http://${PUBLIC_IP}
+      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
+      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
+      - KOREAUNIV_OPENAPI_CLIENT_ID=${KOREAUNIV_OPENAPI_CLIENT_ID}
+      - KOREAUNIV_OPENAPI_CLIENT_SECRET=${KOREAUNIV_OPENAPI_CLIENT_SECRET}
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./.envs/.local/django.env
+    container_name: dev_backend
+
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - dev_postgres_data:/var/lib/postgresql/data
+    env_file:
+      - ./.envs/.local/postgres.env
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    container_name: dev_db
+
+  pgadmin:
+    image: dpage/pgadmin4
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./.envs/.local/pgadmin.env
+    volumes:
+      - dev_pgadmin:/var/lib/pgadmin
+    ports:
+      - "9000:80"
+    container_name: dev_pgadmin
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./compose/local/frontend/Dockerfile
+    command: bash -c "npm run dev -- --host"
+    ports:
+      - "80:5173"
+    volumes:
+      - /app/node_modules
+      - ./frontend:/app
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    container_name: dev_frontend
+
+volumes:
+  dev_postgres_data:
+  dev_pgadmin:
