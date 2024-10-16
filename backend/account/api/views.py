@@ -910,7 +910,57 @@ def student_validation(request):
             
             # Check if the "result" key is an empty list
             if response_data.get("result") == []:
-                print(f'Empty result for student ID: {student_id}')
+                #졸업생 쿼리 api 호출
+                
+                grad_api_url = "https://kuapi.korea.ac.kr/svc/academic-record/student/undergraduate-gra"  # 실제 API 엔드포인트로 변경
+
+                headers = {
+                'AUTH_KEY': access_token
+            }
+                params = {
+                'client_id': settings.KOREAUNIV_OPENAPI_CLIENT_ID,
+                'std_id' : student_id
+            }
+                            # API 호출
+                response = requests.get(grad_api_url, headers=headers, params=params)
+                
+                 # JSON 응답을 파싱
+                response_data = response.json()
+                
+                if response_data.get("result") == []:
+                    print(f'Empty result for student ID: {student_id}')
+                
+                else :    
+                    result_items = response_data.get("result", [])
+                    result_item = result_items[0]
+                    # result_list가 빈 리스트가 아닐 경우
+                    std_id = result_item.get("STD_ID")
+                    rec_sts_nm = result_item.get("REC_STS_NM")
+                    kor_nm = result_item.get("KOR_NM")
+                    col_nm = result_item.get("COL_NM")
+                    dept_nm = result_item.get("DEPT_NM")
+                    smajor_nm = result_item.get("SMAJOR_NM")          
+                    email_addr = result_item.get("EMAIL_ADDR")     
+
+                    # data 리스트에 새로운 딕셔너리 추가
+                    data.append({
+                        "STD_ID": std_id,
+                        "REC_STS_NM": rec_sts_nm,
+                        "KOR_NM": kor_nm,
+                        "COL_NM": col_nm,
+                        "DEPT_NM": dept_nm,
+                        "SMAJOR_NM":smajor_nm,
+                        "email_addr": email_addr
+                    })
+
+                    specific_student =  Student.objects.get(id= student_id)
+                    specific_student.enrollment = rec_sts_nm 
+                    specific_student.name = kor_nm
+                    specific_student.college = col_nm
+                    specific_student.department = dept_nm 
+                    specific_student.double_major = smajor_nm
+                    specific_student.primary_email = email_addr
+                    specific_student.save()
             
             else:
                 # response_data에서 "result" 키의 값을 가져옴
@@ -986,9 +1036,49 @@ def query_student_openapi(ids,access_token):
             
             # Check if the "result" key is an empty list
             if response_data.get("result") == []:
-                print(f'Empty result for student ID: {student_id}')
-                empty_list.append(student_id)
-            
+                #졸업생 쿼리 api 호출
+                
+                grad_api_url = "https://kuapi.korea.ac.kr/svc/academic-record/student/undergraduate-gra"  # 실제 API 엔드포인트로 변경
+
+                headers = {
+                'AUTH_KEY': access_token
+            }
+                params = {
+                'client_id': settings.KOREAUNIV_OPENAPI_CLIENT_ID,
+                'std_id' : student_id
+            }
+                            # API 호출
+                response = requests.get(grad_api_url, headers=headers, params=params)
+                
+                 # JSON 응답을 파싱
+                response_data = response.json()
+                
+                if response_data.get("result") == []:
+                    empty_list.append(student_id)
+
+                else :    
+                    result_items = response_data.get("result", [])
+                    result_item = result_items[0]
+                    # result_list가 빈 리스트가 아닐 경우
+                    std_id = result_item.get("STD_ID")
+                    rec_sts_nm = result_item.get("REC_STS_NM")
+                    kor_nm = result_item.get("KOR_NM")
+                    col_nm = result_item.get("COL_NM")
+                    dept_nm = result_item.get("DEPT_NM")
+                    smajor_nm = result_item.get("SMAJOR_NM")          
+                    email_addr = result_item.get("EMAIL_ADDR")     
+
+                    # data 리스트에 새로운 딕셔너리 추가
+                    data.append({
+                        "STD_ID": std_id,
+                        "REC_STS_NM": rec_sts_nm,
+                        "KOR_NM": kor_nm,
+                        "COL_NM": col_nm,
+                        "DEPT_NM": dept_nm,
+                        "SMAJOR_NM":smajor_nm,
+                        "email_addr": email_addr
+                    })
+                
             else:
                 # response_data에서 "result" 키의 값을 가져옴
                 result_items = response_data.get("result", [])
@@ -1028,7 +1118,7 @@ def query_per_get_student_openapi(request):
         
         data =[]
         #API 요청
-        api_url = "https://kuapi.korea.ac.kr/svc/academic-record/student/undergraduate"  # 실제 API 엔드포인트로 변경
+        api_url = "https://kuapi.korea.ac.kr/svc/academic-record/student/undergraduate-gra"  # 실제 API 엔드포인트로 변경
         headers = {
             'AUTH_KEY': access_token
         }
