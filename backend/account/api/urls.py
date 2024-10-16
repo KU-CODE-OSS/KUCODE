@@ -33,5 +33,13 @@ urlpatterns = [
     path("student_validation", views.student_validation, name="student_validation"),
 
     # Per Student lookup
-    path("query_per_get_student_openapi",views.query_per_get_student_openapi, name ="query_per_get_student_openapi")
+    path("query_per_get_student_openapi",views.query_per_get_student_openapi, name ="query_per_get_student_openapi"),
+
+    # Students without githubids.
+    path("none_githubid_list",views.none_githubid_list, name ="none_githubid_list"),
+
+    # Students without githubids but only for attending students
+    path("none_githubid_list_only_attending",views.none_githubid_list_only_attending, name ="none_githubid_list_only_attending")
+
+
 ]   

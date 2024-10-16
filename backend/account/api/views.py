@@ -910,6 +910,7 @@ def student_validation(request):
             
             # Check if the "result" key is an empty list
             if response_data.get("result") == []:
+                
                 #졸업생 쿼리 api 호출
                 
                 grad_api_url = "https://kuapi.korea.ac.kr/svc/academic-record/student/undergraduate-gra"  # 실제 API 엔드포인트로 변경
@@ -952,6 +953,7 @@ def student_validation(request):
                         "SMAJOR_NM":smajor_nm,
                         "email_addr": email_addr
                     })
+                    student_count += 1
 
                     specific_student =  Student.objects.get(id= student_id)
                     specific_student.enrollment = rec_sts_nm 
@@ -1170,3 +1172,28 @@ def query_per_get_student_openapi(request):
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
     
+
+def none_githubid_list(request):
+    # github_id가 빈 문자열이거나 None인 학생의 id와 enrollment 가져오기
+    empty_github_ids = Student.objects.filter(
+        Q(github_id__isnull=True) | Q(github_id__exact='')
+    ).values('id', 'enrollment')  # id와 enrollment 필드 가져오기
+
+    # 데이터를 리스트로 변환
+    data = list(empty_github_ids)
+
+    # JsonResponse 반환
+    return JsonResponse(data, safe=False)
+
+
+def none_githubid_list_only_attending(request):
+    # github_id가 빈 문자열이거나 None이고 enrollment가 '재학'인 학생의 id와 enrollment 가져오기
+    empty_github_ids = Student.objects.filter(
+        (Q(github_id__isnull=True) | Q(github_id__exact='')) & Q(enrollment='재학')
+    ).values('id', 'enrollment')  # id와 enrollment 필드 가져오기
+
+    # 데이터를 리스트로 변환
+    data = list(empty_github_ids)
+
+    # JsonResponse 반환
+    return JsonResponse(data, safe=False)
