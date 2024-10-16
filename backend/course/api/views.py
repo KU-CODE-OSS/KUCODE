@@ -442,6 +442,11 @@ def course_validation(request):
             specific_course.name = course_name 
             specific_course.save()
 
+            # 과목 학생 수 count validation 
+            specific_course_count = Course_registration.objects.filter(course = specific_course).count()
+            specific_course.student_count = specific_course_count
+            specific_course.save()
+
             data.append(response_data)
         
         return JsonResponse(data , safe=False) 
@@ -595,3 +600,5 @@ def course_reg_look(request):
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
+    
+

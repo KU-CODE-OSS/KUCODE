@@ -1187,13 +1187,31 @@ def none_githubid_list(request):
 
 
 def none_githubid_list_only_attending(request):
-    # github_id가 빈 문자열이거나 None이고 enrollment가 '재학'인 학생의 id와 enrollment 가져오기
-    empty_github_ids = Student.objects.filter(
+    # github_id가 빈 문자열이거나 None이고 enrollment가 '재학'인 학생의 객체 가져오기
+    students_empty_github_ids = Student.objects.filter(
         (Q(github_id__isnull=True) | Q(github_id__exact='')) & Q(enrollment='재학')
-    ).values('id', 'enrollment')  # id와 enrollment 필드 가져오기
+    )
 
-    # 데이터를 리스트로 변환
-    data = list(empty_github_ids)
+    data = []
+
+    for empty_student in students_empty_github_ids:
+        temp_data = []
+        # 해당 학생이 수강한 과목 정보 가져오기
+        courses_taken = Course_registration.objects.filter(student=empty_student)
+        
+        # courses_taken을 리스트로 변환하여 추가
+        for per_course_taken in courses_taken:
+            course_id = per_course_taken.course.course_id
+            course_name = per_course_taken.course.name
+            temp_data.append([course_id,course_name])
+
+        # 학생 정보 추가
+        temp_data.append(empty_student.id)
+        temp_data.append(empty_student.name)
+        temp_data.append(empty_student.department)
+        temp_data.append(empty_student.enrollment)
+
+        data.append(list(temp_data))
 
     # JsonResponse 반환
     return JsonResponse(data, safe=False)
