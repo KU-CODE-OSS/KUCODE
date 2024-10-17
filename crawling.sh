@@ -28,12 +28,16 @@ repo_contributor_urls=(
 course_related_urls=(
     # OS 
     "http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1"
-    # 산악 캡스톤
+    # 산학 캡스톤 (1학기)
     "http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1"
+    # 클라우드 컴퓨팅 (2학기)
+    "http://localhost:8000/api/course/course_project_update?course_id=COSE444-00&year=2024&semester=2"
+    # 실전 SW 프로젝트 (2학기)
+    "http://localhost:8000/api/course/course_project_update?course_id=COSE457-00&year=2024&semester=2"
+    # 산학 캡스톤 (2학기, 2반)
+    "http://localhost:8000/api/course/course_project_update?course_id=COSE480-02&year=2024&semester=2"
 )
 
-# File to store failed URLs
-failed_urls_file="/tmp/failed_urls.txt"
 
 # Check if the script is already running
 if [[ $(pgrep -f $(basename "$0") | wc -l) -gt 2 ]]; then
@@ -58,7 +62,7 @@ process_url() {
         echo "Success: $url (Time taken: ${hours}h ${minutes}m ${seconds}s)"
     else
         echo "Failed: $url with response code $response (Time taken: ${hours}h ${minutes}m ${seconds}s)"
-        echo "$url" >> "$failed_urls_file"
+        # No need to log the failed URL
     fi
 }
 
@@ -82,23 +86,6 @@ process_urls_in_parallel() {
     done
     
     wait
-}
-
-# Function to process failed URLs
-process_failed_urls() {
-    if [ -f "$failed_urls_file" ]; then
-        local failed_urls=()
-        while IFS= read -r url; do
-            failed_urls+=("$url")
-        done < "$failed_urls_file"
-        
-        if [ ${#failed_urls[@]} -gt 0 ]; then
-            echo "Retrying failed URLs from previous cycle..."
-            process_urls_sequentially "${failed_urls[@]}"
-            # Clear the file after processing
-            : > "$failed_urls_file"
-        fi
-    fi
 }
 
 # Function to sleep until a specific time
@@ -125,31 +112,28 @@ while true; do
     # Process student URLs first in every cycle
     process_urls_sequentially "${student_urls[@]}"
 
-    # Process failed URLs from the previous cycle
-    process_failed_urls
-
-    # Process repo URLs every 6 hours
-    if (( cycle_count % 6 == 0 )); then
+    # Process repo URLs every 12 hours
+    if (( cycle_count % 12 == 0 )); then
         process_urls_sequentially "${repo_urls[@]}"
     fi
 
-    # Process course-related URLs every 6 hours
-    if (( cycle_count % 6 == 0 )); then
+    # Process course-related URLs every 12 hours
+    if (( cycle_count % 12 == 0 )); then
         process_urls_sequentially "${course_related_urls[@]}"
     fi
 
-    # Process repo commit URLs every 4 hours
-    if (( cycle_count % 4 == 0 )); then
+    # Process repo commit URLs every 2 hours
+    if (( cycle_count % 2 == 0 )); then
         process_urls_in_parallel "${repo_commit_urls[@]}"
     fi
 
-    # Process repo issue and PR URLs every 3 hours
-    if (( cycle_count % 3 == 0 )); then
+    # Process repo issue and PR URLs every 12 hours
+    if (( cycle_count % 12 == 0 )); then
         process_urls_in_parallel "${repo_issue_pr_urls[@]}"
     fi
 
-    # Process repo contributor URLs every 6 hours
-    if (( cycle_count % 6 == 0 )); then
+    # Process repo contributor URLs every 12 hours
+    if (( cycle_count % 12 == 0 )); then
         process_urls_in_parallel "${repo_contributor_urls[@]}"
     fi
 

@@ -241,7 +241,7 @@ def repo_read_db(request):
                 contributors_without_dash.sort(key=lambda x: x[0])
 
                 # Concatenate sorted lists, placing contributors with '-' at the end
-                contributors_total_info = contributors_without_dash + contributors_with_dash
+                contributors_total_info = contributors_without_dash 
             
             repo_info = {
             'id': r.id,
@@ -1175,10 +1175,12 @@ def sync_repo_commit_db_test(request):
     try:
         github_id = request.GET.get('github_id')
 
-        repositories = Repository.objects.filter(owner_github_id=github_id) 
+        # Get the list of repositories for the given GitHub user
+        repositories = Repository.objects.filter(owner_github_id=github_id)
         if not repositories:
             return JsonResponse({"status": "Error", "message": "Repositories not found"}, status=404)
-        
+
+        # Create a list of repositories with relevant information
         repo_list = [{'id': repo.id, 'name': repo.name, 'github_id': repo.owner_github_id} for repo in repositories]
         total_repo_count = len(repo_list)
         repo_count = 0
@@ -1186,7 +1188,13 @@ def sync_repo_commit_db_test(request):
         # Track processed repository IDs to identify deletions later
         processed_repo_ids = set()
 
+        # Loop through the list of repositories
         for repo in repo_list:
+            # Check if repo_count exceeds total_repo_count
+            if repo_count >= total_repo_count:
+                print(f"Warning: repo_count {repo_count} exceeded or equaled total_repo_count {total_repo_count}. Stopping further processing.")
+                break  # Exit loop to prevent further processing
+
             repo_count += 1
             print(f'({repo_count}/{total_repo_count}) Processing repository {repo["name"]} commits of GitHub user {repo["github_id"]}')
             processed_repo_ids.add(repo['id'])
@@ -1194,28 +1202,33 @@ def sync_repo_commit_db_test(request):
             github_id = repo['github_id']
             repo_name = repo['name']
 
-            # Try to get the latest commit
+            # Try to get the latest commit for the repository
             latest_commit = Repo_commit.objects.filter(repo_id=repo_id).order_by('-last_update').first()
             if latest_commit is None:
-                since = "2008-02-08T00:00:00Z"
+                since = "2008-02-08T00:00:00Z"  # Fallback date if no commits are found
             else:
                 since = latest_commit.last_update
 
-            response = requests.get(f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/commit", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
+            # Fetch commit data from the external API
+            response = requests.get(f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/commit",
+                                    params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
             data = response.json()
 
-            total_commit_count = len(data)
-            commit_count = 0
-
+            # Handle invalid or empty responses
             if not isinstance(data, list):
                 message = f"Invalid response format for commits of GitHub user {github_id} or Empty Repository"
                 print(message)
                 continue
 
+            total_commit_count = len(data)
+            commit_count = 0
+
+            # Loop through the commit data
             for commit_data in data:
                 commit_count += 1
                 print(f'({commit_count}/{total_commit_count}) Processing commit {commit_data.get("sha")} for repo {repo_name} of GitHub user {github_id}')
                 try:
+                    # Try to update an existing commit
                     commit = Repo_commit.objects.get(sha=commit_data.get('sha'))
                     commit.sha = commit_data.get('sha')
                     commit.repo_id = repo_id
@@ -1229,6 +1242,7 @@ def sync_repo_commit_db_test(request):
                     print(f"Updated repo_commit record for repo {repo_id} of GitHub user {github_id}: {commit_data.get('sha')}")
 
                 except ObjectDoesNotExist:
+                    # Create a new commit record if it doesn't exist
                     Repo_commit.objects.create(
                         sha=commit_data.get('sha'),
                         repo_id=repo_id,
@@ -1242,14 +1256,18 @@ def sync_repo_commit_db_test(request):
                     print(f"Created repo_commit record for repo {repo_id} of GitHub user {github_id}: {commit_data.get('sha')}")
 
                 except Exception as e:
+                    # Handle any unexpected errors during commit processing
                     message = f"Error processing commit for repo {repo_name} of GitHub user {github_id}: {str(e)}"
                     print(message)
                     continue
- 
+
             print(f"Repo {repo_name}'s commit(s) updated successfully for GitHub user {github_id}")
             print(f'({repo_count}/{total_repo_count}) Successfully processed commits for GitHub user {github_id}')
-            
+
         return JsonResponse({"status": "OK", "message": "Repo commits updated successfully"})
+    
     except Exception as e:
+        # Return error message in case of an exception
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
 #-----------------------------------------------------
