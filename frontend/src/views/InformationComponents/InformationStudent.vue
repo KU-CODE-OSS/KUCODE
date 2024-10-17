@@ -18,8 +18,8 @@
       </div>
       <div class="toggle-box" @click.self.prevent="toggle">
         <div class="wrapper">
-          <input type="checkbox" id="switch" v-model="showTable" @click="changeRoutebyTable">
-          <label for="switch" class="switch_label">
+          <input type="checkbox" id="infoswitchstudent" v-model="showTable" @click="changeRoutebyTable">
+          <label for="infoswitchstudent" class="switch_label">
             <span class="onf_btn"></span>
             <div class="toggle-text">
               <div class="toggle-total">
@@ -39,7 +39,34 @@
         <div v-if="!showTable" class="table">
           <table class="table-over" style="table-layout: fixed"> 
             <thead class="table-header-wrapper">
-              <th class="table-header" v-for="item in headerforsummary" :key="item[0]" :style="{width: tablewidth(item[1])}">{{item[0]}}</th>
+              <!-- 열 제목에 @click 이벤트 추가하여 정렬 가능하도록 설정 -->
+              <th class="table-header" @click="sortTable('name')" :style="{width: tablewidth(headerforsummary[0][1])}">
+                이름
+              </th>
+              <th class="table-header" @click="sortTable('department')" :style="{width: tablewidth(headerforsummary[1][1])}">
+                학과
+              </th>
+              <th class="table-header" @click="sortTable('id')" :style="{width: tablewidth(headerforsummary[2][1])}">
+                학번
+              </th>
+              <th class="table-header" @click="sortTable('enrollment')" :style="{width: tablewidth(headerforsummary[3][1])}">
+                학적
+              </th>
+              <th class="table-header" @click="sortTable('github')" :style="{width: tablewidth(headerforsummary[4][1])}">
+                Github ID
+              </th>
+              <th class="table-header" @click="sortTable('commit')" :style="{width: tablewidth(headerforsummary[5][1])}">
+                Commit
+              </th>
+              <th class="table-header" @click="sortTable('pr')" :style="{width: tablewidth(headerforsummary[6][1])}">
+                PR
+              </th>
+              <th class="table-header" @click="sortTable('issue')" :style="{width: tablewidth(headerforsummary[7][1])}">
+                Issue
+              </th>
+              <th class="table-header" @click="sortTable('num_repos')" :style="{width: tablewidth(headerforsummary[8][1])}">
+                Repos
+              </th>
             </thead>
             <tbody>
               <tr v-for="(item, index) in slicedsummarizedStudents" :key="index" class="table-row">
@@ -93,7 +120,42 @@
         <div v-else class="table">
           <table class="table-over" style="table-layout: fixed"> 
             <thead class="table-header-wrapper">
-              <th class="table-header" v-for="item in headerforall" :key="item[0]" :style="{width: tablewidth(item[1])}">{{item[0]}}</th>
+              <th class="table-header" @click="sortTableForAll('yearandsemester')" :style="{width: tablewidth(headerforall[0][1])}">
+                개설학기
+              </th>
+              <th class="table-header" @click="sortTableForAll('name')" :style="{width: tablewidth(headerforall[0][1])}">
+                이름
+              </th>
+              <th class="table-header" @click="sortTableForAll('department')" :style="{width: tablewidth(headerforall[1][1])}">
+                학과
+              </th>
+              <th class="table-header" @click="sortTableForAll('id')" :style="{width: tablewidth(headerforall[2][1])}">
+                학번
+              </th>
+              <th class="table-header" @click="sortTableForAll('enrollment')" :style="{width: tablewidth(headerforall[3][1])}">
+                학적
+              </th>
+              <th class="table-header" @click="sortTableForAll('github')" :style="{width: tablewidth(headerforall[4][1])}">
+                Github ID
+              </th>
+              <th class="table-header" @click="sortTableForAll('course_name')" :style="{width: tablewidth(headerforall[5][1])}">
+                과목명
+              </th>
+              <th class="table-header" @click="sortTableForAll('course_id')" :style="{width: tablewidth(headerforall[6][1])}">
+                학수번호
+              </th>
+              <th class="table-header" @click="sortTableForAll('commit')" :style="{width: tablewidth(headerforall[7][1])}">
+                Commit
+              </th>
+              <th class="table-header" @click="sortTableForAll('pr')" :style="{width: tablewidth(headerforall[8][1])}">
+                PR
+              </th>
+              <th class="table-header" @click="sortTableForAll('issue')" :style="{width: tablewidth(headerforall[9][1])}">
+                Issue
+              </th>
+              <th class="table-header" @click="sortTableForAll('num_repos')" :style="{width: tablewidth(headerforall[10][1])}">
+                Repos
+              </th>
             </thead>
             <tbody>
               <tr v-for="(item, index) in sclicedPosts" :key="index" class="table-row">
@@ -158,6 +220,8 @@ export default {
   props: ["postss"],
   data() {
     return {
+      currentSort: null, // 현재 정렬 중인 열
+      currentSortDir: 'asc', // 정렬 방향 (asc: 오름차순, desc: 내림차순)
       showTable: false,
       searchField: '',
       pannelLoading: false,
@@ -249,6 +313,49 @@ export default {
     }
   },
   methods: {
+    // 정렬 메서드
+    sortTable(column) {
+      if (this.currentSort === column) {
+        // 같은 열을 다시 클릭하면 정렬 방향 변경
+        this.currentSortDir = this.currentSortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        // 새로운 열 클릭 시 오름차순으로 정렬 시작
+        this.currentSort = column;
+        this.currentSortDir = 'asc';
+      }
+
+      // 전체 데이터인 summarizedStudents 배열을 정렬
+      this.summarizedStudents.sort((a, b) => {
+        let modifier = this.currentSortDir === 'asc' ? 1 : -1;
+        if (a[column] < b[column]) return -1 * modifier;
+        if (a[column] > b[column]) return 1 * modifier;
+        return 0;
+      });
+
+      // 정렬된 데이터를 페이지에 맞게 나눠서 보여주기
+      this.slicingforsummary();
+    },
+    sortTableForAll(column) {
+      if (this.currentSort === column) {
+        // 같은 열을 다시 클릭하면 정렬 방향을 변경
+        this.currentSortDir = this.currentSortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        // 새로운 열을 클릭하면 오름차순으로 정렬 시작
+        this.currentSort = column;
+        this.currentSortDir = 'asc';
+      }
+
+      // 전체 데이터인 posts 배열을 정렬
+      this.posts.sort((a, b) => {
+        let modifier = this.currentSortDir === 'asc' ? 1 : -1;
+        if (a[column] < b[column]) return -1 * modifier;
+        if (a[column] > b[column]) return 1 * modifier;
+        return 0;
+      });
+
+      // 정렬된 데이터를 페이지에 맞게 나눠서 보여줌
+      this.slicingforall();
+    },
     changePageforAll(page) {
       let toPage = 0
       if (page < 1) {
@@ -324,12 +431,14 @@ export default {
     slicingforall() {
       const start = (this.currentPageforAll - 1) * this.postsPerPage;
       const end = start + this.postsPerPage;
-      this.sclicedPosts = this.yearandCommitSort(this.posts.slice(start, end));
+      // 정렬된 posts 배열에서 현재 페이지에 해당하는 부분만 가져옴
+      this.sclicedPosts = this.posts.slice(start, end);
     },
     slicingforsummary() {
       const start = (this.currentPageforSummary - 1) * this.postsPerPage;
       const end = start + this.postsPerPage;
-      this.slicedsummarizedStudents = this.commitSort(this.summarizedStudents.slice(start, end));
+      // 정렬된 summarizedStudents에서 현재 페이지에 해당하는 부분만 가져옴
+      this.slicedsummarizedStudents = this.summarizedStudents.slice(start, end);
     },
     commitSort(li){
       li.sort(function(a,b){
@@ -587,7 +696,7 @@ export default {
       margin: 0 auto;
       position: relative;
     }
-    #switch {
+    #infoswitchstudent {
       display: none;
     }
     .switch_label {
@@ -639,18 +748,18 @@ export default {
         transition: color 0.2s linear;
       }
     }
-    #switch:checked + .switch_label .onf_btn {
+    #infoswitchstudent:checked + .switch_label .onf_btn {
       left: 70px;
       background: #fff;
       box-shadow: 1px 2px 3px #00000020;
     }
-    #switch:checked + .switch_label .toggle-total {
+    #infoswitchstudent:checked + .switch_label .toggle-total {
       color: var(--Primary_disabled, #E9D8D9);
       & path {
         stroke: #E9D8D9;
       }
     }
-    #switch:checked + .switch_label .toggle-indiv {
+    #infoswitchstudent:checked + .switch_label .toggle-indiv {
       color: var(--Primary_medium, #CB385C);
     }
   }
@@ -686,7 +795,6 @@ export default {
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
-      color: #000000;
     }
   }
 }

@@ -2,18 +2,18 @@
   <div class="container" :class="{cursorblock: pannelLoading === true}">
     <div class="navigation">
       <div class="menu">
-        <router-link v-bind:to="'/statistics/students'" class="default-router plan-text" append>전체</router-link>
+        <div class="default-router plan-text current-tab">전체</div>
       </div>
       <div class="menu">
         <router-link v-bind:to="'/statistics/course'" class="default-router plan-text" append>과목별</router-link>
       </div>
       <div class="menu">
-        <div class="default-router plan-text current-tab">학과별</div>
+        <router-link v-bind:to="'/statistics/department'" class="default-router plan-text" append>학과별</router-link>
       </div>
       <div class="toggle-box" @click.self.prevent="toggle">
         <div class="wrapper">
-          <input type="checkbox" id="switchdepartment" v-model="showTable">
-          <label for="switchdepartment" class="switch_label">
+          <input type="checkbox" id="switchstudent" v-model="showTable">
+          <label for="switchstudent" class="switch_label">
             <span class="onf_btn"></span>
             <div class="toggle_img">
                 <div class="img1">
@@ -48,13 +48,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th>학과</th>
+                      <th>학수번호</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td :title="item.department">{{ item.department }}</td>
-                        <td :title="item.students">{{item.total.students}}</td>
+                        <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                        <td :title="item.students">{{item.students}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -65,13 +65,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th>학과</th>
+                      <th>학수번호</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td :title="item.department">{{ item.department }}</td>
-                        <td :title="item.students">{{item.total.num_repos_stats.sum}}</td>
+                        <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                        <td :title="item.students">{{item.num_repos_stats.sum}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -83,13 +83,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th>학과</th>
+                      <th>학수번호</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td :title="item.department">{{ item.department }}</td>
-                        <td :title="item.total.commit">{{item.total.commit_stats.sum}}</td>
+                        <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                        <td :title="item.commit">{{item.commit_stats.sum}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -100,13 +100,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th>학과</th>
+                      <th>학수번호</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td :title="item.department">{{ item.department }}</td>
-                        <td :title="item.total.issue">{{item.total.issue_stats.sum}}</td>
+                        <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                        <td :title="item.issue">{{item.issue_stats.sum}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -118,13 +118,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th>학과</th>
+                      <th>학수번호</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td :title="item.department">{{ item.department }}</td>
-                        <td :title="item.total.pr_stats.sum">{{item.total.pr_stats.sum}}</td>
+                        <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                        <td :title="item.pr">{{item.pr_stats.sum}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -135,13 +135,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th>학과</th>
+                      <th>학수번호</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td :title="item.department">{{ item.department }}</td>
-                        <td :title="item.total.stars_stats.sum">{{item.total.stars_stats.sum}}</td>
+                        <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                        <td :title="item.issue">{{item.stars_stats.sum}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -155,7 +155,7 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학과</th>
+                      <th width="203px">학수번호</th>
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
@@ -165,13 +165,13 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.department">{{ item.department }}</td>
-                        <td width="58px" :title="item.total.num_repos_stats.q1">{{item.total.num_repos_stats.q1}}</td>
-                        <td width="58px" :title="item.total.num_repos_stats.median">{{item.total.num_repos_stats.median}}</td>
-                        <td width="58px" :title="item.total.num_repos_stats.q3">{{item.total.num_repos_stats.q3}}</td>
-                        <td width="58px" :title="item.total.num_repos_stats.max">{{item.total.num_repos_stats.max}}</td>
-                        <td width="87px" :title="item.total.num_repos_stats.mean">{{item.total.num_repos_stats.mean}}</td>
-                        <td width="87px" :title="item.total.num_repos_stats.stdDev">{{item.total.num_repos_stats.stdDev}}</td>
+                        <td width="203px" :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                        <td width="58px" :title="item.num_repos_stats.q1">{{item.num_repos_stats.q1}}</td>
+                        <td width="58px" :title="item.num_repos_stats.median">{{item.num_repos_stats.median}}</td>
+                        <td width="58px" :title="item.num_repos_stats.q3">{{item.num_repos_stats.q3}}</td>
+                        <td width="58px" :title="item.num_repos_stats.max">{{item.num_repos_stats.max}}</td>
+                        <td width="87px" :title="item.num_repos_stats.mean">{{item.num_repos_stats.mean}}</td>
+                        <td width="87px" :title="item.num_repos_stats.stdDev">{{item.num_repos_stats.stdDev}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -182,7 +182,7 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학과</th>
+                      <th width="203px">학수번호</th>
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
@@ -192,13 +192,13 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.department">{{ item.department }}</td>
-                        <td width="58px" :title="item.total.commit_stats.q1">{{item.total.commit_stats.q1}}</td>
-                        <td width="58px" :title="item.total.commit_stats.median">{{item.total.commit_stats.median}}</td>
-                        <td width="58px" :title="item.total.commit_stats.q3">{{item.total.commit_stats.q3}}</td>
-                        <td width="58px" :title="item.total.commit_stats.max">{{item.total.commit_stats.max}}</td>
-                        <td width="87px" :title="item.total.commit_stats.mean">{{item.total.commit_stats.mean}}</td>
-                        <td width="87px" :title="item.total.commit_stats.stdDev">{{item.total.commit_stats.stdDev}}</td>
+                        <td width="203px" :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                        <td width="58px" :title="item.commit_stats.q1">{{item.commit_stats.q1}}</td>
+                        <td width="58px" :title="item.commit_stats.median">{{item.commit_stats.median}}</td>
+                        <td width="58px" :title="item.commit_stats.q3">{{item.commit_stats.q3}}</td>
+                        <td width="58px" :title="item.commit_stats.max">{{item.commit_stats.max}}</td>
+                        <td width="87px" :title="item.commit_stats.mean">{{item.commit_stats.mean}}</td>
+                        <td width="87px" :title="item.commit_stats.stdDev">{{item.commit_stats.stdDev}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -210,7 +210,7 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학과</th>
+                      <th width="203px">학수번호</th>
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
@@ -220,13 +220,13 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.department">{{ item.department }}</td>
-                        <td width="58px" :title="item.total.issue_stats.q1">{{item.total.issue_stats.q1}}</td>
-                        <td width="58px" :title="item.total.issue_stats.median">{{item.total.issue_stats.median}}</td>
-                        <td width="58px" :title="item.total.issue_stats.q3">{{item.total.issue_stats.q3}}</td>
-                        <td width="58px" :title="item.total.issue_stats.max">{{item.total.issue_stats.max}}</td>
-                        <td width="87px" :title="item.total.issue_stats.mean">{{item.total.issue_stats.mean}}</td>
-                        <td width="87px" :title="item.total.issue_stats.stdDev">{{item.total.issue_stats.stdDev}}</td>
+                        <td width="203px" :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                        <td width="58px" :title="item.issue_stats.q1">{{item.issue_stats.q1}}</td>
+                        <td width="58px" :title="item.issue_stats.median">{{item.issue_stats.median}}</td>
+                        <td width="58px" :title="item.issue_stats.q3">{{item.issue_stats.q3}}</td>
+                        <td width="58px" :title="item.issue_stats.max">{{item.issue_stats.max}}</td>
+                        <td width="87px" :title="item.issue_stats.mean">{{item.issue_stats.mean}}</td>
+                        <td width="87px" :title="item.issue_stats.stdDev">{{item.issue_stats.stdDev}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -237,7 +237,7 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학과</th>
+                      <th width="203px">학수번호</th>
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
@@ -247,13 +247,12 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.department">{{ item.department }}</td>
-                        <td width="58px" :title="item.total.pr_stats.q1">{{item.total.pr_stats.q1}}</td>
-                        <td width="58px" :title="item.total.pr_stats.median">{{item.total.pr_stats.median}}</td>
-                        <td width="58px" :title="item.total.pr_stats.q3">{{item.total.pr_stats.q3}}</td>
-                        <td width="58px" :title="item.total.pr_stats.max">{{item.total.pr_stats.max}}</td>
-                        <td width="87px" :title="item.total.pr_stats.mean">{{item.total.pr_stats.mean}}</td>
-                        <td width="87px" :title="item.total.pr_stats.stdDev">{{item.total.pr_stats.stdDev}}</td>
+                        <td width="203px" :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                        <td width="58px" :title="item.pr_stats.q1">{{item.pr_stats.q1}}</td>
+                        <td width="58px" :title="item.pr_stats.median">{{item.pr_stats.median}}</td>
+                        <td width="58px" :title="item.pr_stats.max">{{item.pr_stats.max}}</td>
+                        <td width="87px" :title="item.pr_stats.mean">{{item.pr_stats.mean}}</td>
+                        <td width="87px" :title="item.pr_stats.stdDev">{{item.pr_stats.stdDev}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -265,7 +264,7 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학과</th>
+                      <th width="203px">학수번호</th>
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
@@ -275,43 +274,18 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.department">{{ item.department }}</td>
-                        <td width="58px" :title="item.total.stars_stats.q1">{{item.total.stars_stats.q1}}</td>
-                        <td width="58px" :title="item.total.stars_stats.median">{{item.total.stars_stats.median}}</td>
-                        <td width="58px" :title="item.total.stars_stats.q3">{{item.total.stars_stats.q3}}</td>
-                        <td width="58px" :title="item.total.stars_stats.max">{{item.total.stars_stats.max}}</td>
-                        <td width="87px" :title="item.total.stars_stats.mean">{{item.total.stars_stats.mean}}</td>
-                        <td width="87px" :title="item.total.stars_stats.stdDev">{{item.total.stars_stats.stdDev}}</td>
+                        <td width="203px" :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                        <td width="58px" :title="item.stars_stats.q1">{{item.stars_stats.q1}}</td>
+                        <td width="58px" :title="item.stars_stats.median">{{item.stars_stats.median}}</td>
+                        <td width="58px" :title="item.stars_stats.q3">{{item.stars_stats.q3}}</td>
+                        <td width="58px" :title="item.stars_stats.max">{{item.stars_stats.max}}</td>
+                        <td width="87px" :title="item.stars_stats.mean">{{item.stars_stats.mean}}</td>
+                        <td width="87px" :title="item.stars_stats.stdDev">{{item.stars_stats.stdDev}}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
-              <!-- <div class="sub-table-right">
-                <div class="title">Total Repos</div>
-                <div class="sub-table">
-                  <table>
-                    <thead class="table-header-wrapper">
-                      <th width="203px">학과</th>
-                      <th width="58px">25%</th>
-                      <th width="58px">50%</th>
-                      <th width="58px">75%</th>
-                      <th width="87px">평균</th>
-                      <th width="87px">표준편차</th>
-                    </thead>
-                    <tbody class="table-body-wrapper">
-                      <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.department">{{ item.department }}</td>
-                        <td width="58px" :title="item.num_repos_stats.q1">{{item.num_repos_stats.q1}}</td>
-                        <td width="58px" :title="item.num_repos_stats.median">{{item.num_repos_stats.median}}</td>
-                        <td width="58px" :title="item.num_repos_stats.q3">{{item.num_repos_stats.q3}}</td>
-                        <td width="87px" :title="item.num_repos_stats.mean">{{item.num_repos_stats.mean}}</td>
-                        <td width="87px" :title="item.num_repos_stats.stdDev">{{item.num_repos_stats.stdDev}}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div> -->
             </div>
           </transition>
         </div>
@@ -324,7 +298,7 @@
                     활동 학생 수
                   </div>
                   <!-- 학생 수 차트 -->
-                  <DepartmentGroupBarCharts 
+                  <StudentGroupBarCharts 
                     class="charts"
                     :data="posts" 
                     chartTitle="Number of Students by Year" 
@@ -337,11 +311,11 @@
                     Total Repos
                   </div>
                   <!-- Repos 차트 -->
-                  <DepartmentGroupBarCharts 
+                  <StudentGroupBarCharts 
                     :data="posts" 
                     chartTitle="Number of Repos by Year" 
                     yAxisTitle="Repos 수"
-                    dataKey="num_repos_stats.sum"
+                    dataKey="num_repos"
                   />
                 </div>
               </div>
@@ -351,11 +325,11 @@
                     Total Commits
                   </div>
                   <!-- Commits 차트 -->
-                  <DepartmentGroupBarCharts 
+                  <StudentGroupBarCharts 
                     :data="posts" 
                     chartTitle="Number of Commits by Year" 
                     yAxisTitle="Commits 수"
-                    dataKey="commit_stats.sum"
+                    dataKey="commit"
                   />
                 </div>
                 <div class="right-container">
@@ -363,11 +337,11 @@
                     Total Issues
                   </div>
                   <!-- Issues 차트 -->
-                  <DepartmentGroupBarCharts 
+                  <StudentGroupBarCharts 
                     :data="posts" 
                     chartTitle="Number of Issues by Year" 
                     yAxisTitle="Issues 수"
-                    dataKey="issue_stats.sum"
+                    dataKey="issue"
                   />
                 </div>
               </div>
@@ -377,11 +351,11 @@
                     Total PRs
                   </div>
                   <!-- PRs 차트 -->
-                  <DepartmentGroupBarCharts 
+                  <StudentGroupBarCharts 
                     :data="posts" 
                     chartTitle="Number of PRs by Year" 
                     yAxisTitle="PR 수"
-                    dataKey="pr_stats.sum"
+                    dataKey="pr"
                   />
                 </div>
                 <div class="right-container">
@@ -389,11 +363,11 @@
                     Total Stars
                   </div>
                   <!-- Stars 차트 -->
-                  <DepartmentGroupBarCharts 
+                  <StudentGroupBarCharts 
                     :data="posts" 
                     chartTitle="Number of Stars by Year" 
                     yAxisTitle="Star 수"
-                    dataKey="stars_stats.sum"
+                    dataKey="stars"
                   />
                 </div>
               </div>
@@ -405,7 +379,7 @@
                     Total Repos
                   </div>
                   <!-- Repos 차트 -->
-                  <DepartmentGroupBoxCharts 
+                  <StudentGroupBoxCharts 
                     :data="posts" 
                     chartTitle="Number of Repos by Year" 
                     yAxisTitle="Repos 수"
@@ -417,7 +391,7 @@
                     Total Commits
                   </div>
                   <!-- Commits 차트 -->
-                  <DepartmentGroupBoxCharts 
+                  <StudentGroupBoxCharts 
                     :data="posts" 
                     chartTitle="Number of Commits by Year" 
                     yAxisTitle="Commits 수"
@@ -431,7 +405,7 @@
                     Total Issues
                   </div>
                   <!-- Issues 차트 -->
-                  <DepartmentGroupBoxCharts 
+                  <StudentGroupBoxCharts 
                     :data="posts" 
                     chartTitle="Number of Issues by Year" 
                     yAxisTitle="Issues 수"
@@ -443,7 +417,7 @@
                     Total PRs
                   </div>
                   <!-- PRs 차트 -->
-                  <DepartmentGroupBoxCharts 
+                  <StudentGroupBoxCharts 
                     :data="posts" 
                     chartTitle="Number of PRs by Year" 
                     yAxisTitle="PR 수"
@@ -457,7 +431,7 @@
                     Total Stars
                   </div>
                   <!-- Stars 차트 -->
-                  <DepartmentGroupBoxCharts 
+                  <StudentGroupBoxCharts 
                     :data="posts" 
                     chartTitle="Number of Stars by Year" 
                     yAxisTitle="Star 수"
@@ -474,15 +448,15 @@
 </template>
 
 <script>
-import DepartmentGroupBarCharts from '@/views/StatisticsCharts/Departments/DepartmentGroupBarCharts.vue'
-import DepartmentGroupBoxCharts from '@/views/StatisticsCharts/Departments/DepartmentGroupBoxCharts.vue'
+import StudentGroupBarCharts from '@/views/StatisticsCharts/Students/StudentGroupBarCharts.vue'
+import StudentGroupBoxCharts from '@/views/StatisticsCharts/Students/StudentGroupBoxCharts.vue'
 export default {
-  name: 'StatisticsDepartment',
-  components: {
-    DepartmentGroupBarCharts,
-    DepartmentGroupBoxCharts,
-  },
+  name: 'StatisticsStudent',
   props: ["course"],
+  components: {
+    StudentGroupBarCharts,
+    StudentGroupBoxCharts,
+  },
   data() {
     return {
       showOverlay: false,
@@ -495,7 +469,7 @@ export default {
       postsPerPage: 10,
       header : [['개설학기', '9%'], 
                 ['과목명', '14%'], 
-                ['학과', '11%'], 
+                ['학수번호', '11%'], 
                 ['지도교수', '11%'], 
                 ['수강생', '11%'],
                 ['Commit', '11%'], 
@@ -551,8 +525,7 @@ export default {
     course(to, from) {
       const vm = this
       this.posts = vm.course
-      // console.log(JSON.stringify(this.posts))
-
+      // console.log(this.posts)
     },
   }
 };
@@ -591,10 +564,67 @@ export default {
       }
     }
   }
+
   .contents-box {
     padding: 0 56px;
     .student-sub-toggle{
-        padding-top: 20px;
+      padding-top: 20px;
+      width: 200px;
+      height: 40px;
+      display: inline-flex;
+      
+      .all, .each {
+        width: 100px;
+        height: 40px;
+        text-align: center;
+        line-height: 40px;
+        border-radius: 30px;
+        background: #FFEAEC;
+        color: var(--Primary_medium, #CB385C);
+        font-family: Pretendard;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .all-unclick {
+        background: #FFF;
+        color: #CDCDCD;
+      }
+      .all-click {
+        background: #FFEAEC;
+        color: var(--Primary_medium, #CB385C);
+      }
+      .each-unclick {
+        background: #FFF;
+        color: #CDCDCD;
+      }
+      .each-click {
+        background: #FFEAEC;
+        color: var(--Primary_medium, #CB385C);
+      }
+    } 
+
+    .slide-fade-enter-active {
+      transition: all 0.3s ease-out;
+    }
+
+    .slide-fade-leave-active {
+      transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+    }
+
+    .slide-fade-enter-from,
+    .slide-fade-leave-to {
+      transform: translateX(50px);
+      opacity: 0;
+    }
+    .table {
+      margin: 0 0 20px 0;
+      padding-bottom: 20px;
+      /* border: 1px solid #dce2ed; */
+      border-radius: 4px;
+      height: 100%;
+      .student-sub-toggle{
         width: 200px;
         height: 40px;
         display: inline-flex;
@@ -630,25 +660,6 @@ export default {
           color: var(--Primary_medium, #CB385C);
         }
       } 
-    .slide-fade-enter-active {
-      transition: all 0.3s ease-out;
-    }
-
-    .slide-fade-leave-active {
-      transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
-    }
-
-    .slide-fade-enter-from,
-    .slide-fade-leave-to {
-      transform: translateX(50px);
-      opacity: 0;
-    }
-    .table {
-      margin: 0 0 20px 0;
-      padding-bottom: 20px;
-      /* border: 1px solid #dce2ed; */
-      border-radius: 4px;
-      height: 100%;
 
       .all-table, .each-table {
         /* margin-top: 40px; */
@@ -831,13 +842,13 @@ export default {
     margin-left: auto;
     .wrapper {
       width: 150px;
-      height: 44px;
+      height: 58px;
       text-align: center;
       margin: 0 auto;
       position: relative;
     }
 
-    #switchdepartment {
+    #switchstudent {
       display: none;
     }
 
@@ -895,17 +906,17 @@ export default {
             margin-right: auto;
         }
     }
-    #switchdepartment:checked + .switch_label .onf_btn {
+    #switchstudent:checked + .switch_label .onf_btn {
         left: 70px;
         background: #fff;
         box-shadow: 1px 2px 3px #00000020;
     }
-    #switchdepartment:checked + .switch_label .toggle-image-1 {
+    #switchstudent:checked + .switch_label .toggle-image-1 {
         & path {
             stroke: #E9D8D9;
         }
     }
-    #switchdepartment:checked + .switch_label .toggle-image-2 {
+    #switchstudent:checked + .switch_label .toggle-image-2 {
         & path {
             stroke: #CB385C;
         }
@@ -942,25 +953,6 @@ export default {
   }
 }
 
-.chart {
-  margin: 20px 0;
-  padding: 20px 0;
-  /* border: 1px solid #dce2ed; */
-  border-radius: 4px;
-  height: 100%;
-  .year-chart-container {
-  
-    
-  }
-  .category-chart-container {
-
-  }
-  & .title {
-    font-size: 22px;
-    font-weight: 700;
-    
-  }
-}
 .chart {
   margin: 20px 0;
   padding: 20px 0;

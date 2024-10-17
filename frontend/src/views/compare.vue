@@ -98,11 +98,11 @@
           </div>
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="coursenameDropped">
-              <li class="item" v-for="(course, index) in courseFilterCourseNameCheckbox" :key="index">
+              <li class="item" v-for="(coursename, index) in courseFilterCourseNameCheckbox" :key="index">
                 <label :for="'course' + index" class="checkbox-label">
-                  <input :id="'course' + index" type="checkbox" class="checkbox" :value="course.course_name" v-model="selectedCourseNameItemsforCourse" @change="courseNameFilterEventChangeforCourse(semester, $event)">
-                  <p v-if="course.course_name === '기타' || course.course_name === ''" class="label-text">기타</p>
-                  <p v-else class="label-text">{{course.course_name}} ({{course.course_id}})</p>
+                  <input :id="'course' + index" type="checkbox" class="checkbox" :value="coursename" v-model="selectedCourseNameItemsforCourse" @change="courseNameFilterEventChangeforCourse(semester, $event)">
+                  <p v-if="coursename === '기타' || coursename === ''" class="label-text">기타</p>
+                  <p v-else class="label-text">{{coursename}}</p>
                 </label>
               </li>
             </ul>
@@ -208,11 +208,11 @@
           </div>
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="coursenameDropped">
-              <li class="item" v-for="(course, index) in studentsFilterCourseNameCheckbox" :key="index">
+              <li class="item" v-for="(coursename, index) in studentsFilterCourseNameCheckbox" :key="index">
                 <label :for="'course-student' + index" class="checkbox-label">
-                  <input :id="'course-student' + index" type="checkbox" class="checkbox" :value="course.course_name" v-model="selectedCourseNameItemsforStudents" @change="courseNameFilterEventChangeforStudents(semester, $event)">
-                  <p v-if="course.course_name === '기타' || course.course_name === ''" class="label-text">기타</p>
-                  <p v-else class="label-text">{{course.course_name}} ({{course.course_id}})</p>
+                  <input :id="'course-student' + index" type="checkbox" class="checkbox" :value="coursename" v-model="selectedCourseNameItemsforStudents" @change="courseNameFilterEventChangeforStudents(semester, $event)">
+                  <p v-if="coursename === '기타' || coursename === ''" class="label-text">기타</p>
+                  <p v-else class="label-text">{{coursename}}</p>
                 </label>
               </li>
             </ul>
@@ -226,9 +226,9 @@
       <div class="title">
         {{titles}}
       </div>
-      <InformationCourse v-show="$route.path === '/info/course'" :postss="courseFilteredPosts"></InformationCourse>
-      <InformationStudent v-show="$route.path === '/info/students'" :postss="studentsFilteredPosts"></InformationStudent>
-      <InformationRepos v-show="$route.path === '/info/repos'" :postss="repoPosts"></InformationRepos>
+      <router-view :postss="courseFilteredPosts" v-if="$route.path === '/info/course'"></router-view>
+      <router-view :postss="studentsFilteredPosts" @fetch="setInit" v-if="$route.path === '/info/students'"></router-view>
+      <router-view :postss="repoFilteredPosts" @fetch="setInit" v-if="$route.path === '/info/repos'"></router-view>
     </div>
   </div> 
 </template>
@@ -236,15 +236,8 @@
 <script>
 import {getCourseInfo, getRepoInfo} from '@/api.js'
 import InformationCourse from '@/views/InformationComponents/InformationCourse.vue'
-import InformationRepos from '@/views/InformationComponents/InformationRepos.vue'
-import InformationStudent from '@/views/InformationComponents/InformationStudent.vue'
 export default {
   name: 'Information',
-  components: {
-    InformationCourse,
-    InformationRepos,
-    InformationStudent
-  },
   data() {
     return {
       titles: '',
@@ -284,15 +277,10 @@ export default {
     };
   },
   mounted() {
-    // this.setInit()
-  },
-  created() {
     this.setInit()
+    
   },
   computed: {
-    isVisible() {
-
-    }
   },
   methods: {
     getRouteType () {
@@ -306,26 +294,12 @@ export default {
         return 3
       }
     },
-    async currentPost() {
-      console.log('helelell')
-      console.log(this.coursePosts)
-      switch (this.$route.path) {
-        case '/info/course':
-          return this.coursePosts;
-        case '/info/students':
-          return this.studentsFilteredPosts;
-        case '/info/repos':
-          return this.coursePosts;
-        default:
-          return false;
-      }
-    },
     async setInit() {
       if(this.$route.name === "InformationCourse") {
-        this.titles = '과목 정보'
+        this.titles = '과목 통계'
       }
       if (this.coursePosts.length === 0) {
-        await getCourseInfo().then(res => {
+        getCourseInfo().then(res => {
           this.coursePosts = res.data
           this.coursePosts = this.coursePreprocessingTableData(this.coursePosts)
           this.courseFilteredPosts = this.coursePosts
@@ -337,10 +311,10 @@ export default {
         })
       }
       if(this.$route.name === "InformationStudent") {
-        this.titles = '학생 정보'
+        this.titles = '학생 통계'
       }
       if (this.studentsPosts.length === 0) {
-        await getCourseInfo().then(res => {
+        getCourseInfo().then(res => {
           this.studentsPosts = res.data
           this.studentsPosts = this.studentsPreprocessingTableData(this.studentsPosts)
           this.studentsPosts = this.yearandCommitSort(this.studentsPosts)
@@ -352,9 +326,8 @@ export default {
         })
       }
       if(this.$route.name === "InformationRepos") {
-        this.titles = '레포지토리 정보'
+        this.titles = '레포지토리 통계'
       }
-      // this.repoPosts.length !== 0 조건 없으면 다른 페이지 갔다와야 데이터 로딩됨
       if(this.repoPosts.length === 0 || this.repoPosts.length !== 0 ) {
         getRepoInfo().then(res => {
           this.repoPosts = res.data
@@ -375,49 +348,18 @@ export default {
     courseFiltering(courses) {
       const yearset = new Set(courses.map(row=>row.year));
       this.courseFilterYearsCheckbox = [...yearset];
-
       const semesterset = new Set(courses.map(row=>row.semester));
       this.courseFilterSemesterCheckbox = [...semesterset];
-
-      // const courseset = new Set(courses.map(row=>row.course_name));
-      // course 정보에 course id도 추가, 중복 제거 기능 추가
-      const courseMap = new Map();
-      courses.forEach(course => {
-        if (!courseMap.has(course.course_id)) {
-          courseMap.set(course.course_id, {
-            course_name: course.course_name,
-            course_id: course.course_id
-          });
-        }
-      });
-      // 정렬 기능 추가
-      this.courseFilterCourseNameCheckbox = Array.from(courseMap.values()).sort((a, b) => {
-        return a.course_name.localeCompare(b.course_name, 'ko', { numeric: true, sensitivity: 'base' });
-      });
+      const courseset = new Set(courses.map(row=>row.course_name));
+      this.courseFilterCourseNameCheckbox = [...courseset];
     },
-    
     studentsFiltering(students) {
       const yearset = new Set(students.map(row=>row.year));
       this.studentsFilterYearsCheckbox = [...yearset];
-
       const semesterset = new Set(students.map(row=>row.semester));
       this.studentsFilterSemesterCheckbox = [...semesterset];
-
-      // const courseset = new Set(students.map(row=>row.course_name));
-      // course id도 추가
-      const courseMap = new Map();
-      students.forEach(student => {
-        if (!courseMap.has(student.course_id)) {
-          courseMap.set(student.course_id, {
-            course_name: student.course_name,
-            course_id: student.course_id
-          });
-        }
-      });
-      // 정렬 기능 추가
-      this.studentsFilterCourseNameCheckbox = Array.from(courseMap.values()).sort((a, b) => {
-        return a.course_name.localeCompare(b.course_name, 'ko', { numeric: true, sensitivity: 'base' });
-      });
+      const courseset = new Set(students.map(row=>row.course_name));
+      this.studentsFilterCourseNameCheckbox = [...courseset];
     },
     coursePreprocessingTableData(datalist) {
       var li = []
@@ -504,8 +446,6 @@ export default {
           newData.star_count = element.star_count
           newData.language = element.language
           newData.contributors = element.contributors
-          newData.url = element.url
-          newData.contributors_list = element.contributors_list;
           li.push(newData)
       });
       console.log('done')
@@ -642,6 +582,7 @@ export default {
   watch: {
     $route(to, from) {
       if (to.path !== from.path) {
+        console.log(this.repoPosts)
         this.setInit()
       }
     }
@@ -658,7 +599,7 @@ export default {
   width: 100%;
   margin-top: 120px;
   height: 100vh;
-  background: #FFF;
+  background: var(--White, #FCFCFC);
   overflow: hidden; /* Ensure no overflow issues */
 }
 

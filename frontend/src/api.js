@@ -30,6 +30,10 @@ export function getCourseTotalInfo() {
   return ajax(ip_for_develop + '/account/student_read_total', 'get')
 }
 
+export function getCourseStudentInfo() {
+  return ajax(ip_for_develop + '/course/course_department_count', 'get')
+}
+
 export function postCourseUpload(formData) {
   return ajax(ip_for_develop + '/account/student_excel_import', 'post', { data: formData, headers })
 }

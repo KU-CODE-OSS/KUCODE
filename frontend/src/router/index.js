@@ -3,12 +3,14 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Dashboard from '@/views/Dashboard.vue';
 import Information from '@/views/Information.vue';
 import Statistics from '@/views/Statistics.vue';
-import StatisticsTotal from '@/views/StatisticsComponents/StatisticsTotal.vue';
-import StatisticsCourse from '@/views/StatisticsComponents/StatisticsCourse.vue';
-import StatisticsDepartment from '@/views/StatisticsComponents/StatisticsDepartment.vue';
-import InformationCourse from '@/views/InformationComponents/InformationCourse.vue'
-import InformationRepos from '@/views/InformationComponents/InformationRepos.vue'
-import InformationStudent from '@/views/InformationComponents/InformationStudent.vue'
+
+const StatisticsCourse = () => import('@/views/StatisticsComponents/StatisticsCourse.vue');
+const StatisticsStudent = () => import('@/views/StatisticsComponents/StatisticsStudent.vue');
+const StatisticsDepartment = () => import('@/views/StatisticsComponents/StatisticsDepartment.vue');
+
+const InformationCourse = () => import('@/views/InformationComponents/InformationCourse.vue')
+const InformationRepos   = () => import('@/views/InformationComponents/InformationRepos.vue')
+const InformationStudent = () => import('@/views/InformationComponents/InformationStudent.vue')
 import QnA from '../views/QnA.vue'
 
 const routes = [
@@ -52,18 +54,18 @@ const routes = [
     children: [
       { // default path
         path: '',
-        redirect: '/statistics/total',
-      },
-      {
-        path: 'total',
-        name: 'StatisticsTotal',
-        component: StatisticsTotal,
-        props: true,
+        redirect: '/statistics/students',
       },
       {
         path: 'course',
         name: 'StatisticsCourse',
         component: StatisticsCourse,
+        props: true,
+      },
+      {
+        path: 'students',
+        name: 'StatisticsStudent',
+        component: StatisticsStudent,
       },
       {
         path: 'department',
@@ -86,22 +88,45 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
 
-  const defaultQuery = { page: '1', type: 'summary' };
+  const defaultQueryforInformation = { page: '1', type: 'summary' };
+  const defaultQueryforStatistics = { type: 'all' };
+  
 
   if (to.name === "InformationStudent") {
     const query = { ...to.query };
     if (!query.page) {
-      query.page = defaultQuery.page;
+      query.page = defaultQueryforInformation.page;
     }
     if (!query.type) {
-      query.type = defaultQuery.type;
+      query.type = defaultQueryforInformation.type;
     }
     if (query.page !== to.query.page || query.type !== to.query.type) {
       next({ name: to.name, params: to.params, query: query });
     } else {
       next();
     }
-  } else {
+  } else if (to.name === "StatisticsStudent") {
+    const query = { ...to.query };
+    if (!query.type) {
+      query.type = defaultQueryforStatistics.type;
+    }
+    if (query.type !== to.query.type) {
+      next({ name: to.name, params: to.params, query: query });
+    } else {
+      next();
+    }
+  } else if (to.name === "StatisticsDepartment") {
+    const query = { ...to.query };
+    if (!query.type) {
+      query.type = defaultQueryforStatistics.type;
+    }
+    if (query.type !== to.query.type) {
+      next({ name: to.name, params: to.params, query: query });
+    } else {
+      next();
+    }
+  }
+  else {
     next();
   }
 });

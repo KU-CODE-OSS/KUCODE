@@ -11,6 +11,10 @@ import navigation_bar from './components/navigation_bar.vue';
 </template>
 <style>
  .app {
-  
+  background: #FFF;
  }
+html, 
+body {
+  background: #FFF;
+}
 </style>

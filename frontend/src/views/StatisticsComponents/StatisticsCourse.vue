@@ -1,8 +1,8 @@
 <template>
-  <div class="container">
+  <div class="container" :class="{cursorblock: pannelLoading === true}">
     <div class="navigation">
       <div class="menu">
-        <router-link v-bind:to="'/statistics/total'" class="default-router plan-text" append>전체</router-link>
+        <router-link v-bind:to="'/statistics/students'" class="default-router plan-text" append>전체</router-link>
       </div>
       <div class="menu">
         <div class="default-router plan-text current-tab">과목별</div>
@@ -10,16 +10,10 @@
       <div class="menu">
         <router-link v-bind:to="'/statistics/department'" class="default-router plan-text" append>학과별</router-link>
       </div>
-      <div class="search-box">
-      <div class="form__group field">
-        <input type="input" class="form-field" :value="searchField" />
-        <label class="form__label">SEARCH</label>
-      </div>
-      </div>
       <div class="toggle-box" @click.self.prevent="toggle">
         <div class="wrapper">
-          <input type="checkbox" id="switch" v-model="showTable">
-          <label for="switch" class="switch_label">
+          <input type="checkbox" id="switchcourse" v-model="showTable">
+          <label for="switchcourse" class="switch_label">
             <span class="onf_btn"></span>
             <div class="toggle_img">
                 <div class="img1">
@@ -42,27 +36,216 @@
     <div class="navigation_underline"></div>
     <div class="contents-box">
       <transition name="slide-fade" mode="out-in">
-        <div v-if="!showTable" class="table">Table Content</div>
-        <div v-else class="chart">
-          <div class="year-chart-container">
-            <div class="chart-title">연도별 데이터</div>
-            <div class="charts">
-              <div class="chart-container">
-                <BarChart1></BarChart1>
+        <div v-if="!showTable" class="table">
+          <div class="course-title">{{title}}</div>
+          <div class="all-table">
+            <div class="sub-table-left">
+              <div class="title">활동 학생 수</div>
+              <div class="sub-table">
+                <table>
+                  <thead class="table-header-wrapper">
+                    <th>학수번호</th>
+                    <th>합계</th>
+                  </thead>
+                  <tbody class="table-body-wrapper">
+                    <tr v-for="(item, index) in posts" :key="item[0]">
+                      <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                      <td :title="item.students">{{item.students}}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div class="chart-container">
-                <BarChart2></BarChart2>
+            </div>
+            <div class="sub-table-right">
+              <div class="title">학생별 Repos</div>
+              <div class="sub-table">
+                <table>
+                  <thead class="table-header-wrapper">
+                    <th>합계</th>
+                    <th>최솟값</th>
+                    <th>최댓값</th>
+                    <th>평균</th>
+                  </thead>
+                  <tbody class="table-body-wrapper">
+                    <tr v-for="(item, index) in posts" :key="item[0]">
+                      <td :title="item.students">{{item.num_repos_stats.sum}}</td>
+                      <td :title="item.students">{{item.num_repos_stats.min}}</td>
+                      <td :title="item.students">{{item.num_repos_stats.max}}</td>
+                      <td :title="item.students">{{item.num_repos_stats.mean}}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div class="chart-container">
-                <BarChart3></BarChart3>
+            </div>
+            <!-- 줄 바뀜 -->
+            <div class="sub-table-left">
+              <div class="title">학생별 Commits</div>
+              <div class="sub-table">
+                <table>
+                  <thead class="table-header-wrapper">
+                    <th>합계</th>
+                    <th>최솟값</th>
+                    <th>최댓값</th>
+                    <th>평균</th>
+                  </thead>
+                  <tbody class="table-body-wrapper">
+                    <tr v-for="(item, index) in posts" :key="item[0]">
+                      <td :title="item.students">{{item.commit_stats.sum}}</td>
+                      <td :title="item.students">{{item.commit_stats.min}}</td>
+                      <td :title="item.students">{{item.commit_stats.max}}</td>
+                      <td :title="item.students">{{item.commit_stats.mean}}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div class="chart-container">
-                <BarChart4></BarChart4>
+            </div>
+            <div class="sub-table-right">
+              <div class="title">학생별 Issues</div>
+              <div class="sub-table">
+                <table>
+                  <thead class="table-header-wrapper">
+                    <th>합계</th>
+                    <th>최솟값</th>
+                    <th>최댓값</th>
+                    <th>평균</th>
+                  </thead>
+                  <tbody class="table-body-wrapper">
+                    <tr v-for="(item, index) in posts" :key="item[0]">
+                      <td :title="item.students">{{item.issue_stats.sum}}</td>
+                      <td :title="item.students">{{item.issue_stats.min}}</td>
+                      <td :title="item.students">{{item.issue_stats.max}}</td>
+                      <td :title="item.students">{{item.issue_stats.mean}}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <!-- 줄 바뀜 -->
+            <div class="sub-table-left">
+              <div class="title">학생별 PRs</div>
+              <div class="sub-table">
+                <table>
+                  <thead class="table-header-wrapper">
+                    <th>합계</th>
+                    <th>최솟값</th>
+                    <th>최댓값</th>
+                    <th>평균</th>
+                  </thead>
+                  <tbody class="table-body-wrapper">
+                    <tr v-for="(item, index) in posts" :key="item[0]">
+                      <td :title="item.students">{{item.pr_stats.sum}}</td>
+                      <td :title="item.students">{{item.pr_stats.min}}</td>
+                      <td :title="item.students">{{item.pr_stats.max}}</td>
+                      <td :title="item.students">{{item.pr_stats.mean}}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="sub-table-right">
+              <div class="title">학생별 Stars</div>
+              <div class="sub-table">
+                <table>
+                  <thead class="table-header-wrapper">
+                    <th>합계</th>
+                    <th>최솟값</th>
+                    <th>최댓값</th>
+                    <th>평균</th>
+                  </thead>
+                  <tbody class="table-body-wrapper">
+                    <tr v-for="(item, index) in posts" :key="item[0]">
+                      <td :title="item.students">{{item.stars_stats.sum}}</td>
+                      <td :title="item.students">{{item.stars_stats.min}}</td>
+                      <td :title="item.students">{{item.stars_stats.max}}</td>
+                      <td :title="item.students">{{item.stars_stats.mean}}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-          <div class="category-chart-container">
-            <div class="chart-title">카테고리별 상세 데이터</div>
+        </div>
+        <div v-else class="chart">
+          <div v-if="this.course_id === ''" class="plz-select-course">과목을 선택하세요</div>
+          <div v-else>
+            <div class="horizontal-chart-container">
+              <div class="left-container">
+                <div class="chart-title">
+                  활동 학생 수
+                </div>
+                <!-- 학생 수 차트 -->
+                <CourseGroupStudentBarCharts 
+                  class="charts"
+                  chartTitle="Number of Students by Year" 
+                  yAxisTitle="학생 수"
+                  :courseId=this.course_id 
+                />
+              </div>
+              <div class="right-container">
+                <div class="chart-title">
+                  Total Repos
+                </div>
+                <!-- Repos 차트 -->
+                <CourseGroupLineCharts 
+                  :data="posts" 
+                  chartTitle="Number of Repos by Year" 
+                  yAxisTitle="Repos 수"
+                  dataKey="num_repos_stats"
+                />
+              </div>
+            </div>
+            <div class="horizontal-chart-container">
+              <div class="left-container">
+                <div class="chart-title">
+                  Total Commits
+                </div>
+                <!-- Commits 차트 -->
+                <CourseGroupLineCharts 
+                  :data="posts" 
+                  chartTitle="Number of Commits by Year" 
+                  yAxisTitle="Commits 수"
+                  dataKey="commit_stats"
+                />
+              </div>
+              <div class="right-container">
+                <div class="chart-title">
+                  Total Issues
+                </div>
+                <!-- Issues 차트 -->
+                <CourseGroupLineCharts 
+                  :data="posts" 
+                  chartTitle="Number of Issues by Year" 
+                  yAxisTitle="Issues 수"
+                  dataKey="issue_stats"
+                />
+              </div>
+            </div>
+            <div class="horizontal-chart-container">
+              <div class="left-container">
+                <div class="chart-title">
+                  Total PRs
+                </div>
+                <!-- PRs 차트 -->
+                <CourseGroupLineCharts 
+                  :data="posts" 
+                  chartTitle="Number of PRs by Year" 
+                  yAxisTitle="PR 수"
+                  dataKey="pr_stats"
+                />
+              </div>
+              <div class="right-container">
+                <div class="chart-title">
+                  Total Stars
+                </div>
+                <!-- Stars 차트 -->
+                <CourseGroupLineCharts 
+                  :data="posts" 
+                  chartTitle="Number of Stars by Year" 
+                  yAxisTitle="Star 수"
+                  dataKey="stars_stats"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </transition>
@@ -71,80 +254,105 @@
 </template>
 
 <script>
-import BarChart1 from '../StudentCharts/BarCharts1.vue';
-import BarChart2 from '../StudentCharts/BarCharts2.vue';
-import BarChart3 from '../StudentCharts/BarCharts3.vue';
-import BarChart4 from '../StudentCharts/BarCharts4.vue';
-
+import CourseGroupLineCharts from '@/views/StatisticsCharts/Courses/CourseGroupLineCharts.vue'
+import CourseGroupStudentBarCharts from '@/views/StatisticsCharts/Courses/CourseGroupStudentBarCharts.vue'
 export default {
-  name: 'StaticsTotal',
+  name: 'StatisticsCourse',
+  props: ["course"],
   components: {
-    BarChart1,
-    BarChart2,
-    BarChart3,
-    BarChart4,
+    CourseGroupLineCharts,
+    CourseGroupStudentBarCharts
   },
   data() {
     return {
-            option: {
-              textStyle: {
-                fontFamily: 'Inter, "Helvetica Neue", Arial, sans-serif',
-              },
-              title: {
-                text: 'Traffic Sources',
-                left: 'center',
-              },
-              tooltip: {
-                trigger: 'item',
-                formatter: '{a} <br/>{b} : {c} ({d}%)',
-              },
-              legend: {
-                orient: 'vertical',
-                left: 'left',
-                data: [
-                  'Direct',
-                  'Email',
-                  'Ad Networks',
-                  'Video Ads',
-                  'Search Engines',
-                ],
-              },
-              series: [
-                {
-                  name: 'Traffic Sources',
-                  type: 'pie',
-                  radius: '55%',
-                  center: ['50%', '60%'],
-                  data: [
-                    { value: 335, name: 'Direct' },
-                    { value: 310, name: 'Email' },
-                    { value: 234, name: 'Ad Networks' },
-                    { value: 135, name: 'Video Ads' },
-                    { value: 1548, name: 'Search Engines' },
-                  ],
-                  emphasis: {
-                    itemStyle: {
-                      shadowBlur: 10,
-                      shadowOffsetX: 0,
-                      shadowColor: 'rgba(0, 0, 0, 0.5)',
-                    },
-                  },
-                },
-              ],
-            },
+      showOverlay: false,
       showTable: false,
       searchField: '',
+      selectedFile: null,
+      pannelLoading: false,
+      posts: [],
+      currentPage: 1,
+      postsPerPage: 10,
+      importItem: {
+        course_id: '',
+        year: '',
+        semester: '',
+        course_name: '',
+        prof: '',
+        ta: '',
+      },
+      ValidationItem: {
+        course_id: '',
+        year: '',
+        semester: '',
+        course_name: '',
+        prof: '',
+        ta: '',
+        file: '',
+      },
+      selectedFileName: '',
+      subToggleButton: false,
+      title: '',
+      course_id: ''
     };
+  },
+  computed: {
+    totalPages() {
+      return Math.ceil(this.posts.length / this.postsPerPage)
+    },
   },
   methods: {
     toggle() {
       this.showTable = !this.showTable;
     },
+    tablewidth(length) {
+      return length
+    },
+    allStudentToggleButton() {
+      this.subToggleButton = false
+      this.$router.replace({ path: this.$route.path, query: { type: 'all' } });
+    },
+    eachStudentToggleButton() {
+      this.subToggleButton = true
+      this.$router.replace({ path: this.$route.path, query: { type: 'each' } });
+    },
+    renamedTitle() {
+      console.log(this.posts)
+      if(this.posts.length === 0) {
+        this.title = '과목을 선택하세요.'
+      }
+      else if(this.posts[0].course_name === '기타') {
+        this.title = '기타'
+      } else {
+        this.title = this.posts[0].course_name + ' (' + this.posts[0].course_id + ')'
+      }
+    },
   },
+  mounted() {
+    this.posts = this.course
+    this.renamedTitle()
+  },
+  watch: {
+    course(to, from) {
+      const vm = this
+      this.posts = vm.course
+      console.log(JSON.stringify(this.posts))
+      this.renamedTitle()
+      console.log('fsefsf', this.posts)
+      if(this.posts.length === 0) {
+        this.course_id = ''  
+      } else {
+        this.course_id = this.posts[0].course_id
+      }
+    },
+  }
 };
 </script>
 
 <style scoped>
+.cursorblock {
+  pointer-events: none; 
+}
 .container {
   max-width: 1600px;
 
@@ -190,84 +398,197 @@ export default {
       transform: translateX(50px);
       opacity: 0;
     }
-  }
-  .search-box {
-    min-height: 44px;
-    margin-left: auto;
-    align-self: flex-end;
-    padding-bottom: 4px;
-    margin-right: 26px;
+    .table {
+      margin: 30px 0 20px 0;
+      padding-bottom: 20px;
+      /* border: 1px solid #dce2ed; */
+      border-radius: 4px;
+      height: 100%;
 
-    .form__group {
-      position: relative;
-      width: 100%;
-    }
-    
-    .form-field {
-      font-family: inherit;
-      width: 230px;
-      height: 40px;
-      border: 0;
-      border-bottom: 2px solid #9b9b9b;
-      outline: 0;
-      color: #86263300;
-      padding: 1px 0;
-      background: transparent;
-      transition: border-bottom 0.2s ease-in-out;;
-      transition: border-image 0.2s ease-in-out;
-      font-size: 1.1rem;
-      &::placeholder {
-        color: transparent;
-      }
-    
-      &:placeholder-shown ~ .form__label {
-        font-size: 18px;
-        cursor: text;
-      }
-    }
-    
-    .form__label {
-      position: absolute;
-      top: 5px;
-      display: block;
-      transition: 0.2s;
-      color: #9b9b9b;
-      font-size: 1.1rem;
-      pointer-events: none;
-    }
-    
-    .form-field:focus {
-      ~ .form__label {
-        position: absolute;
-        top: -25px;
-        display: block;
-        transition: 0.2s;
-        font-size: 1rem;
-        color: #CB385C;
+      .course-title {
+        color: var(--Black, #262626);
+        font-family: Pretendard;
+        font-size: 20px;
+        font-style: normal;
         font-weight: 700;
+        height: 24px;
+        line-height: 24px;
       }
-      padding-bottom: 6px;
-      font-weight: 700;
-      border-width: 3px;
-      border-image: linear-gradient(to right, #CB385C, #FFF4F5);
-      transition: opacity 1s;
-      border-image-slice: 1;
-      color: #862633;
-    }
-    .form-field:focus::before, .form-field:focus::after{
-        transition: 0.2s ease-in-out;
-    }
-    /* reset input */
-    .form-field {
-      &:required,
-      &:invalid {
-        box-shadow: none;
-      }
-    }
+      .all-table {
+        display: flex;
+        flex-flow: wrap;
+        height: 900px;
+        justify-content: space-between;
+        align-content: flex-start;
 
+        & .title {
+          color: var(--Black, #262626);
+          font-family: Pretendard;
+          font-size: 18px;
+          font-weight: 700;
+          margin: 0 0 15px 15px;
+        }
+
+        .sub-table-left {
+          margin-top: 40px;
+          width: 540px;
+          height: 270px;
+          min-height: 270px;
+          background: var(--Primary_background, #FFF);
+        }
+        .sub-table-middle {
+          width: 320px;
+          background: var(--Primary_background, #FFF);
+        }
+        .sub-table-right {
+          margin-top: 40px;
+          width: 540px;
+          height: 270px;
+          min-height: 270px;
+          background: var(--Primary_background, #FFF);
+        }
+
+        & .sub-table {
+          width: 100%;
+          & table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          & .table-header-wrapper {
+            border-top: 1px solid #FFEAEC;
+            border-bottom: 1px solid #FFEAEC;
+            background-color: #FFFBFB;
+            border-collapse: collapse;
+            position : sticky;
+            display:block;
+            inset-block-start: 0;
+
+          }
+          & .table-body-wrapper {
+            display: block;
+            max-height: 154px;
+            width: 100%;
+            overflow-y: auto;
+          }
+          & th {
+            vertical-align: middle;
+            width: 270px;
+            text-align: center;
+            height: 43px;
+            color: #CB385C;
+            line-height: 43px;
+
+            font-size: 16px;
+            font-weight: 600;
+          }
+          & tr {
+            height: 50px;
+            width: 270px;
+            vertical-align: middle;
+            text-align: center;
+
+            border-top: 1px solid #FFEAEC;
+            border-bottom: 1px solid #FFEAEC;
+            & td {
+              width: 270px;
+              font-size: 16px;
+              font-weight: 500;
+              line-height: 50px;
+            }
+          }
+        }
+      }
+
+      .each-table {
+        display: flex;
+        flex-flow: wrap;
+        height: 900px;
+        justify-content: space-between;
+        align-content: flex-start;
+
+        & .title {
+          color: var(--Black, #262626);
+          font-family: Pretendard;
+          font-size: 18px;
+          font-weight: 700;
+          margin: 0 0 15px 15px;
+        }
+
+        .sub-table-left {
+          margin-top: 40px;
+          width: 580px;
+          height: 270px;
+          min-height: 270px;
+          background: var(--Primary_background, #FFF);
+        }
+        .sub-table-middle {
+          width: 320px;
+          background: var(--Primary_background, #FFF);
+        }
+        .sub-table-right {
+          margin-top: 40px;
+          width: 580px;
+          height: 270px;
+          min-height: 270px;
+          background: var(--Primary_background, #FFF);
+        }
+
+        .sub-table {
+          width: inherit;
+          & table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          & .table-header-wrapper {
+            border-top: 1px solid #FFEAEC;
+            border-bottom: 1px solid #FFEAEC;
+            background-color: #FFFBFB;
+            border-collapse: collapse;
+            position : sticky;
+            display:block;
+            inset-block-start: 0;
+
+          }
+          & .table-body-wrapper {
+            display: block;
+            max-height: 154px;
+            width: inherit;
+            overflow-y: auto;
+          }
+          & th {
+            vertical-align: middle;
+            /* width: 270px; */
+            text-align: center;
+            height: 43px;
+            color: #CB385C;
+            line-height: 43px;
+
+            font-size: 16px;
+            font-weight: 600;
+          }
+          & tr {
+            height: 50px;
+            width: inherit;
+            vertical-align: middle;
+            text-align: center;
+
+            border-top: 1px solid #FFEAEC;
+            border-bottom: 1px solid #FFEAEC;
+            & td {
+              /* width: 270px; */
+              font-size: 15px;
+              font-weight: 500;
+              line-height: 50px;
+            }
+          }
+        }
+      }
+    }
   }
 
   .toggle-box {
+    align-self: flex-end;
+    margin-left: auto;
     .wrapper {
       width: 150px;
       height: 44px;
@@ -276,7 +597,7 @@ export default {
       position: relative;
     }
 
-    #switch {
+    #switchcourse {
       display: none;
     }
 
@@ -334,17 +655,17 @@ export default {
             margin-right: auto;
         }
     }
-    #switch:checked + .switch_label .onf_btn {
+    #switchcourse:checked + .switch_label .onf_btn {
         left: 70px;
         background: #fff;
         box-shadow: 1px 2px 3px #00000020;
     }
-    #switch:checked + .switch_label .toggle-image-1 {
+    #switchcourse:checked + .switch_label .toggle-image-1 {
         & path {
             stroke: #E9D8D9;
         }
     }
-    #switch:checked + .switch_label .toggle-image-2 {
+    #switchcourse:checked + .switch_label .toggle-image-2 {
         & path {
             stroke: #CB385C;
         }
@@ -352,43 +673,85 @@ export default {
   }
 }
 
-
 .navigation_underline {
   border-bottom: solid 2px #dce2ed;
   width: calc(1920px - 586px) !important;
 }
 
-.table,
-.chart {
-  margin: 20px 0;
-  padding: 20px 0;
-  border: 1px solid #dce2ed;
-  border-radius: 4px;
-  height: 100%;
-}
-.chart {
-  .year-chart-container {
-  
-    
+.table-over {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 16px;
+  .table-header-wrapper{
+    border-top: solid 1px #F9D2D6;
+    border-bottom: solid 1px #F9D2D6; 
   }
-  .category-chart-container {
-    margin-top: 60px;
+  .table-header {
+    color: var(--Primary_normal, #910024);
+    font-weight: 600;
+    height: 43px;
+    vertical-align: middle;
   }
-  & .chart-title {
-    font-size: 22px;
-    font-weight: 700;
-    margin: 0 0 30px 0;
-  }
-  .charts {
-    display: flex;
-    min-height: 260px;
-    justify-content: space-between;
-    .chart-container {
-      width: 280px;
-      /* width: calc(1222px / 4)px; */
-      /* margin-right: 30px; */
-    }
+  .table-row {
+    height: 70px;
+    border-bottom: solid 1px #DCE2ED;
+    text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
   }
 }
 
+.chart {
+  margin: 20px 0;
+  padding: 20px 0;
+  /* border: 1px solid #dce2ed; */
+  border-radius: 4px;
+  height: 100%;
+  .plz-select-course{
+    font-family: Pretendard;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 700;
+  }
+  & .horizontal-chart-container {
+    display: flex;
+    flex-flow: wrap;
+    justify-content: space-between;
+    align-content: flex-start;
+
+    .left-container, .right-container {
+      margin-bottom: 20px;
+      background: var(--Primary_background, #FFFBFB);
+      border-radius: 20px;
+      .chart-title {
+        margin-top: 10px;
+        position: static;
+        color: var(--Black, #262626);
+        font-family: Pretendard;
+        font-size: 18px;
+        font-style: normal;
+        font-weight: 700;
+        margin-left: 40px;
+      }
+      .charts {
+          position: static;
+        }
+    }
+  }
+  .category-chart-container {
+
+  }
+  & .title {
+    font-size: 22px;
+    font-weight: 700;
+  }
+}
+
+.dragblock {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-use-select: none;
+  user-select: none;
+}
 </style>
