@@ -28,13 +28,13 @@ repo_contributor_urls=(
 course_related_urls=(
     # OS 
     "http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1"
-    # 산학 캡스톤 (1학기)
+    # 산학 캡스톤 (1)
     "http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1"
-    # 클라우드 컴퓨팅 (2학기)
+    # 클라우드 컴퓨팅 (2)
     "http://localhost:8000/api/course/course_project_update?course_id=COSE444-00&year=2024&semester=2"
-    # 실전 SW 프로젝트 (2학기)
+    # 실전 SW 프로젝트 (2)
     "http://localhost:8000/api/course/course_project_update?course_id=COSE457-00&year=2024&semester=2"
-    # 산학 캡스톤 (2학기, 2반)
+    # 산학 캡스톤 (2)
     "http://localhost:8000/api/course/course_project_update?course_id=COSE480-02&year=2024&semester=2"
 )
 
