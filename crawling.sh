@@ -28,16 +28,15 @@ repo_contributor_urls=(
 course_related_urls=(
     # OS 
     "http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1"
-    # 산학 캡스톤 (1학기)
+    # 산학 캡스톤 (1)
     "http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1"
-    # 클라우드 컴퓨팅 (2학기)
+    # 클라우드 컴퓨팅 (2)
     "http://localhost:8000/api/course/course_project_update?course_id=COSE444-00&year=2024&semester=2"
-    # 실전 SW 프로젝트 (2학기)
+    # 실전 SW 프로젝트 (2)
     "http://localhost:8000/api/course/course_project_update?course_id=COSE457-00&year=2024&semester=2"
-    # 산학 캡스톤 (2학기, 2반)
+    # 산학 캡스톤 (2)
     "http://localhost:8000/api/course/course_project_update?course_id=COSE480-02&year=2024&semester=2"
 )
-
 
 # Check if the script is already running
 if [[ $(pgrep -f $(basename "$0") | wc -l) -gt 2 ]]; then
@@ -50,6 +49,7 @@ process_url() {
     local url=$1
     start_time=$(date +%s)
     response=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$url")
+    curl_exit_code=$?
     end_time=$(date +%s)
     elapsed_time=$((end_time - start_time))
     
@@ -57,14 +57,17 @@ process_url() {
     hours=$((elapsed_time / 3600))
     minutes=$(( (elapsed_time % 3600) / 60 ))
     seconds=$((elapsed_time % 60))
-    
-    if [ "$response" -eq 200 ]; then
+
+    # Check if curl failed due to network issues
+    if [ $curl_exit_code -ne 0 ]; then
+        echo "Failed: $url with curl exit code $curl_exit_code (Time taken: ${hours}h ${minutes}m ${seconds}s)"
+    elif [ "$response" -eq 200 ]; then
         echo "Success: $url (Time taken: ${hours}h ${minutes}m ${seconds}s)"
     else
         echo "Failed: $url with response code $response (Time taken: ${hours}h ${minutes}m ${seconds}s)"
-        # No need to log the failed URL
     fi
 }
+
 
 # Function to process URLs sequentially
 process_urls_sequentially() {
@@ -88,54 +91,26 @@ process_urls_in_parallel() {
     wait
 }
 
-# Function to sleep until a specific time
-sleep_until() {
-    target_hour=$1
-    target_minute=$2
-    current_time=$(date +%s)
-    target_time=$(date -d "today ${target_hour}:${target_minute}" +%s)
-    sleep_seconds=$(( target_time - current_time ))
-    if [ $sleep_seconds -lt 0 ]; then
-        target_time=$(date -d "tomorrow ${target_hour}:${target_minute}" +%s)
-        sleep_seconds=$(( target_time - current_time ))
-    fi
-    echo "All requests completed. Waiting until ${target_hour}:${target_minute} before the next cycle."
-    sleep $sleep_seconds
-}
-
 cycle_count=0
 
 while true; do
     start_time=$(date +"%Y-%m-%d %H:%M:%S")
     echo "Cycle started at: $start_time"
 
-    # Process student URLs first in every cycle
+    # Process student URLs first
     process_urls_sequentially "${student_urls[@]}"
 
-    # Process repo URLs every 12 hours
-    if (( cycle_count % 12 == 0 )); then
-        process_urls_sequentially "${repo_urls[@]}"
-    fi
+    # Process repo URLs next
+    process_urls_sequentially "${repo_urls[@]}"
 
-    # Process course-related URLs every 12 hours
-    if (( cycle_count % 12 == 0 )); then
-        process_urls_sequentially "${course_related_urls[@]}"
-    fi
+    # Process course-related URLs
+    process_urls_sequentially "${course_related_urls[@]}"
 
-    # Process repo commit URLs every 2 hours
-    if (( cycle_count % 2 == 0 )); then
-        process_urls_in_parallel "${repo_commit_urls[@]}"
-    fi
+    # Process repo issue, PR, and contributor URLs in parallel
+    process_urls_in_parallel "${repo_issue_pr_urls[@]}" "${repo_contributor_urls[@]}"
 
-    # Process repo issue and PR URLs every 12 hours
-    if (( cycle_count % 12 == 0 )); then
-        process_urls_in_parallel "${repo_issue_pr_urls[@]}"
-    fi
-
-    # Process repo contributor URLs every 12 hours
-    if (( cycle_count % 12 == 0 )); then
-        process_urls_in_parallel "${repo_contributor_urls[@]}"
-    fi
+    # Process repo commit URLs after parallel operations
+    process_urls_sequentially "${repo_commit_urls[@]}"
 
     end_time=$(date +"%Y-%m-%d %H:%M:%S")
     echo "Cycle ended at: $end_time"
