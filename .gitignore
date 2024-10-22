@@ -165,4 +165,11 @@ cython_debug/
 !frontend
 /frontend/node_modules
 
+<<<<<<< HEAD
 frontend/node_modules
+=======
+frontend/node_modules
+
+#vscode
+*vscode
+>>>>>>> e80889aa93fa1e2571004a53d18083cb267d2514
