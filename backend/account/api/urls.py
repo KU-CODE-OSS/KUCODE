@@ -1,16 +1,9 @@
 from django.urls import path
-<<<<<<< HEAD
-=======
 from .import views
->>>>>>> e80889aa93fa1e2571004a53d18083cb267d2514
 
 from account.api.views import HealthCheckAPIView
 
 urlpatterns = [
-<<<<<<< HEAD
-    path("healthcheck", HealthCheckAPIView.as_view(), name="healthcheck")
-]
-=======
     path("healthcheck", HealthCheckAPIView.as_view(), name="healthcheck"),
 
  # account_students CRUD
@@ -50,4 +43,3 @@ urlpatterns = [
 
 
 ]   
->>>>>>> e80889aa93fa1e2571004a53d18083cb267d2514

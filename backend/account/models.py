@@ -5,9 +5,8 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     # 권한을 설정하는 ENUM 클래스
-<<<<<<< HEAD
     pass
-=======
+
     github_id = models.CharField(max_length=255,default='null')
     name = models.CharField(max_length=255,default='null')
 
@@ -44,4 +43,4 @@ class Administration(models.Model):
 
     def __str__(self):
         return self.name
->>>>>>> e80889aa93fa1e2571004a53d18083cb267d2514
+

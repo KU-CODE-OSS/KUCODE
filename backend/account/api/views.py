@@ -1,18 +1,16 @@
 from django.shortcuts import render
-<<<<<<< HEAD
-=======
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
->>>>>>> e80889aa93fa1e2571004a53d18083cb267d2514
+
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-<<<<<<< HEAD
-=======
+
 from account.models import User,Student
 from course.models import Course, Course_registration, Course_project
 from repo.models import Repo_commit, Repo_pr ,Repo_issue, Repository
@@ -28,13 +26,11 @@ from django.db.models.functions import ExtractYear
 import requests
 import pandas as pd
 import subprocess
->>>>>>> e80889aa93fa1e2571004a53d18083cb267d2514
 
 class HealthCheckAPIView(APIView):
     def get(self, request):
         return Response({"status": "OK"}, status=status.HTTP_200_OK)
-<<<<<<< HEAD
-=======
+
 
 #---------- CU ----------#
 def sync_student_db(request):
@@ -1212,4 +1208,3 @@ def none_githubid_list_only_attending(request):
 
     # JsonResponse 반환
     return JsonResponse(data, safe=False)
->>>>>>> e80889aa93fa1e2571004a53d18083cb267d2514
