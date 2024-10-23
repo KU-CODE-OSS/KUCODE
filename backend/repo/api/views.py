@@ -41,7 +41,7 @@ def sync_repo_db(request):
 
         for student in students_list:
             student_count += 1
-            print(f'\n{"="*20} [{student_count}/{total_student_count}] Processing GitHub user: {student["github_id"]} {"="*20}')
+            print(f'\n{"="*10} [{student_count}/{total_student_count}] Processing GitHub user: {student["github_id"]} {"="*10}')
             id = student['id']
             github_id = student['github_id']
             
@@ -127,7 +127,7 @@ def sync_repo_db(request):
 
             print(f"  Total star count ({total_star_count}) for GitHub user {github_id} saved.")
             success_student_count += 1
-            print(f'{"-"*50} Processed GitHub user: {github_id} {"-"*50}')
+            print(f'{"-"*5} Processed GitHub user: {github_id} {"-"*5}')
 
         return JsonResponse({
             "status": "OK",
@@ -289,7 +289,7 @@ def sync_repo_contributor_db(request):
         # Process each repository
         for repo in repo_list:
             repo_count += 1
-            print(f'\n{"="*20} [{repo_count}/{total_repo_count}] Processing repo: {repo["name"]} (GitHub ID: {repo["github_id"]}) {"="*20}')
+            print(f'\n{"="*10} [{repo_count}/{total_repo_count}] Processing repo: {repo["name"]} (GitHub ID: {repo["github_id"]}) {"="*10}')
             
             repo_id = repo['id']
             repo_name = repo['name']
@@ -338,7 +338,7 @@ def sync_repo_contributor_db(request):
                     continue
 
             success_repo_count += 1
-            print(f'\n{"-"*50} Processed contributors for repository: {repo_name} (GitHub ID: {github_id}) {"-"*50}')
+            print(f'\n{"-"*5} Processed contributors for repository: {repo_name} (GitHub ID: {github_id}) {"-"*5}')
 
         # Check for any repositories that need to be removed
         for repo_id in repo_ids:
@@ -397,7 +397,7 @@ def sync_repo_issue_db(request):
         
         for repo in repo_list:
             repo_count += 1
-            print(f'\n{"="*20} [{repo_count}/{total_repo_count}] Processing issues for repo: {repo["name"]} (GitHub ID: {repo["github_id"]}) {"="*20}')
+            print(f'\n{"="*10} [{repo_count}/{total_repo_count}] Processing issues for repo: {repo["name"]} (GitHub ID: {repo["github_id"]}) {"="*10}')
             
             processed_repo_ids.add(repo['id'])
             repo_id = repo['id']
@@ -459,7 +459,7 @@ def sync_repo_issue_db(request):
                     continue
 
             success_repo_count += 1
-            print(f'\n{"-"*50} Processed issues for repository: {repo_name} (GitHub ID: {github_id}) {"-"*50}')
+            print(f'\n{"-"*5} Processed issues for repository: {repo_name} (GitHub ID: {github_id}) {"-"*5}')
 
         # Check for any repositories that need to be removed
         for repo_id in repo_ids:
@@ -519,7 +519,7 @@ def sync_repo_pr_db(request):
 
         for repo in repo_list:
             repo_count += 1
-            print(f'\n{"="*20} [{repo_count}/{total_repo_count}] Processing PRs for repo: {repo["name"]} (GitHub ID: {repo["github_id"]}) {"="*20}')
+            print(f'\n{"="*10} [{repo_count}/{total_repo_count}] Processing PRs for repo: {repo["name"]} (GitHub ID: {repo["github_id"]}) {"="*10}')
             
             processed_repo_ids.add(repo['id'])
             repo_id = repo['id']
@@ -582,7 +582,7 @@ def sync_repo_pr_db(request):
                     continue
 
             success_repo_count += 1
-            print(f'\n{"-"*50} Processed PRs for repository: {repo_name} (GitHub ID: {github_id}) {"-"*50}')
+            print(f'\n{"-"*5} Processed PRs for repository: {repo_name} (GitHub ID: {github_id}) {"-"*5}')
 
         # Check for any repositories that need to be removed
         for repo_id in repo_ids:
@@ -643,7 +643,7 @@ def sync_repo_commit_db(request):
 
         for repo in repo_list:
             repo_count += 1
-            print(f'\n{"="*20} [{repo_count}/{total_repo_count}] Processing commits for repo: {repo["name"]} (GitHub ID: {repo["github_id"]}) {"="*20}')
+            print(f'\n{"="*10} [{repo_count}/{total_repo_count}] Processing commits for repo: {repo["name"]} (GitHub ID: {repo["github_id"]}) {"="*10}')
             
             processed_repo_ids.add(repo['id'])
             repo_id = repo['id']
@@ -698,7 +698,7 @@ def sync_repo_commit_db(request):
                     continue
 
             success_repo_count += 1
-            print(f'\n{"-"*50} Processed commits for repository: {repo_name} (GitHub ID: {github_id}) {"-"*50}')
+            print(f'\n{"-"*5} Processed commits for repository: {repo_name} (GitHub ID: {github_id}) {"-"*5}')
 
         # Check for any repositories that need to be removed
         for repo_id in repo_ids:

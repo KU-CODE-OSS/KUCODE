@@ -49,7 +49,7 @@ def sync_student_db(request):
         # Process each student
         for student in student_list:
             student_count += 1
-            print(f'\n{"="*20} [{student_count}/{total_student_count}] Processing student ID: {student["id"]} (GitHub ID: {student["github_id"]}) {"="*20}')
+            print(f'\n{"="*10} [{student_count}/{total_student_count}] Processing student ID: {student["id"]} (GitHub ID: {student["github_id"]}) {"="*10}')
             
             id = student['id']
             github_id = student['github_id']
@@ -89,7 +89,7 @@ def sync_student_db(request):
                 failure_count += 1
                 failure_details.append({"id": id, "github_id": github_id, "message": message})
 
-            print(f'-'*50)
+            print(f'-'*5)
 
         return JsonResponse({
             "status": "OK", 
