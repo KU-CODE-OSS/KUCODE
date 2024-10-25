@@ -1,25 +1,13 @@
 from django.shortcuts import render
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main
 from account.models import User,Student
 from course.models import Course, Course_registration, Course_project
 from repo.models import Repo_commit, Repo_pr ,Repo_issue, Repository
@@ -39,10 +27,6 @@ import subprocess
 class HealthCheckAPIView(APIView):
     def get(self, request):
         return Response({"status": "OK"}, status=status.HTTP_200_OK)
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main
 
 #---------- CU ----------#
 def sync_student_db(request):

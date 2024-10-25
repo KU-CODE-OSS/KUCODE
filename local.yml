@@ -10,17 +10,13 @@ services:
           python manage.py runserver 0.0.0.0:8000"
     environment:
       - PUBLIC_IP=${PUBLIC_IP}
-<<<<<<< HEAD
       - VUE_APP_API_URL=${VUE_APP_API_URL}
       - CORS_ALLOWED_ORIGIN=${CORS_ALLOWED_ORIGIN}
-=======
->>>>>>> origin/main
       - FASTAPI_PORT=${FASTAPI_PORT}
       - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
       - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
       - KOREAUNIV_OPENAPI_CLIENT_ID=${KOREAUNIV_OPENAPI_CLIENT_ID}
       - KOREAUNIV_OPENAPI_CLIENT_SECRET=${KOREAUNIV_OPENAPI_CLIENT_SECRET}
-<<<<<<< HEAD
       - STUDENT_SYNC_URL=${STUDENT_SYNC_URL}
       - REPO_SYNC_URL=${REPO_SYNC_URL}
       - REPO_COMMIT_SYNC_URL=${REPO_COMMIT_SYNC_URL}
@@ -34,8 +30,6 @@ services:
       - COURSE_CAPSTONE_SYNC_URL_2=${COURSE_CAPSTONE_SYNC_URL_2}
 
 
-=======
->>>>>>> origin/main
     volumes:
       - ./backend:/app
     ports:
