@@ -431,18 +431,14 @@ export default {
     slicingforall() {
       const start = (this.currentPageforAll - 1) * this.postsPerPage;
       const end = start + this.postsPerPage;
-
       // 정렬된 posts 배열에서 현재 페이지에 해당하는 부분만 가져옴
       this.sclicedPosts = this.posts.slice(start, end);
-
     },
     slicingforsummary() {
       const start = (this.currentPageforSummary - 1) * this.postsPerPage;
       const end = start + this.postsPerPage;
-
       // 정렬된 summarizedStudents에서 현재 페이지에 해당하는 부분만 가져옴
       this.slicedsummarizedStudents = this.summarizedStudents.slice(start, end);
-
     },
     commitSort(li){
       li.sort(function(a,b){

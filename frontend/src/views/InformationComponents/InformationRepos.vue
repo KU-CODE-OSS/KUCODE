@@ -11,7 +11,6 @@
         <div class="default-router plan-text current-tab">레포지토리</div>
       </div>
       <div class="search-box">
-
         <div class="form__group field">
           <input type="input" class="form-field" :value="searchField" />
           <label class="form__label">SEARCH</label>
@@ -26,7 +25,6 @@
           <div class="import-btn-svg-text">Import</div>
         </div>
       </div> -->
-
     </div>
     <div class="navigation_underline"></div>
     <div class="contents-box">

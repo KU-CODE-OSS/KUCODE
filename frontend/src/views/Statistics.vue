@@ -103,7 +103,6 @@
                   <input :id="'course' + index + 'student'" type="checkbox" class="checkbox" :value="course.course_name" v-model="selectedCourseNameItemsforStudent" @change="courseNameFilterEventChangeforStudent(course, $event)">
                   <p v-if="course.course_name === '기타' || course.course_name === ''" class="label-text">기타</p>
                   <p v-else class="label-text">{{course.course_name}} ({{course.course_id}})</p>
-
                 </label>
               </li>
             </ul>
@@ -417,7 +416,6 @@ export default {
     studentFiltering(courses) {
       const yearset = new Set(courses.map(row=>row.year));
       this.studentFilterYearsCheckbox = [...yearset];
-
 
       const semesterset = new Set(courses.map(row=>row.semester));
       this.studentFilterSemesterCheckbox = [...semesterset];

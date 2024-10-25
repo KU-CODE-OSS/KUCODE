@@ -105,7 +105,10 @@ This health check endpoint can be useful for monitoring the status of the backen
 - `/api`: Django API. Includes `/api/healthcheck` endpoint.
 
 
-
+## Make crawling sh and run
+```
+nohup ./crawling.sh > crawling.log 2>&1 &
+```
 
 ## 기여 가이드라인
 **이 프로젝트에 기여를 하고자 한다면 

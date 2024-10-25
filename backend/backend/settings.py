@@ -12,25 +12,36 @@ DEBUG = env("DEBUG", default=False)
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS", default='').split(",")
 
+PUBLIC_IP = env("PUBLIC_IP")
+FASTAPI_PORT = env("FASTAPI_PORT")
+
+OAUTH_CLIENT_ID = env("OAUTH_CLIENT_ID")
+OAUTH_CLIENT_SECRET = env ("OAUTH_CLIENT_SECRET")
+KOREAUNIV_OPENAPI_CLIENT_ID=env("KOREAUNIV_OPENAPI_CLIENT_ID")
+KOREAUNIV_OPENAPI_CLIENT_SECRET=env("KOREAUNIV_OPENAPI_CLIENT_SECRET")
+
 # Application definition
 
 DJANGO_APPS = [
-    # "django.contrib.admin",
+    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'rest_framework'
 ]
 
 THIRD_PARTY_APPS = [
-    'rest_framework',
-    'corsheaders',
+    'corsheaders'
 ]
 
 LOCAL_APPS = [
     "core",
-    "account"
+    "account",
+    "repo",
+    "course",
+    "login",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -125,15 +136,9 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_URLS_REGEX = r"^/api/.*$"
-
-CORS_ALLOW_ALL_ORIGINS = bool(env("CORS_ALLOWED_ORIGINS", default=False))
-
-CUSTOM_CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGIN')
-
-CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS", default="http://localhost,http://127.0.0.1").split(',')
-
-if CUSTOM_CORS_ALLOWED_ORIGINS:
-    CORS_ALLOWED_ORIGINS.append(CUSTOM_CORS_ALLOWED_ORIGINS)
+#여기서 
+CORS_ORIGIN_ALLOW_ALL = True
+#여기까지 
 
 
 if DEBUG:
@@ -153,3 +158,4 @@ else:
             'rest_framework.renderers.JSONRenderer'
         ]
     }
+

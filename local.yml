@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.8'
 
 services:
   backend:
@@ -10,8 +10,13 @@ services:
           python manage.py runserver 0.0.0.0:8000"
     environment:
       - PUBLIC_IP=${PUBLIC_IP}
+      - FASTAPI_PORT=${FASTAPI_PORT}
       - VUE_APP_API_URL=http://${PUBLIC_IP}:8000
       - CORS_ALLOWED_ORIGIN=http://${PUBLIC_IP}
+      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
+      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
+      - KOREAUNIV_OPENAPI_CLIENT_ID=${KOREAUNIV_OPENAPI_CLIENT_ID}
+      - KOREAUNIV_OPENAPI_CLIENT_SECRET=${KOREAUNIV_OPENAPI_CLIENT_SECRET}
     volumes:
       - ./backend:/app
     ports:

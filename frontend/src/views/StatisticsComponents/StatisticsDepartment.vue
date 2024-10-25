@@ -156,16 +156,26 @@
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학과</th>
-<<<<<<< HEAD
+
+
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
-=======
+
+
+                      <th width="58px">Q1</th>
+                      <th width="58px">Q2</th>
+                      <th width="58px">Q3</th>
+
+
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
                       <th width="58px">최대</th>
->>>>>>> origin/dev-jhs
+
+
+
+
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -175,10 +185,15 @@
                         <td width="58px" :title="item.total.num_repos_stats.q1">{{item.total.num_repos_stats.q1}}</td>
                         <td width="58px" :title="item.total.num_repos_stats.median">{{item.total.num_repos_stats.median}}</td>
                         <td width="58px" :title="item.total.num_repos_stats.q3">{{item.total.num_repos_stats.q3}}</td>
-<<<<<<< HEAD
-=======
+
+
                         <td width="58px" :title="item.total.num_repos_stats.max">{{item.total.num_repos_stats.max}}</td>
->>>>>>> origin/dev-jhs
+
+
+
+                        <td width="58px" :title="item.total.num_repos_stats.max">{{item.total.num_repos_stats.max}}</td>
+
+
                         <td width="87px" :title="item.total.num_repos_stats.mean">{{item.total.num_repos_stats.mean}}</td>
                         <td width="87px" :title="item.total.num_repos_stats.stdDev">{{item.total.num_repos_stats.stdDev}}</td>
                       </tr>
@@ -192,16 +207,28 @@
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학과</th>
-<<<<<<< HEAD
+
+
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
-=======
+
+
+
+                      <th width="58px">Q1</th>
+                      <th width="58px">Q2</th>
+                      <th width="58px">Q3</th>
+
+
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
                       <th width="58px">최대</th>
->>>>>>> origin/dev-jhs
+
+
+
+
+
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -211,10 +238,16 @@
                         <td width="58px" :title="item.total.commit_stats.q1">{{item.total.commit_stats.q1}}</td>
                         <td width="58px" :title="item.total.commit_stats.median">{{item.total.commit_stats.median}}</td>
                         <td width="58px" :title="item.total.commit_stats.q3">{{item.total.commit_stats.q3}}</td>
-<<<<<<< HEAD
-=======
+
+
                         <td width="58px" :title="item.total.commit_stats.max">{{item.total.commit_stats.max}}</td>
->>>>>>> origin/dev-jhs
+
+
+
+
+                        <td width="58px" :title="item.total.commit_stats.max">{{item.total.commit_stats.max}}</td>
+
+
                         <td width="87px" :title="item.total.commit_stats.mean">{{item.total.commit_stats.mean}}</td>
                         <td width="87px" :title="item.total.commit_stats.stdDev">{{item.total.commit_stats.stdDev}}</td>
                       </tr>
@@ -229,16 +262,27 @@
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학과</th>
-<<<<<<< HEAD
+
+
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
-=======
+
+
+                      <th width="58px">Q1</th>
+                      <th width="58px">Q2</th>
+                      <th width="58px">Q3</th>
+
+
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
                       <th width="58px">최대</th>
->>>>>>> origin/dev-jhs
+
+
+
+
+
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -248,10 +292,15 @@
                         <td width="58px" :title="item.total.issue_stats.q1">{{item.total.issue_stats.q1}}</td>
                         <td width="58px" :title="item.total.issue_stats.median">{{item.total.issue_stats.median}}</td>
                         <td width="58px" :title="item.total.issue_stats.q3">{{item.total.issue_stats.q3}}</td>
-<<<<<<< HEAD
-=======
+
+
                         <td width="58px" :title="item.total.issue_stats.max">{{item.total.issue_stats.max}}</td>
->>>>>>> origin/dev-jhs
+
+
+
+                        <td width="58px" :title="item.total.issue_stats.max">{{item.total.issue_stats.max}}</td>
+
+
                         <td width="87px" :title="item.total.issue_stats.mean">{{item.total.issue_stats.mean}}</td>
                         <td width="87px" :title="item.total.issue_stats.stdDev">{{item.total.issue_stats.stdDev}}</td>
                       </tr>
@@ -265,16 +314,27 @@
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학과</th>
-<<<<<<< HEAD
+
+
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
-=======
+
+
+                      <th width="58px">Q1</th>
+                      <th width="58px">Q2</th>
+                      <th width="58px">Q3</th>
+
+
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
                       <th width="58px">최대</th>
->>>>>>> origin/dev-jhs
+
+
+
+
+
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -284,10 +344,16 @@
                         <td width="58px" :title="item.total.pr_stats.q1">{{item.total.pr_stats.q1}}</td>
                         <td width="58px" :title="item.total.pr_stats.median">{{item.total.pr_stats.median}}</td>
                         <td width="58px" :title="item.total.pr_stats.q3">{{item.total.pr_stats.q3}}</td>
-<<<<<<< HEAD
-=======
+
+
                         <td width="58px" :title="item.total.pr_stats.max">{{item.total.pr_stats.max}}</td>
->>>>>>> origin/dev-jhs
+
+
+
+
+                        <td width="58px" :title="item.total.pr_stats.max">{{item.total.pr_stats.max}}</td>
+
+
                         <td width="87px" :title="item.total.pr_stats.mean">{{item.total.pr_stats.mean}}</td>
                         <td width="87px" :title="item.total.pr_stats.stdDev">{{item.total.pr_stats.stdDev}}</td>
                       </tr>
@@ -302,16 +368,27 @@
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학과</th>
-<<<<<<< HEAD
+
+
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
-=======
+
+
+
+                      <th width="58px">Q1</th>
+                      <th width="58px">Q2</th>
+                      <th width="58px">Q3</th>
+
+
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
                       <th width="58px">최대</th>
->>>>>>> origin/dev-jhs
+
+
+
+
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -321,10 +398,15 @@
                         <td width="58px" :title="item.total.stars_stats.q1">{{item.total.stars_stats.q1}}</td>
                         <td width="58px" :title="item.total.stars_stats.median">{{item.total.stars_stats.median}}</td>
                         <td width="58px" :title="item.total.stars_stats.q3">{{item.total.stars_stats.q3}}</td>
-<<<<<<< HEAD
-=======
+
+
                         <td width="58px" :title="item.total.stars_stats.max">{{item.total.stars_stats.max}}</td>
->>>>>>> origin/dev-jhs
+
+
+
+                        <td width="58px" :title="item.total.stars_stats.max">{{item.total.stars_stats.max}}</td>
+
+
                         <td width="87px" :title="item.total.stars_stats.mean">{{item.total.stars_stats.mean}}</td>
                         <td width="87px" :title="item.total.stars_stats.stdDev">{{item.total.stars_stats.stdDev}}</td>
                       </tr>
@@ -338,15 +420,31 @@
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학과</th>
-<<<<<<< HEAD
-                      <th width="58px">Q1</th>
-                      <th width="58px">Q2</th>
-                      <th width="58px">Q3</th>
-=======
+
+
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
->>>>>>> origin/dev-jhs
+
+                      <th width="58px">Q1</th>
+                      <th width="58px">Q2</th>
+                      <th width="58px">Q3</th>
+
+                      <th width="58px">25%</th>
+                      <th width="58px">50%</th>
+                      <th width="58px">75%</th>
+
+
+
+                      <th width="58px">Q1</th>
+                      <th width="58px">Q2</th>
+                      <th width="58px">Q3</th>
+
+                      <th width="58px">25%</th>
+                      <th width="58px">50%</th>
+                      <th width="58px">75%</th>
+
+
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -602,11 +700,19 @@ export default {
     course(to, from) {
       const vm = this
       this.posts = vm.course
-<<<<<<< HEAD
-      console.log(JSON.stringify(this.posts))
-=======
+
+
       // console.log(JSON.stringify(this.posts))
->>>>>>> origin/dev-jhs
+      console.log(JSON.stringify(this.posts))
+      // console.log(JSON.stringify(this.posts))
+
+
+
+      console.log(JSON.stringify(this.posts))
+
+      // console.log(JSON.stringify(this.posts))
+
+
 
     },
   }

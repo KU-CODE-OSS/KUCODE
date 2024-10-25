@@ -322,9 +322,7 @@ export default {
     },
     async setInit() {
       if(this.$route.name === "InformationCourse") {
-
-        this.titles = '과목 정보'
-
+        this.titles = '과목 통계'
       }
       if (this.coursePosts.length === 0) {
         await getCourseInfo().then(res => {
@@ -339,7 +337,7 @@ export default {
         })
       }
       if(this.$route.name === "InformationStudent") {
-        this.titles = '학생 정보'
+        this.titles = '학생 통계'
       }
       if (this.studentsPosts.length === 0) {
         await getCourseInfo().then(res => {
@@ -354,8 +352,7 @@ export default {
         })
       }
       if(this.$route.name === "InformationRepos") {
-
-        this.titles = '레포지토리 정보'
+        this.titles = '레포지토리 통계'
       }
       // this.repoPosts.length !== 0 조건 없으면 다른 페이지 갔다와야 데이터 로딩됨
       if(this.repoPosts.length === 0 || this.repoPosts.length !== 0 ) {
@@ -378,7 +375,6 @@ export default {
     courseFiltering(courses) {
       const yearset = new Set(courses.map(row=>row.year));
       this.courseFilterYearsCheckbox = [...yearset];
-
 
       const semesterset = new Set(courses.map(row=>row.semester));
       this.courseFilterSemesterCheckbox = [...semesterset];
@@ -508,7 +504,6 @@ export default {
           newData.star_count = element.star_count
           newData.language = element.language
           newData.contributors = element.contributors
-
           newData.url = element.url
           newData.contributors_list = element.contributors_list;
           li.push(newData)
