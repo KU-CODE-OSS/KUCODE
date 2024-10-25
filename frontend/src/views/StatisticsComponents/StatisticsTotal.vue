@@ -1,29 +1,89 @@
 <template>
-  <div class="container">
+  <div class="container" :class="{cursorblock: pannelLoading === true}">
+    <div class="import-overlay" v-show="this.showOverlay" v-on:click="changeOverlay">
+      <div class="pannel-container" :class="{pannelblock : pannelLoading === true}" @click.stop >
+        <pulse-loader class="loader" :loading="pannelLoading" v-bind:color="'#910024'" :size="'15px'"></pulse-loader>
+        <div class="pannel-top">
+          <div class="text">Import Course</div>
+          <div class="exit-svg" v-on:click="changeOverlay">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M11.9498 13.364C12.3403 13.7545 12.9734 13.7545 13.364 13.364C13.7545 12.9734 13.7545 12.3403 13.364 11.9497L8.41424 7.00002L13.364 2.05031C13.7545 1.65978 13.7545 1.02662 13.364 0.636092C12.9734 0.245567 12.3403 0.245567 11.9497 0.636092L7.00003 5.5858L2.05026 0.636033C1.65973 0.245508 1.02657 0.245509 0.636045 0.636033C0.24552 1.02656 0.24552 1.65972 0.636045 2.05025L5.58582 7.00002L0.636033 11.9498C0.245508 12.3403 0.245509 12.9735 0.636033 13.364C1.02656 13.7545 1.65972 13.7545 2.05025 13.364L7.00003 8.41423L11.9498 13.364Z" fill="#262626"/>
+            </svg>
+          </div>
+        </div>
+        <div class="pannel-body">
+          <div class="import-container">
+            <input class="input-for-import" v-model="importItem.course_id" @focus="clearErrorMessageforCourseID" type="text" id="course_id" placeholder="학수번호" required>
+            </input>
+            <p class="err-msg">{{this.ValidationItem.course_id}}</p>
+          </div>
+          <div class="import-container">
+            <input class="input-for-import" v-model="importItem.year" @focus="clearErrorMessageforYear" type="text" id="year" placeholder="연도" required>
+            </input>
+            <p class="err-msg">{{this.ValidationItem.year}}</p>
+          </div>
+          <div class="import-container">
+            <input class="input-for-import" v-model="importItem.semester" @focus="clearErrorMessageforSemester" type="text" id="semester" placeholder="학기" required>
+            </input>
+            <p class="err-msg">{{this.ValidationItem.semester}}</p>
+          </div>
+          <div class="import-container">
+            <input class="input-for-import" v-model="importItem.course_name" @focus="clearErrorMessageforCourseName" type="text" id="course_name" placeholder="과목명" required>
+            </input>
+            <p class="err-msg">{{this.ValidationItem.course_name}}</p>
+          </div>
+          <div class="import-container">
+            <input class="input-for-import" v-model="importItem.prof" @focus="clearErrorMessageforProf" type="text" id="prof" placeholder="교수" required>
+            </input>
+            <p class="err-msg">{{this.ValidationItem.prof}}</p>
+          </div>
+          <div class="import-container">
+            <input class="input-for-import" v-model="importItem.ta" @focus="clearErrorMessageforTA" type="text" id="ta" placeholder="조교" required>
+            </input>
+            <p class="err-msg">{{this.ValidationItem.ta}}</p>
+          </div>
+          <div class="import-container">
+            <label for="file">
+              <div class="btn-upload">
+                <div class="svg">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 8V16M16 12H8M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#616161" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="text">교과목 학생 파일</div>
+              </div>
+            </label>
+            <p class="err-msg">{{this.ValidationItem.file}}</p>
+            <input type="file" name="file" id="file" v-on:change="selectFile" accept=".xlsx, xls, .csv" />
+          </div>
+          <div class="import-container">
+            <p class="uploaded-file">Selected File Name</p>
+            <p v-show="this.selectedFile" class="uploaded-file-name">{{this.selectedFileName}}</p>
+          </div>
+        </div>
+        <div class="pannel-footer">
+          <div class="cancel-btn" v-on:click="closeImportDialog"> 취소 </div>
+          <div class="accept-btn" v-on:click="fileUpload"> 확인 </div>
+        </div>
+      </div>
+    </div>
     <div class="navigation">
       <div class="menu">
-        <router-link v-bind:to="'/info/course'" class="default-router plan-text" append>과목</router-link>
+        <div class="default-router plan-text current-tab">과목</div>
       </div>
       <div class="menu">
         <router-link v-bind:to="'/info/students'" class="default-router plan-text" append>학생</router-link>
       </div>
       <div class="menu">
-        <div class="default-router plan-text current-tab">레포지토리</div>
+        <router-link v-bind:to="'/info/repos'" class="default-router plan-text" append>레포지토리</router-link>
       </div>
       <div class="search-box">
-<<<<<<< HEAD
-      <div class="form__group field">
-        <input type="input" class="form-field" :value="searchField" />
-        <label class="form__label">SEARCH</label>
-      </div>
-      </div>
-=======
         <div class="form__group field">
           <input type="input" class="form-field" :value="searchField" />
           <label class="form__label">SEARCH</label>
         </div>
       </div>
-      <!-- <div class="import-btn" v-on:click="changeOverlay">
+      <div class="import-btn" v-on:click="changeOverlay">
         <div class="import-btn-svg">
           <svg id="svg-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="18" viewBox="0 0 20 18" fill="none">
             <path d="M4.75 0.25C2.12665 0.25 0 2.37665 0 5V13C0 15.6234 2.12665 17.75 4.75 17.75H12C14.6234 17.75 16.75 15.6234 16.75 13C16.75 12.5858 16.4142 12.25 16 12.25C15.5858 12.25 15.25 12.5858 15.25 13C15.25 14.7949 13.7949 16.25 12 16.25H7.46412C8.26157 15.4003 8.75 14.2572 8.75 13V5C8.75 3.74279 8.26157 2.59965 7.46412 1.75H12C13.7949 1.75 15.25 3.20507 15.25 5C15.25 5.41421 15.5858 5.75 16 5.75C16.4142 5.75 16.75 5.41421 16.75 5C16.75 2.37665 14.6234 0.25 12 0.25H4.75Z" fill="#CB385C"/>
@@ -31,210 +91,111 @@
           </svg>
           <div class="import-btn-svg-text">Import</div>
         </div>
-      </div> -->
->>>>>>> origin/dev-jhs
+      </div>
     </div>
     <div class="navigation_underline"></div>
     <div class="contents-box">
       <div class="table">
-<<<<<<< HEAD
         <table class="table-over" style="table-layout: fixed"> 
-          <thead class="table-header-wrapper">
-            <th class="table-header" v-for="item in header" v-bind:style="{width: tablewidth(item[1])}">{{item[0]}}</th>
-          </thead>
+          <thead class="table-header-wrapper"><th class="table-header" v-for="item in header" v-bind:style="{width: tablewidth(item[1])}">{{item[0]}}</th></thead>
           <tbody>
-            <tr v-for="item in sclicedPosts" :key="item.id" class="table-row">
-              <td :title="item.name">{{item.name}}</td>
-              <td>{{item.star_count}}</td>
-              <td>{{item.fork_count}}</td>
-              <td>{{item.commit_count}}</td>
-              <td>{{item.pr_count}}</td>
-              <td>{{item.total_issue_count}}</td>
-              <td :title="item.language">{{item.language}}</td>
-              <td>{{item.contributors}}</td>
+            <tr v-for="item in posts" class="table-row">
+              <!-- {{item}} -->
+              <td>{{item.yearandsemester}}</td>
+              <td>{{item.course_name}}</td>
+              <td>{{item.course_id}}</td>
+              <td>{{item.prof}}</td>
+              <td>{{item.students}}</td>
+              <td>{{item.commit}}</td>
+              <td>{{item.pr}}</td>
+              <td>{{item.issue}}</td>
+              <td>{{item.num_repos}}</td>
             </tr>
           </tbody>
         </table>
-=======
-      <table class="table-over" style="table-layout: fixed"> 
-        <thead class="table-header-wrapper">
-          <!-- 각 열에 대해 정렬을 적용할 수 있도록 @click 이벤트 추가 -->
-          <th class="table-header" @click="sortTable('name')" :style="{width: tablewidth(header[0][1])}">
-            레포지토리
-          </th>
-          <th class="table-header" @click="sortTable('owner_github_id')" :style="{width: tablewidth(header[1][1])}">
-            소유자
-          </th>
-          <th class="table-header" @click="sortTable('star_count')" :style="{width: tablewidth(header[2][1])}">
-            스타 수
-          </th>
-          <th class="table-header" @click="sortTable('fork_count')" :style="{width: tablewidth(header[3][1])}">
-            포크 수
-          </th>
-          <th class="table-header" @click="sortTable('commit_count')" :style="{width: tablewidth(header[4][1])}">
-            커밋 수
-          </th>
-          <th class="table-header" @click="sortTable('pr_count')" :style="{width: tablewidth(header[5][1])}">
-            PR 수
-          </th>
-          <th class="table-header" @click="sortTable('total_issue_count')" :style="{width: tablewidth(header[6][1])}">
-            이슈 수
-          </th>
-          <th class="table-header" @click="sortTable('language')" :style="{width: tablewidth(header[7][1])}">
-            언어
-          </th>
-          <th class="table-header" @click="sortTable('contributors')" :style="{width: tablewidth(header[8][1])}">
-            기여자 수
-          </th>
-          <th class="table-header" :style="{width: tablewidth(header[9][1])}">
-            상세보기
-          </th>
-        </thead>
-
-        <tbody>
-          <tr v-for="item in sclicedPosts" :key="item.id" class="table-row">
-            <!-- 테이블 데이터 부분은 그대로 유지 -->
-            <td :title="item.name">
-              <a :href="item.url" target="_blank">{{ item.name }}</a> <!-- 하이퍼링크 추가 -->
-            </td>
-            <td>{{item.owner_github_id}}</td>
-            <td>{{item.star_count}}</td>
-            <td>{{item.fork_count}}</td>
-            <td>{{item.commit_count}}</td>
-            <td>{{item.pr_count}}</td>
-            <td>{{item.total_issue_count}}</td>
-            <td :title="item.language">{{item.language}}</td>
-            <td>{{item.contributors}}</td>
-            <td>
-              <button @click="showContributors(item)" class="icon-button">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                </svg>
-              </button>
-            </td>            
-          </tr>
-        </tbody>
-      </table>
-        <!-- 팝업 창 -->
-        <div class="import-overlay" v-show="showOverlay" v-on:click="closeOverlay">
-          <div class="pannel-container" @click.stop>
-            <div class="pannel-top">
-              <div class="text">기여자 정보</div>
-              <!-- <div class="pannel-footer">
-                <button @click="closeOverlay">Close</button>
-              </div> -->
-              <div class="exit-svg" v-on:click="closeOverlay">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path fill-rule="evenodd" clip-rule="evenodd" d="M11.9498 13.364C12.3403 13.7545 12.9734 13.7545 13.364 13.364C13.7545 12.9734 13.7545 12.3403 13.364 11.9497L8.41424 7.00002L13.364 2.05031C13.7545 1.65978 13.7545 1.02662 13.364 0.636092C12.9734 0.245567 12.3403 0.245567 11.9497 0.636092L7.00003 5.5858L2.05026 0.636033C1.65973 0.245508 1.02657 0.245509 0.636045 0.636033C0.24552 1.02656 0.24552 1.65972 0.636045 2.05025L5.58582 7.00002L0.636033 11.9498C0.245508 12.3403 0.245509 12.9735 0.636033 13.364C1.02656 13.7545 1.65972 13.7545 2.05025 13.364L7.00003 8.41423L11.9498 13.364Z" fill="#262626"/>
-                </svg>
-              </div>
-            </div>
-            <div class="pannel-body" style="max-height: 400px; overflow-y: auto;">
-              <table class="contributor-table-over" style="table-layout: fixed">
-                <thead class="contributor-table-header-wrapper">
-                  <tr class="contributor-table-row">
-                    <th>이름</th>
-                    <th>학과</th>
-                    <th>학번</th>
-                    <th>Github ID</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr class="contributor-table-row" v-for="(contributor, index) in contributorsList" :key="index">
-                    <td>{{ contributor[0] }}</td>
-                    <td>{{ contributor[1] }}</td>
-                    <td>{{ contributor[2] }}</td>
-                    <td>{{ contributor[3] }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+        <div class="pagenation-container">
+          <div class="pagenation-wrapper">
+            <button @click="firstPageforAll" :disabled="firstPageDisabledforAll" class="prev-button">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path class="prev-pointer" d="M15 18L9 12L15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path class="prev-pointer" d="M19 18L13 12L19 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button @click="prevPageforAll" :disabled="prevPageDisabledforAll" class="prev-button">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path class="prev-pointer" d="M15 18L9 12L15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button
+              v-for="page in pagesToShowforAll"
+              :key="page"
+              @click="changePageforAll(page)"
+              :class="{ active: page === currentPageforAll }"
+              class="number-list-btn">
+              {{ page }}
+            </button>
+            <button @click="nextPageforAll" :disabled="nextPageDisabledforAll" class="next-button">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path class="next-pointer" d="M9 18L15 12L9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button @click="lastPageforAll" :disabled="lastPageDisabledforAll" class="next-button">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path class="next-pointer" d="M9 18L15 12L9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path class="next-pointer" d="M5 18L11 12L5 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
         </div>
->>>>>>> origin/dev-jhs
-        <div class="pagenation-container">
-            <div class="pagenation-wrapper">
-            <button @click="firstPageforAll" :disabled="firstPageDisabledforAll" class="prev-button">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path class="prev-pointer" d="M15 18L9 12L15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path class="prev-pointer" d="M19 18L13 12L19 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-            <button @click="prevPageforAll" :disabled="prevPageDisabledforAll" class="prev-button">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path class="prev-pointer" d="M15 18L9 12L15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <button
-              v-for="page in pagesToShowforAll"
-                :key="page"
-                @click="changePageforAll(page)"
-                :class="{ active: page === currentPage }"
-                class="number-list-btn">
-                {{ page }}
-              </button>
-            <button @click="nextPageforAll" :disabled="nextPageDisabledforAll" class="next-button">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path class="next-pointer" d="M9 18L15 12L9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-            <button @click="lastPageforAll" :disabled="lastPageDisabledforAll" class="next-button">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path class="next-pointer" d="M9 18L15 12L9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path class="next-pointer" d="M5 18L11 12L5 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-            </div>
-          </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import {getRepoInfo, postCourseUpload} from '@/api.js'
+import {getCourseInfo, postCourseUpload} from '@/api.js'
 import * as XLSX from 'xlsx';
 export default {
-  name: 'StatisticsRepo',
+  name: 'StatisticsTotal',
   props: ["postss"],
   data() {
     return {
       showOverlay: false,
-<<<<<<< HEAD
-=======
-      contributorsList: [], // 팝업창에 표시할 contributors_list
->>>>>>> origin/dev-jhs
       showTable: false,
       searchField: '',
+      selectedFile: null,
       pannelLoading: false,
       posts: [],
       sclicedPosts: [],
       currentPage: 1,
       postsPerPage: 10,
-<<<<<<< HEAD
-      header : [
-        ['레포지토리', '20%'],
-=======
-      currentSort: null, // 현재 정렬 중인 필드
-      currentSortDir: 'asc', // 정렬 방향 (asc: 오름차순, desc: 내림차순)
-      header : [
-        ['레포지토리', '10%'],
-        ['소유자', '10%'],
->>>>>>> origin/dev-jhs
-        ['스타 수', '10%'], 
-        ['포크 수', '10%'], 
-        ['커밋 수', '10%'], 
-        ['PR 수', '10%'], 
-        ['이슈 수', '10%'], 
-<<<<<<< HEAD
-        ['언어', '20%'], 
-        ['기여자 수', '10%']
-=======
-        ['언어', '16%'], 
-        ['기여자 수', '7%'],
-        ['상세보기', '7%']
->>>>>>> origin/dev-jhs
-      ],
+      header : [['개설학기', '9%'], 
+                ['과목명', '14%'], 
+                ['학수번호', '11%'], 
+                ['지도교수', '11%'], 
+                ['수강생', '11%'],
+                ['Commit', '11%'], 
+                ['PR', '11%'], 
+                ['Issue', '11%'], 
+                ['Repos', '11%']],
+      importItem: {
+        course_id: '',
+        year: '',
+        semester: '',
+        course_name: '',
+        prof: '',
+        ta: '',
+      },
+      ValidationItem: {
+        course_id: '',
+        year: '',
+        semester: '',
+        course_name: '',
+        prof: '',
+        ta: '',
+        file: '',
+      },
+      selectedFileName: '',
     };
   },
   computed: {
@@ -245,19 +206,19 @@ export default {
       return  Math.floor(Math.ceil(this.postss.length / this.postsPerPage) / 10) + 1;
     },
     prevPageDisabledforAll() {
-      return Math.floor((this.currentPage - 1) / 10) === 0
+      return Math.floor((this.currentPageforAll - 1) / 10) === 0
     },
     nextPageDisabledforAll() {
-      return Math.floor((this.currentPage - 1) / 10) + 1 >= this.totalPagesPerListforAll
+      return Math.floor((this.currentPageforAll - 1) / 10) + 1 >= this.totalPagesPerListforAll
     },
     firstPageDisabledforAll() {
-      return this.currentPage === 1
+      return this.currentPageforAll === 1
     },
     lastPageDisabledforAll() {
-      return this.currentPage === this.totalPagesforAll
+      return this.currentPageforAll === this.totalPagesforAll
     },
     pagesToShowforAll() {
-      const startPage = Math.floor((this.currentPage - 1) / 10) * 10 + 1;
+      const startPage = Math.floor((this.currentPageforAll - 1) / 10) * 10 + 1;
       const endPage = Math.min(startPage + 9, this.totalPagesforAll);
       const pages = [];
       for (let i = startPage; i <= endPage; i++) {
@@ -267,31 +228,6 @@ export default {
     },
   },
   methods: {
-<<<<<<< HEAD
-=======
-    // 테이블 정렬 메서드
-    sortTable(column) {
-      if (this.currentSort === column) {
-        // 같은 열을 다시 클릭하면 정렬 방향을 변경
-        this.currentSortDir = this.currentSortDir === 'asc' ? 'desc' : 'asc';
-      } else {
-        // 새로운 열을 클릭하면 오름차순으로 정렬 시작
-        this.currentSort = column;
-        this.currentSortDir = 'asc';
-      }
-
-      // 전체 데이터인 posts 배열을 정렬
-      this.posts.sort((a, b) => {
-        let modifier = this.currentSortDir === 'asc' ? 1 : -1;
-        if (a[column] < b[column]) return -1 * modifier;
-        if (a[column] > b[column]) return 1 * modifier;
-        return 0;
-      });
-
-      // 정렬된 데이터를 페이지에 맞게 나눠서 보여줌
-      this.slicingforall();
-    },
->>>>>>> origin/dev-jhs
     changePageforAll(page) {
       let toPage = 0
       if (page < 1) {
@@ -303,131 +239,190 @@ export default {
       }
       const query = { ...this.$route.query, page: toPage };
       this.$router.replace({ path: this.$route.path, query: query });
-      this.currentPage = toPage;
+      this.currentPageforAll = toPage;
     },
     firstPageforAll() {
-      if (this.currentPage > 1) {
+      if (this.currentPageforAll > 1) {
         this.changePageforAll(1);
       }
     },
     prevPageforAll() {
-      if (this.currentPage > 1) {
-      this.changePageforAll(this.currentPage - 1);
+      if (this.currentPageforAll > 1) {
+        this.changePageforAll(Math.floor((this.currentPageforAll - 1) / 10));
       }
     },
     nextPageforAll() {
-      if (this.currentPage < this.totalPagesforAll) {
-      this.changePageforAll(this.currentPage + 1);
+      if (Math.floor((this.currentPageforAll - 1) / 10) + 1 < this.totalPagesPerListforAll) {
+        this.changePageforAll(Math.floor((this.currentPageforAll - 1) / 10) + 11);
       }
     },
     lastPageforAll() {
-      if (this.currentPage < this.totalPagesforAll) {
+      if (this.currentPageforAll < this.totalPagesforAll) {
         this.changePageforAll(this.totalPagesforAll);
       }
+    },
+    selectFile(e) {
+      this.selectedFile = e.target.files[0];
+      this.selectedFileName = this.selectedFile.name
+      console.log(this.selectedFile)
     },
     toggle() {
       this.showTable = !this.showTable;
     },
-    tablewidth(length) {
-      return length;
-    },
     slicingforall() {
-      const start = (this.currentPage - 1) * this.postsPerPage;
+      const start = (this.currentPageforAll - 1) * this.postsPerPage;
       const end = start + this.postsPerPage;
-<<<<<<< HEAD
       this.sclicedPosts = this.yearandCommitSort(this.posts.slice(start, end));
-=======
-      // 정렬된 posts 배열에서 현재 페이지에 해당하는 부분만 가져옴
-      this.sclicedPosts = this.posts.slice(start, end);
->>>>>>> origin/dev-jhs
     },
-    commitSort(li){
-      li.sort(function(a,b){
-        if( !a.commit_count ) {
-          a.commit_count = 0
+    checkInput() {
+      let onormore = false;
+      if(this.importItem.course_id === '') {
+        this.ValidationItem.course_id = 'The Course ID is required.'
+        onormore = true
       }
-        if(!b.commit_count) {
-          b.commit_count = 0
-        }
-        return b.commit_count - a.commit_count
-      });
-      return li
+      if(this.importItem.year === '') {
+        this.ValidationItem.year = 'The Year is required.'
+        onormore = true
+      }
+      if(this.importItem.semester === '') {
+        this.ValidationItem.semester = 'The Semester is required.'
+        onormore = true
+      }
+      if(this.importItem.course_name === '') {
+        this.ValidationItem.course_name = 'The Course Name is required.'
+        onormore = true
+      }
+      if(this.importItem.prof === '') {
+        this.ValidationItem.prof = 'The Professor Name is required.'
+        onormore = true
+      }
+      if(this.importItem.ta === '') {
+        this.ValidationItem.ta = 'The TA Name is required.'
+        onormore = true
+      }
+      if(!this.selectedFile) {
+        this.ValidationItem.file = 'The TA Name is required.'
+        this.selectedFileName = ''
+        onormore = true
+      } else {
+        this.selectedFileName = this.selectedFile.name
+      }
+      return onormore
+    },
+    clearErrorMessageforCourseID() {
+      this.ValidationItem.course_id = ''
+    },
+    clearErrorMessageforYear() {
+      this.ValidationItem.year = ''
+    },
+    clearErrorMessageforSemester() {
+      this.ValidationItem.semester = ''
+    },
+    clearErrorMessageforCourseName() {
+      this.ValidationItem.course_name = ''
+    },
+    clearErrorMessageforProf() {
+      this.ValidationItem.prof = ''
+    },
+    clearErrorMessageforTA() {
+      this.ValidationItem.ta = ''
+    },
+    clearErrorMessageforFile() {
+      this.ValidationItem.file = ''
+      this.selectedFileName = ''
+    },
+    clearAllMessages() {
+      this.clearErrorMessageforCourseID()
+      this.clearErrorMessageforYear()
+      this.clearErrorMessageforSemester()
+      this.clearErrorMessageforCourseName()
+      this.clearErrorMessageforProf()
+      this.clearErrorMessageforTA()
+      this.clearErrorMessageforFile()
+    },
+    changeOverlay() {
+      this.showOverlay = !this.showOverlay
+    },
+    tablewidth(length) {
+      return length
+    },
+    fileUpload() {
+      if (this.checkInput()) {
+        return;
+      }
+      this.pannelLoading = true
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        console.log(e)
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const sheetData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+        const importDetails = [
+          this.importItem.course_id,
+          this.importItem.year,
+          this.importItem.semester,
+          this.importItem.course_name,
+          this.importItem.prof,
+          this.importItem.ta,
+        ];
+        sheetData.unshift(importDetails);
+
+        // Convert back to worksheet and workbook
+        const newWorksheet = XLSX.utils.aoa_to_sheet(sheetData);
+        const newWorkbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, 'Sheet1');
+
+        // Write the new workbook to a blob
+        const newExcelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
+        const newFile = new Blob([newExcelBuffer], { type: 'application/octet-stream' });
+
+        // Prepare the form data for upload
+        const formData = new FormData();
+        formData.append('file', newFile, 'modified_import.xlsx');
+        formData.append('course_id', this.importItem.course_id);
+        formData.append('year', this.importItem.year);
+        formData.append('semester', this.importItem.semester);
+        formData.append('name', this.importItem.course_name);
+        formData.append('prof', this.importItem.prof);
+        formData.append('ta', this.importItem.ta);
+        postCourseUpload(formData).then(response => {
+          this.closeImportDialog()
+        }).catch(e => {
+          console.error('Error Uploading file:', error);
+          this.pannelLoading = false
+        })
+      };
+      reader.readAsArrayBuffer(this.selectedFile);
+    },
+    closeImportDialog() {
+      this.showOverlay = false;
+      this.clearAllMessages()
+      this.selectedFile = null;
+      this.pannelLoading = false
     },
     yearandCommitSort(li) {
       li.sort(function(a, b) {
-        return b.commit_count - a.commit_count;
+        // year 값이 없는 경우 -1로 설정
+        const yearA = a.year || -1;
+        const yearB = b.year || -1;
+
+        // year가 같은 경우 commit 값을 기준으로 정렬
+        if (yearA === yearB) {
+          return b.commit - a.commit;
+        }
+
+        // year를 기준으로 정렬
+        return yearB - yearA;
       });
       return li;
     },
-    toSummarized(li) {
-      var ret = []
-      const ids = new Set(li.map(row=>row.id));
-      const uniqueArr  = [...ids];
-      li.forEach(element => {
-        let index = uniqueArr.indexOf(element.id)
-<<<<<<< HEAD
-
-=======
-          
->>>>>>> origin/dev-jhs
-        if (ret[index] === undefined) {
-          var newData = new Object()
-          newData.id = element.id
-          newData.name = element.name
-          newData.owner_github_id = element.owner_github_id
-          newData.commit_count = element.commit_count
-          newData.pr_count = element.pr_count
-          newData.total_issue_count = element.total_issue_count
-          newData.fork_count = element.fork_count
-          newData.star_count = element.star_count
-<<<<<<< HEAD
-=======
-          newData.url = element.url
-          newData.contributors_list = element.contributors_list;
->>>>>>> origin/dev-jhs
-          ret[index] = newData
-        }
-        else {
-          var appendData = ret[index]
-          appendData.commit_count = appendData.commit_count + element.commit_count
-          appendData.pr_count = appendData.pr_count + element.pr_count
-          appendData.total_issue_count = appendData.total_issue_count + element.total_issue_count
-          appendData.fork_count = appendData.fork_count + element.fork_count
-          appendData.star_count = appendData.star_count + element.star_count
-          ret[index] = appendData   
-        }
-      });
-      ret = this.commitSort(ret)
-      return ret
-    },
-    changeRoutebyTable() {
-      if (this.showTable) {
-        this.$router.replace({ path: this.$route.path, query: { page: 1, type: 'summary' } });
-      } else if (!this.showTable) {
-        this.$router.replace({ path: this.$route.path, query: { page: 1, type: 'all' } });
-      }
-      this.slicingforall();
-      this.toSummarized(this.posts);
-      this.slicingforsummary();
-    },
-<<<<<<< HEAD
-=======
-    // 팝업창 띄우는 메서드
-    showContributors(item) {
-      this.contributorsList = item.contributors_list || []; // contributors_list 데이터를 가져와서 설정
-      this.showOverlay = true; // 팝업창 표시
-    },
-    // 팝업창 닫는 메서드
-    closeOverlay() {
-      this.showOverlay = false;
-      this.contributorsList = []; // 팝업창 닫을 때 contributors_list 초기화
-    }
->>>>>>> origin/dev-jhs
   },
   mounted() {
-    this.currentPage = parseInt(this.$route.query.page) || 1;
+    this.posts = this.postss
+    this.currentPageforAll = parseInt(this.$route.query.page) || 1;
     this.slicingforall();
-    this.toSummarized(this.posts);
   },
   beforeMount() {
     const query = this.$route.query;
@@ -437,39 +432,30 @@ export default {
       newQuery.page = 1;
       needsReplace = true;
     }
+
     if (needsReplace) {
       this.$router.replace({ path: this.$route.path, query: newQuery });
     }
-    this.currentPage = parseInt(query.page) || 1;
+    this.currentPageforAll = parseInt(query.page) || 1;
   },
   watch: {
     postss(to, from) {
       this.posts = to;
-<<<<<<< HEAD
-      console.log(this.posts)
-=======
-      console.log('초기 데이터',this.posts)
->>>>>>> origin/dev-jhs
       this.slicingforall();
       if (this.$route.query.page > this.totalPagesforAll) {
         this.changePageforAll(this.totalPagesforAll);
       }
-      this.toSummarized(this.posts);
     },
     $route(to, from) {
-      console.log(this.posts)
-      this.currentPage = parseInt(to.query.page) || 1;
+      this.currentPageforAll = parseInt(to.query.page) || 1;
       this.slicingforall();
     },
-    currentPage(to, from) {
+    currentPageforAll(to, from) {
       this.slicingforall();
-      this.toSummarized(this.posts);
-
     },
   }
 };
 </script>
-
 
 <style scoped>
 .cursorblock {
@@ -521,9 +507,7 @@ export default {
       opacity: 0;
     }
   }
-<<<<<<< HEAD
-=======
-  .Contributor-btn {
+  .import-btn {
     min-height: 34px;
     min-width: 117px;
     margin-right: 0;
@@ -536,7 +520,7 @@ export default {
     &:hover {
       background: #ffe9eb;
     }
-    .Contributor-btn-svg {
+    .import-btn-svg {
       display: flex;
       align-items: center;
       /* background-color: red; */
@@ -545,7 +529,7 @@ export default {
         /* margin: 0 auto; */
         display: block;
       }
-      .Contributor-btn-svg-text {
+      .import-btn-svg-text {
         display: block;
         margin-left: 8px;
         font-size: 16px;
@@ -556,15 +540,12 @@ export default {
       }
     }
   }
-
->>>>>>> origin/dev-jhs
   .search-box {
     min-height: 44px;
     margin-left: auto;
     margin-right: 60px;
     align-self: flex-end;
     padding-bottom: 4px;
-    margin-right: 26px;
 
     .form__group {
       position: relative;
@@ -632,7 +613,9 @@ export default {
         box-shadow: none;
       }
     }
+
   }
+
 }
 
 .navigation_underline {
@@ -670,45 +653,6 @@ export default {
   }
 }
 
-<<<<<<< HEAD
-=======
-.contributor-table-over {
-  border-collapse: collapse;
-  width: 180%;
-  font-size: 16px;
-  margin-left: 10%;
-  .contributor-table-header-wrapper{
-    border-top: solid 1px #F9D2D6;
-    border-bottom: solid 1px #F9D2D6; 
-  }
-  .contributor-table-header {
-    color: var(--Primary_normal, #910024);
-    font-weight: 600;
-    height: 43px;
-    vertical-align: middle;
-  }
-  .contributor-table-row {
-    height: 70px;
-    border-bottom: solid 1px #DCE2ED;
-    text-align: center;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-    & td {
-      text-overflow: ellipsis;
-      overflow: hidden;
-      white-space: nowrap;
-      color: #000000;
-    }
-  }
-}
-
-.contributor-table-over th {
-  color: #910024;
-  font-weight: bold; /* 글자를 좀 더 두껍게 표현 */
-}
-
->>>>>>> origin/dev-jhs
 .table {
   .pagenation-container {
     height: 44px;
@@ -785,6 +729,7 @@ export default {
 .chart {
   margin: 20px 0;
   padding: 20px 0;
+  /* border: 1px solid #dce2ed; */
   border-radius: 4px;
   height: 100%;
   .year-chart-container {
@@ -800,19 +745,6 @@ export default {
     
   }
 }
-<<<<<<< HEAD
-=======
-.icon-button {
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.icon-button svg.size-6 {
-  width: 24px;
-  height: 24px;
-}
->>>>>>> origin/dev-jhs
 
 .import-overlay {
   position: fixed;
@@ -955,8 +887,8 @@ export default {
         }
         .uploaded-file-name {
           overflow:hidden;
-           text-overflow:ellipsis;
-           white-space:nowrap;
+	        text-overflow:ellipsis;
+	        white-space:nowrap;
         }
       }
     }

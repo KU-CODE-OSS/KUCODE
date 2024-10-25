@@ -39,7 +39,38 @@
         <div v-if="!showTable" class="table">
           <table class="table-over" style="table-layout: fixed"> 
             <thead class="table-header-wrapper">
+<<<<<<< HEAD
               <th class="table-header" v-for="item in headerforsummary" :key="item[0]" :style="{width: tablewidth(item[1])}">{{item[0]}}</th>
+=======
+              <!-- 열 제목에 @click 이벤트 추가하여 정렬 가능하도록 설정 -->
+              <th class="table-header" @click="sortTable('name')" :style="{width: tablewidth(headerforsummary[0][1])}">
+                이름
+              </th>
+              <th class="table-header" @click="sortTable('department')" :style="{width: tablewidth(headerforsummary[1][1])}">
+                학과
+              </th>
+              <th class="table-header" @click="sortTable('id')" :style="{width: tablewidth(headerforsummary[2][1])}">
+                학번
+              </th>
+              <th class="table-header" @click="sortTable('enrollment')" :style="{width: tablewidth(headerforsummary[3][1])}">
+                학적
+              </th>
+              <th class="table-header" @click="sortTable('github')" :style="{width: tablewidth(headerforsummary[4][1])}">
+                Github ID
+              </th>
+              <th class="table-header" @click="sortTable('commit')" :style="{width: tablewidth(headerforsummary[5][1])}">
+                Commit
+              </th>
+              <th class="table-header" @click="sortTable('pr')" :style="{width: tablewidth(headerforsummary[6][1])}">
+                PR
+              </th>
+              <th class="table-header" @click="sortTable('issue')" :style="{width: tablewidth(headerforsummary[7][1])}">
+                Issue
+              </th>
+              <th class="table-header" @click="sortTable('num_repos')" :style="{width: tablewidth(headerforsummary[8][1])}">
+                Repos
+              </th>
+>>>>>>> origin/dev-jhs
             </thead>
             <tbody>
               <tr v-for="(item, index) in slicedsummarizedStudents" :key="index" class="table-row">
@@ -93,7 +124,46 @@
         <div v-else class="table">
           <table class="table-over" style="table-layout: fixed"> 
             <thead class="table-header-wrapper">
+<<<<<<< HEAD
               <th class="table-header" v-for="item in headerforall" :key="item[0]" :style="{width: tablewidth(item[1])}">{{item[0]}}</th>
+=======
+              <th class="table-header" @click="sortTableForAll('yearandsemester')" :style="{width: tablewidth(headerforall[0][1])}">
+                개설학기
+              </th>
+              <th class="table-header" @click="sortTableForAll('name')" :style="{width: tablewidth(headerforall[0][1])}">
+                이름
+              </th>
+              <th class="table-header" @click="sortTableForAll('department')" :style="{width: tablewidth(headerforall[1][1])}">
+                학과
+              </th>
+              <th class="table-header" @click="sortTableForAll('id')" :style="{width: tablewidth(headerforall[2][1])}">
+                학번
+              </th>
+              <th class="table-header" @click="sortTableForAll('enrollment')" :style="{width: tablewidth(headerforall[3][1])}">
+                학적
+              </th>
+              <th class="table-header" @click="sortTableForAll('github')" :style="{width: tablewidth(headerforall[4][1])}">
+                Github ID
+              </th>
+              <th class="table-header" @click="sortTableForAll('course_name')" :style="{width: tablewidth(headerforall[5][1])}">
+                과목명
+              </th>
+              <th class="table-header" @click="sortTableForAll('course_id')" :style="{width: tablewidth(headerforall[6][1])}">
+                학수번호
+              </th>
+              <th class="table-header" @click="sortTableForAll('commit')" :style="{width: tablewidth(headerforall[7][1])}">
+                Commit
+              </th>
+              <th class="table-header" @click="sortTableForAll('pr')" :style="{width: tablewidth(headerforall[8][1])}">
+                PR
+              </th>
+              <th class="table-header" @click="sortTableForAll('issue')" :style="{width: tablewidth(headerforall[9][1])}">
+                Issue
+              </th>
+              <th class="table-header" @click="sortTableForAll('num_repos')" :style="{width: tablewidth(headerforall[10][1])}">
+                Repos
+              </th>
+>>>>>>> origin/dev-jhs
             </thead>
             <tbody>
               <tr v-for="(item, index) in sclicedPosts" :key="index" class="table-row">
@@ -158,6 +228,11 @@ export default {
   props: ["postss"],
   data() {
     return {
+<<<<<<< HEAD
+=======
+      currentSort: null, // 현재 정렬 중인 열
+      currentSortDir: 'asc', // 정렬 방향 (asc: 오름차순, desc: 내림차순)
+>>>>>>> origin/dev-jhs
       showTable: false,
       searchField: '',
       pannelLoading: false,
@@ -249,6 +324,52 @@ export default {
     }
   },
   methods: {
+<<<<<<< HEAD
+=======
+    // 정렬 메서드
+    sortTable(column) {
+      if (this.currentSort === column) {
+        // 같은 열을 다시 클릭하면 정렬 방향 변경
+        this.currentSortDir = this.currentSortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        // 새로운 열 클릭 시 오름차순으로 정렬 시작
+        this.currentSort = column;
+        this.currentSortDir = 'asc';
+      }
+
+      // 전체 데이터인 summarizedStudents 배열을 정렬
+      this.summarizedStudents.sort((a, b) => {
+        let modifier = this.currentSortDir === 'asc' ? 1 : -1;
+        if (a[column] < b[column]) return -1 * modifier;
+        if (a[column] > b[column]) return 1 * modifier;
+        return 0;
+      });
+
+      // 정렬된 데이터를 페이지에 맞게 나눠서 보여주기
+      this.slicingforsummary();
+    },
+    sortTableForAll(column) {
+      if (this.currentSort === column) {
+        // 같은 열을 다시 클릭하면 정렬 방향을 변경
+        this.currentSortDir = this.currentSortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        // 새로운 열을 클릭하면 오름차순으로 정렬 시작
+        this.currentSort = column;
+        this.currentSortDir = 'asc';
+      }
+
+      // 전체 데이터인 posts 배열을 정렬
+      this.posts.sort((a, b) => {
+        let modifier = this.currentSortDir === 'asc' ? 1 : -1;
+        if (a[column] < b[column]) return -1 * modifier;
+        if (a[column] > b[column]) return 1 * modifier;
+        return 0;
+      });
+
+      // 정렬된 데이터를 페이지에 맞게 나눠서 보여줌
+      this.slicingforall();
+    },
+>>>>>>> origin/dev-jhs
     changePageforAll(page) {
       let toPage = 0
       if (page < 1) {
@@ -324,12 +445,22 @@ export default {
     slicingforall() {
       const start = (this.currentPageforAll - 1) * this.postsPerPage;
       const end = start + this.postsPerPage;
+<<<<<<< HEAD
       this.sclicedPosts = this.yearandCommitSort(this.posts.slice(start, end));
+=======
+      // 정렬된 posts 배열에서 현재 페이지에 해당하는 부분만 가져옴
+      this.sclicedPosts = this.posts.slice(start, end);
+>>>>>>> origin/dev-jhs
     },
     slicingforsummary() {
       const start = (this.currentPageforSummary - 1) * this.postsPerPage;
       const end = start + this.postsPerPage;
+<<<<<<< HEAD
       this.slicedsummarizedStudents = this.commitSort(this.summarizedStudents.slice(start, end));
+=======
+      // 정렬된 summarizedStudents에서 현재 페이지에 해당하는 부분만 가져옴
+      this.slicedsummarizedStudents = this.summarizedStudents.slice(start, end);
+>>>>>>> origin/dev-jhs
     },
     commitSort(li){
       li.sort(function(a,b){

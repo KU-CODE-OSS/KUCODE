@@ -156,9 +156,16 @@
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학수번호</th>
+<<<<<<< HEAD
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
+=======
+                      <th width="58px">25%</th>
+                      <th width="58px">50%</th>
+                      <th width="58px">75%</th>
+                      <th width="58px">최대</th>
+>>>>>>> origin/dev-jhs
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -168,6 +175,10 @@
                         <td width="58px" :title="item.num_repos_stats.q1">{{item.num_repos_stats.q1}}</td>
                         <td width="58px" :title="item.num_repos_stats.median">{{item.num_repos_stats.median}}</td>
                         <td width="58px" :title="item.num_repos_stats.q3">{{item.num_repos_stats.q3}}</td>
+<<<<<<< HEAD
+=======
+                        <td width="58px" :title="item.num_repos_stats.max">{{item.num_repos_stats.max}}</td>
+>>>>>>> origin/dev-jhs
                         <td width="87px" :title="item.num_repos_stats.mean">{{item.num_repos_stats.mean}}</td>
                         <td width="87px" :title="item.num_repos_stats.stdDev">{{item.num_repos_stats.stdDev}}</td>
                       </tr>
@@ -181,9 +192,16 @@
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학수번호</th>
+<<<<<<< HEAD
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
+=======
+                      <th width="58px">25%</th>
+                      <th width="58px">50%</th>
+                      <th width="58px">75%</th>
+                      <th width="58px">최대</th>
+>>>>>>> origin/dev-jhs
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -193,6 +211,10 @@
                         <td width="58px" :title="item.commit_stats.q1">{{item.commit_stats.q1}}</td>
                         <td width="58px" :title="item.commit_stats.median">{{item.commit_stats.median}}</td>
                         <td width="58px" :title="item.commit_stats.q3">{{item.commit_stats.q3}}</td>
+<<<<<<< HEAD
+=======
+                        <td width="58px" :title="item.commit_stats.max">{{item.commit_stats.max}}</td>
+>>>>>>> origin/dev-jhs
                         <td width="87px" :title="item.commit_stats.mean">{{item.commit_stats.mean}}</td>
                         <td width="87px" :title="item.commit_stats.stdDev">{{item.commit_stats.stdDev}}</td>
                       </tr>
@@ -207,9 +229,16 @@
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학수번호</th>
+<<<<<<< HEAD
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
+=======
+                      <th width="58px">25%</th>
+                      <th width="58px">50%</th>
+                      <th width="58px">75%</th>
+                      <th width="58px">최대</th>
+>>>>>>> origin/dev-jhs
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -219,6 +248,10 @@
                         <td width="58px" :title="item.issue_stats.q1">{{item.issue_stats.q1}}</td>
                         <td width="58px" :title="item.issue_stats.median">{{item.issue_stats.median}}</td>
                         <td width="58px" :title="item.issue_stats.q3">{{item.issue_stats.q3}}</td>
+<<<<<<< HEAD
+=======
+                        <td width="58px" :title="item.issue_stats.max">{{item.issue_stats.max}}</td>
+>>>>>>> origin/dev-jhs
                         <td width="87px" :title="item.issue_stats.mean">{{item.issue_stats.mean}}</td>
                         <td width="87px" :title="item.issue_stats.stdDev">{{item.issue_stats.stdDev}}</td>
                       </tr>
@@ -232,9 +265,16 @@
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학수번호</th>
+<<<<<<< HEAD
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
+=======
+                      <th width="58px">25%</th>
+                      <th width="58px">50%</th>
+                      <th width="58px">75%</th>
+                      <th width="58px">최대</th>
+>>>>>>> origin/dev-jhs
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -243,7 +283,11 @@
                         <td width="203px" :title="item.course_id">{{ item.course_id_for_stats }}</td>
                         <td width="58px" :title="item.pr_stats.q1">{{item.pr_stats.q1}}</td>
                         <td width="58px" :title="item.pr_stats.median">{{item.pr_stats.median}}</td>
+<<<<<<< HEAD
                         <td width="58px" :title="item.pr_stats.q3">{{item.pr_stats.q3}}</td>
+=======
+                        <td width="58px" :title="item.pr_stats.max">{{item.pr_stats.max}}</td>
+>>>>>>> origin/dev-jhs
                         <td width="87px" :title="item.pr_stats.mean">{{item.pr_stats.mean}}</td>
                         <td width="87px" :title="item.pr_stats.stdDev">{{item.pr_stats.stdDev}}</td>
                       </tr>
@@ -258,9 +302,16 @@
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학수번호</th>
+<<<<<<< HEAD
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
+=======
+                      <th width="58px">25%</th>
+                      <th width="58px">50%</th>
+                      <th width="58px">75%</th>
+                      <th width="58px">최대</th>
+>>>>>>> origin/dev-jhs
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -270,6 +321,10 @@
                         <td width="58px" :title="item.stars_stats.q1">{{item.stars_stats.q1}}</td>
                         <td width="58px" :title="item.stars_stats.median">{{item.stars_stats.median}}</td>
                         <td width="58px" :title="item.stars_stats.q3">{{item.stars_stats.q3}}</td>
+<<<<<<< HEAD
+=======
+                        <td width="58px" :title="item.stars_stats.max">{{item.stars_stats.max}}</td>
+>>>>>>> origin/dev-jhs
                         <td width="87px" :title="item.stars_stats.mean">{{item.stars_stats.mean}}</td>
                         <td width="87px" :title="item.stars_stats.stdDev">{{item.stars_stats.stdDev}}</td>
                       </tr>
@@ -833,7 +888,11 @@ export default {
     margin-left: auto;
     .wrapper {
       width: 150px;
+<<<<<<< HEAD
       height: 44px;
+=======
+      height: 58px;
+>>>>>>> origin/dev-jhs
       text-align: center;
       margin: 0 auto;
       position: relative;
