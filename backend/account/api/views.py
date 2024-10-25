@@ -31,8 +31,8 @@ class HealthCheckAPIView(APIView):
 #---------- CU ----------#
 def sync_student_db(request):
     try:
+        # Fetch all students
         students = Student.objects.all()
-        
         student_list = [{'id': student.id, 'github_id': student.github_id} for student in students]
         
         total_student_count = len(student_list)
@@ -42,58 +42,50 @@ def sync_student_db(request):
         failure_count = 0
         failure_details = []
 
+        # Process each student
         for student in student_list:
             student_count += 1
-            print(f'({student_count}/{total_student_count}) Processing student with id {student["id"]} and github_id {student["github_id"]}')
+            print(f'\n{"="*10} [{student_count}/{total_student_count}] Processing student ID: {student["id"]} (GitHub ID: {student["github_id"]}) {"="*10}')
+            
             id = student['id']
             github_id = student['github_id']
             
+            # Fetch GitHub user data
             response = requests.get(f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/user", params={'github_id': github_id})
             if response.status_code == 404:
-                message = f"GitHub user {github_id} not found"
+                message = f"[ERROR] GitHub user {github_id} not found"
                 print(message)
                 failure_count += 1
                 failure_details.append({"id": id, "github_id": github_id, "message": message})
                 continue
-            
+
             data = response.json()
             
-            try:                    
-                student_record = Student.objects.get(github_id__iexact=github_id)
-                student_record.follower_count = data.get('Follower_CNT')
-                student_record.following_count = data.get('Following_CNT')
-                student_record.public_repo_count = data.get('Public_repos_CNT')
-                student_record.github_profile_create_at = data.get('Github_profile_Create_Date')
-                student_record.github_profile_update_at = data.get('Github_profile_Update_Date')
-                student_record.save()
-                message = f"Student record with id {id} and github_id {github_id} updated successfully"
-                print(message)
-                success_count += 1
-
-            except ObjectDoesNotExist:
-                Student.objects.create(
-                    id=id,
-                    github_id=github_id,
-                    follower_count=data.get('Follower_CNT'),
-                    following_count=data.get('Following_CNT'),
-                    public_repo_count=data.get('Public_repos_CNT'),
-                    starred_count=0,
-                    github_profile_create_at=data.get('Github_profile_Create_Date'),
-                    github_profile_update_at=data.get('Github_profile_Update_Date')
+            try:
+                # Update or create student record
+                student_record, created = Student.objects.update_or_create(
+                    github_id__iexact=github_id,
+                    defaults={
+                        'follower_count': data.get('Follower_CNT'),
+                        'following_count': data.get('Following_CNT'),
+                        'public_repo_count': data.get('Public_repos_CNT'),
+                        'github_profile_create_at': data.get('Github_profile_Create_Date'),
+                        'github_profile_update_at': data.get('Github_profile_Update_Date')
+                    }
                 )
 
-                message = f"Student record with id {id} and github_id {github_id} created successfully"
-                print(message)
+                action = "Created" if created else "Updated"
+                message = f"Student record {action}: ID {id}, GitHub ID {github_id}"
+                print(f"[SUCCESS] {message}")
+                success_count += 1
 
             except Exception as e:
-                message = f"Error processing student with id {id} and github_id {github_id}: {str(e)}"
+                message = f"[ERROR] Error processing student: ID {id}, GitHub ID {github_id} - {str(e)}"
                 print(message)
                 failure_count += 1
                 failure_details.append({"id": id, "github_id": github_id, "message": message})
 
-
-            print(f'({student_count}/{total_student_count}) Successfully processed student with id {id} and github_id {github_id}')
-            print(f"-"*50)
+            print(f'-'*5)
 
         return JsonResponse({
             "status": "OK", 
@@ -103,11 +95,8 @@ def sync_student_db(request):
             "failure_details": failure_details
         })
     
-    except ObjectDoesNotExist:
-        return JsonResponse({"status": "Error", "message": f"Student with github_id '{github_id}' does not exist"}, status=404)
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
-
 
 
 

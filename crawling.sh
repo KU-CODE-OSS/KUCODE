@@ -1,43 +1,45 @@
 #!/bin/bash
 
+# .env 파일에서 환경 변수 로드
+if [ -f ".env" ]; then
+    export $(cat .env | xargs)
+else
+    echo ".env file not found! Make sure it exists in the same directory."
+    exit 1
+fi
+
 # Define the URLs for student synchronization
 student_urls=(
-    "http://localhost:8000/api/account/sync_student_db"
+    "$STUDENT_SYNC_URL"
 )
 
 # Define the URLs for repo synchronization
 repo_urls=(
-    "http://localhost:8000/api/repo/sync_repo_db"
+    "$REPO_SYNC_URL"
 )
 
 # Define the URLs to be processed in parallel for repo-related synchronization
 repo_commit_urls=(
-    "http://localhost:8000/api/repo/sync_repo_commit_db"
+    "$REPO_COMMIT_SYNC_URL"
 )
 
 repo_issue_pr_urls=(
-    "http://localhost:8000/api/repo/sync_repo_issue_db"
-    "http://localhost:8000/api/repo/sync_repo_pr_db"
+    "$REPO_ISSUE_SYNC_URL"
+    "$REPO_PR_SYNC_URL"
 )
 
 repo_contributor_urls=(
-    "http://localhost:8000/api/repo/sync_repo_contributor_db"
+    "$REPO_CONTRIBUTOR_SYNC_URL"
 )
 
 # Define the URLs to be processed for course-related operations
 course_related_urls=(
-    # OS 
-    "http://localhost:8000/api/course/course_project_update?course_id=COSE341-01&year=2024&semester=1"
-    # 산학 캡스톤 (1학기)
-    "http://localhost:8000/api/course/course_project_update?course_id=COSE480-00&year=2024&semester=1"
-    # 클라우드 컴퓨팅 (2학기)
-    "http://localhost:8000/api/course/course_project_update?course_id=COSE444-00&year=2024&semester=2"
-    # 실전 SW 프로젝트 (2학기)
-    "http://localhost:8000/api/course/course_project_update?course_id=COSE457-00&year=2024&semester=2"
-    # 산학 캡스톤 (2학기, 2반)
-    "http://localhost:8000/api/course/course_project_update?course_id=COSE480-02&year=2024&semester=2"
+    "$COURSE_OS_SYNC_URL"
+    "$COURSE_CAPSTONE_SYNC_URL_1"
+    "$COURSE_CLOUD_SYNC_URL"
+    "$COURSE_SW_PROJECT_SYNC_URL"
+    "$COURSE_CAPSTONE_SYNC_URL_2"
 )
-
 
 # Check if the script is already running
 if [[ $(pgrep -f $(basename "$0") | wc -l) -gt 2 ]]; then
@@ -45,25 +47,28 @@ if [[ $(pgrep -f $(basename "$0") | wc -l) -gt 2 ]]; then
     exit 1
 fi
 
-# Function to process each URL
+# Function to print a section header in the log
+log_section() {
+    local section_name=$1
+    echo ""
+    echo "###########################################################"
+    echo "## $section_name"
+    echo "###########################################################"
+}
+
+# Function to process each URL and log the result
 process_url() {
     local url=$1
-    start_time=$(date +%s)
+    start_time=$(date +%Y-%m-%d\ %H:%M:%S)
     response=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$url")
-    end_time=$(date +%s)
-    elapsed_time=$((end_time - start_time))
-    
-    # Convert elapsed time to hours, minutes, and seconds
-    hours=$((elapsed_time / 3600))
-    minutes=$(( (elapsed_time % 3600) / 60 ))
-    seconds=$((elapsed_time % 60))
-    
+    end_time=$(date +%Y-%m-%d\ %H:%M:%S)
+
     if [ "$response" -eq 200 ]; then
-        echo "Success: $url (Time taken: ${hours}h ${minutes}m ${seconds}s)"
+        echo "[$start_time] - SUCCESS: $url"
     else
-        echo "Failed: $url with response code $response (Time taken: ${hours}h ${minutes}m ${seconds}s)"
-        # No need to log the failed URL
+        echo "[$start_time] - FAILED: $url (Response code: $response)"
     fi
+    echo "Finished at: $end_time"
 }
 
 # Function to process URLs sequentially
@@ -88,60 +93,46 @@ process_urls_in_parallel() {
     wait
 }
 
-# Function to sleep until a specific time
-sleep_until() {
-    target_hour=$1
-    target_minute=$2
-    current_time=$(date +%s)
-    target_time=$(date -d "today ${target_hour}:${target_minute}" +%s)
-    sleep_seconds=$(( target_time - current_time ))
-    if [ $sleep_seconds -lt 0 ]; then
-        target_time=$(date -d "tomorrow ${target_hour}:${target_minute}" +%s)
-        sleep_seconds=$(( target_time - current_time ))
-    fi
-    echo "All requests completed. Waiting until ${target_hour}:${target_minute} before the next cycle."
-    sleep $sleep_seconds
-}
-
 cycle_count=0
 
 while true; do
     start_time=$(date +"%Y-%m-%d %H:%M:%S")
+    echo ""
+    echo "==========================================================="
     echo "Cycle started at: $start_time"
+    echo "==========================================================="
 
-    # Process student URLs first in every cycle
+    # Process student URLs first
+    log_section "Student Synchronization"
     process_urls_sequentially "${student_urls[@]}"
 
-    # Process repo URLs every 12 hours
-    if (( cycle_count % 12 == 0 )); then
-        process_urls_sequentially "${repo_urls[@]}"
-    fi
+    # Process repo URLs next
+    log_section "Repo Synchronization"
+    process_urls_sequentially "${repo_urls[@]}"
 
-    # Process course-related URLs every 12 hours
-    if (( cycle_count % 12 == 0 )); then
-        process_urls_sequentially "${course_related_urls[@]}"
-    fi
+    # Process course-related URLs
+    log_section "Course Synchronization"
+    process_urls_sequentially "${course_related_urls[@]}"
 
-    # Process repo commit URLs every 2 hours
-    if (( cycle_count % 2 == 0 )); then
-        process_urls_in_parallel "${repo_commit_urls[@]}"
-    fi
+    # 휴식 1시간 (로그에 표시되지 않음)
+    sleep 1h
 
-    # Process repo issue and PR URLs every 12 hours
-    if (( cycle_count % 12 == 0 )); then
-        process_urls_in_parallel "${repo_issue_pr_urls[@]}"
-    fi
+    # Process repo issue, PR, and contributor URLs in parallel
+    log_section "Repo Issue, PR, and Contributor Synchronization (Parallel)"
+    process_urls_in_parallel "${repo_issue_pr_urls[@]}" "${repo_contributor_urls[@]}"
 
-    # Process repo contributor URLs every 12 hours
-    if (( cycle_count % 12 == 0 )); then
-        process_urls_in_parallel "${repo_contributor_urls[@]}"
-    fi
+    # 휴식 1시간 (로그에 표시되지 않음)
+    sleep 1h
+
+    # Process repo commit URLs after parallel operations
+    log_section "Repo Commit Synchronization"
+    process_urls_sequentially "${repo_commit_urls[@]}"
 
     end_time=$(date +"%Y-%m-%d %H:%M:%S")
+    echo ""
+    echo "==========================================================="
     echo "Cycle ended at: $end_time"
-
-    echo "All requests completed. Waiting for 1 hour before the next cycle."
-    sleep 1h
+    echo "==========================================================="
 
     cycle_count=$((cycle_count + 1))
 done
