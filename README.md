@@ -47,6 +47,18 @@ To get started, you need to create a .env file in the root directory of the proj
 PUBLIC_IP=  # Place to write the IP address (exclude 'http://')
 VUE_APP_API_URL=http://${PUBLIC_IP}:8000/api
 CORS_ALLOWED_ORIGIN=http://${PUBLIC_IP}
+OAUTH_CLIENT_ID=
+OAUTH_CLIENT_SECRET=
+KOREAUNIV_OPENAPI_CLIENT_ID=
+KOREAUNIV_OPENAPI_CLIENT_SECRET=
+
+STUDENT_SYNC_URL=
+REPO_SYNC_URL=
+REPO_COMMIT_SYNC_URL=
+REPO_ISSUE_SYNC_URL=
+REPO_PR_SYNC_URL=
+REPO_CONTRIBUTOR_SYNC_URL=
+COURSE_{NAME}_SYNC=
 ```
 
 In this setup, if you are running the environment locally, you can use localhost or 127.0.0.1 as the PUBLIC_IP. However, in a cloud environment, you should specify the public IP address.
