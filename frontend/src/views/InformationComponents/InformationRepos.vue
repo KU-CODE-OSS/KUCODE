@@ -492,7 +492,6 @@ export default {
       }
     }
   }
-
   .search-box {
     min-height: 44px;
     margin-left: auto;

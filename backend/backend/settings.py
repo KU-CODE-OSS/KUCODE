@@ -171,4 +171,9 @@ else:
         'DEFAULT_RENDERER_CLASSES': [
             'rest_framework.renderers.JSONRenderer'
         ]
+<<<<<<< HEAD
     }
+=======
+    }
+
+>>>>>>> origin/main

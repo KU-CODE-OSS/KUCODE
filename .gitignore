@@ -165,6 +165,7 @@ cython_debug/
 !frontend
 /frontend/node_modules
 
+<<<<<<< HEAD
 frontend/node_modules
 frontend/node_modules
 
@@ -172,3 +173,8 @@ frontend/node_modules
 *vscode
 
 .github
+=======
+frontend/node_modules
+
+.vscode
+>>>>>>> origin/main

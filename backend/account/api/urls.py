@@ -42,4 +42,8 @@ urlpatterns = [
     path("none_githubid_list_only_attending",views.none_githubid_list_only_attending, name ="none_githubid_list_only_attending")
 
 
+<<<<<<< HEAD
 ]   
+=======
+]   
+>>>>>>> origin/main
