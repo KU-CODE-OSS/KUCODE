@@ -98,19 +98,11 @@
           </div>
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="coursenameDropped">
-<<<<<<< HEAD
-              <li class="item" v-for="(coursename, index) in courseFilterCourseNameCheckbox" :key="index">
-                <label :for="'course' + index" class="checkbox-label">
-                  <input :id="'course' + index" type="checkbox" class="checkbox" :value="coursename" v-model="selectedCourseNameItemsforCourse" @change="courseNameFilterEventChangeforCourse(semester, $event)">
-                  <p v-if="coursename === '기타' || coursename === ''" class="label-text">기타</p>
-                  <p v-else class="label-text">{{coursename}}</p>
-=======
               <li class="item" v-for="(course, index) in courseFilterCourseNameCheckbox" :key="index">
                 <label :for="'course' + index" class="checkbox-label">
                   <input :id="'course' + index" type="checkbox" class="checkbox" :value="course.course_name" v-model="selectedCourseNameItemsforCourse" @change="courseNameFilterEventChangeforCourse(semester, $event)">
                   <p v-if="course.course_name === '기타' || course.course_name === ''" class="label-text">기타</p>
                   <p v-else class="label-text">{{course.course_name}} ({{course.course_id}})</p>
->>>>>>> origin/dev-jhs
                 </label>
               </li>
             </ul>
@@ -216,19 +208,11 @@
           </div>
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="coursenameDropped">
-<<<<<<< HEAD
-              <li class="item" v-for="(coursename, index) in studentsFilterCourseNameCheckbox" :key="index">
-                <label :for="'course-student' + index" class="checkbox-label">
-                  <input :id="'course-student' + index" type="checkbox" class="checkbox" :value="coursename" v-model="selectedCourseNameItemsforStudents" @change="courseNameFilterEventChangeforStudents(semester, $event)">
-                  <p v-if="coursename === '기타' || coursename === ''" class="label-text">기타</p>
-                  <p v-else class="label-text">{{coursename}}</p>
-=======
               <li class="item" v-for="(course, index) in studentsFilterCourseNameCheckbox" :key="index">
                 <label :for="'course-student' + index" class="checkbox-label">
                   <input :id="'course-student' + index" type="checkbox" class="checkbox" :value="course.course_name" v-model="selectedCourseNameItemsforStudents" @change="courseNameFilterEventChangeforStudents(semester, $event)">
                   <p v-if="course.course_name === '기타' || course.course_name === ''" class="label-text">기타</p>
                   <p v-else class="label-text">{{course.course_name}} ({{course.course_id}})</p>
->>>>>>> origin/dev-jhs
                 </label>
               </li>
             </ul>
@@ -338,11 +322,9 @@ export default {
     },
     async setInit() {
       if(this.$route.name === "InformationCourse") {
-<<<<<<< HEAD
-        this.titles = '과목 통계'
-=======
+
         this.titles = '과목 정보'
->>>>>>> origin/dev-jhs
+
       }
       if (this.coursePosts.length === 0) {
         await getCourseInfo().then(res => {
@@ -357,11 +339,7 @@ export default {
         })
       }
       if(this.$route.name === "InformationStudent") {
-<<<<<<< HEAD
-        this.titles = '학생 통계'
-=======
         this.titles = '학생 정보'
->>>>>>> origin/dev-jhs
       }
       if (this.studentsPosts.length === 0) {
         await getCourseInfo().then(res => {
@@ -376,11 +354,8 @@ export default {
         })
       }
       if(this.$route.name === "InformationRepos") {
-<<<<<<< HEAD
-        this.titles = '레포지토리 통계'
-=======
+
         this.titles = '레포지토리 정보'
->>>>>>> origin/dev-jhs
       }
       // this.repoPosts.length !== 0 조건 없으면 다른 페이지 갔다와야 데이터 로딩됨
       if(this.repoPosts.length === 0 || this.repoPosts.length !== 0 ) {
@@ -403,20 +378,7 @@ export default {
     courseFiltering(courses) {
       const yearset = new Set(courses.map(row=>row.year));
       this.courseFilterYearsCheckbox = [...yearset];
-<<<<<<< HEAD
-      const semesterset = new Set(courses.map(row=>row.semester));
-      this.courseFilterSemesterCheckbox = [...semesterset];
-      const courseset = new Set(courses.map(row=>row.course_name));
-      this.courseFilterCourseNameCheckbox = [...courseset];
-    },
-    studentsFiltering(students) {
-      const yearset = new Set(students.map(row=>row.year));
-      this.studentsFilterYearsCheckbox = [...yearset];
-      const semesterset = new Set(students.map(row=>row.semester));
-      this.studentsFilterSemesterCheckbox = [...semesterset];
-      const courseset = new Set(students.map(row=>row.course_name));
-      this.studentsFilterCourseNameCheckbox = [...courseset];
-=======
+
 
       const semesterset = new Set(courses.map(row=>row.semester));
       this.courseFilterSemesterCheckbox = [...semesterset];
@@ -460,7 +422,6 @@ export default {
       this.studentsFilterCourseNameCheckbox = Array.from(courseMap.values()).sort((a, b) => {
         return a.course_name.localeCompare(b.course_name, 'ko', { numeric: true, sensitivity: 'base' });
       });
->>>>>>> origin/dev-jhs
     },
     coursePreprocessingTableData(datalist) {
       var li = []
@@ -547,11 +508,9 @@ export default {
           newData.star_count = element.star_count
           newData.language = element.language
           newData.contributors = element.contributors
-<<<<<<< HEAD
-=======
+
           newData.url = element.url
           newData.contributors_list = element.contributors_list;
->>>>>>> origin/dev-jhs
           li.push(newData)
       });
       console.log('done')

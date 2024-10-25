@@ -98,19 +98,12 @@
           </div>
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="coursenameDropped">
-<<<<<<< HEAD
-              <li class="item" v-for="(coursename, index) in studentFilterCourseNameCheckbox" :key="index">
-                <label :for="'course' + index + 'student'" class="checkbox-label">
-                  <input :id="'course' + index + 'student'" type="checkbox" class="checkbox" :value="coursename" v-model="selectedCourseNameItemsforStudent" @change="courseNameFilterEventChangeforStudent(coursename, $event)">
-                  <p v-if="coursename === '기타' || coursename === ''" class="label-text">기타</p>
-                  <p v-else class="label-text">{{coursename}}</p>
-=======
               <li class="item" v-for="(course, index) in studentFilterCourseNameCheckbox" :key="index">
                 <label :for="'course' + index + 'student'" class="checkbox-label">
                   <input :id="'course' + index + 'student'" type="checkbox" class="checkbox" :value="course.course_name" v-model="selectedCourseNameItemsforStudent" @change="courseNameFilterEventChangeforStudent(course, $event)">
                   <p v-if="course.course_name === '기타' || course.course_name === ''" class="label-text">기타</p>
                   <p v-else class="label-text">{{course.course_name}} ({{course.course_id}})</p>
->>>>>>> origin/dev-jhs
+
                 </label>
               </li>
             </ul>
@@ -424,12 +417,7 @@ export default {
     studentFiltering(courses) {
       const yearset = new Set(courses.map(row=>row.year));
       this.studentFilterYearsCheckbox = [...yearset];
-<<<<<<< HEAD
-      const semesterset = new Set(courses.map(row=>row.semester));
-      this.studentFilterSemesterCheckbox = [...semesterset];
-      const courseset = new Set(courses.map(row=>row.course_name));
-      this.studentFilterCourseNameCheckbox = [...courseset];
-=======
+
 
       const semesterset = new Set(courses.map(row=>row.semester));
       this.studentFilterSemesterCheckbox = [...semesterset];
@@ -449,7 +437,6 @@ export default {
       this.studentFilterCourseNameCheckbox = Array.from(courseMap.values()).sort((a, b) => {
         return a.course_name.localeCompare(b.course_name, 'ko', { numeric: true, sensitivity: 'base' });
       });
->>>>>>> origin/dev-jhs
     },
     courseFiltering(courses) {
       const courseset = new Set(courses.map(row=>row.course_id));

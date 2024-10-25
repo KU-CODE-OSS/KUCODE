@@ -11,13 +11,7 @@
         <div class="default-router plan-text current-tab">레포지토리</div>
       </div>
       <div class="search-box">
-<<<<<<< HEAD
-      <div class="form__group field">
-        <input type="input" class="form-field" :value="searchField" />
-        <label class="form__label">SEARCH</label>
-      </div>
-      </div>
-=======
+
         <div class="form__group field">
           <input type="input" class="form-field" :value="searchField" />
           <label class="form__label">SEARCH</label>
@@ -32,30 +26,11 @@
           <div class="import-btn-svg-text">Import</div>
         </div>
       </div> -->
->>>>>>> origin/dev-jhs
+
     </div>
     <div class="navigation_underline"></div>
     <div class="contents-box">
       <div class="table">
-<<<<<<< HEAD
-        <table class="table-over" style="table-layout: fixed"> 
-          <thead class="table-header-wrapper">
-            <th class="table-header" v-for="item in header" v-bind:style="{width: tablewidth(item[1])}">{{item[0]}}</th>
-          </thead>
-          <tbody>
-            <tr v-for="item in sclicedPosts" :key="item.id" class="table-row">
-              <td :title="item.name">{{item.name}}</td>
-              <td>{{item.star_count}}</td>
-              <td>{{item.fork_count}}</td>
-              <td>{{item.commit_count}}</td>
-              <td>{{item.pr_count}}</td>
-              <td>{{item.total_issue_count}}</td>
-              <td :title="item.language">{{item.language}}</td>
-              <td>{{item.contributors}}</td>
-            </tr>
-          </tbody>
-        </table>
-=======
       <table class="table-over" style="table-layout: fixed"> 
         <thead class="table-header-wrapper">
           <!-- 각 열에 대해 정렬을 적용할 수 있도록 @click 이벤트 추가 -->
@@ -151,7 +126,6 @@
             </div>
           </div>
         </div>
->>>>>>> origin/dev-jhs
         <div class="pagenation-container">
             <div class="pagenation-wrapper">
             <button @click="firstPageforAll" :disabled="firstPageDisabledforAll" class="prev-button">
@@ -200,10 +174,7 @@ export default {
   data() {
     return {
       showOverlay: false,
-<<<<<<< HEAD
-=======
       contributorsList: [], // 팝업창에 표시할 contributors_list
->>>>>>> origin/dev-jhs
       showTable: false,
       searchField: '',
       pannelLoading: false,
@@ -211,29 +182,19 @@ export default {
       sclicedPosts: [],
       currentPage: 1,
       postsPerPage: 10,
-<<<<<<< HEAD
-      header : [
-        ['레포지토리', '20%'],
-=======
       currentSort: null, // 현재 정렬 중인 필드
       currentSortDir: 'asc', // 정렬 방향 (asc: 오름차순, desc: 내림차순)
       header : [
         ['레포지토리', '10%'],
         ['소유자', '10%'],
->>>>>>> origin/dev-jhs
         ['스타 수', '10%'], 
         ['포크 수', '10%'], 
         ['커밋 수', '10%'], 
         ['PR 수', '10%'], 
         ['이슈 수', '10%'], 
-<<<<<<< HEAD
-        ['언어', '20%'], 
-        ['기여자 수', '10%']
-=======
         ['언어', '16%'], 
         ['기여자 수', '7%'],
         ['상세보기', '7%']
->>>>>>> origin/dev-jhs
       ],
     };
   },
@@ -267,8 +228,6 @@ export default {
     },
   },
   methods: {
-<<<<<<< HEAD
-=======
     // 테이블 정렬 메서드
     sortTable(column) {
       if (this.currentSort === column) {
@@ -291,7 +250,6 @@ export default {
       // 정렬된 데이터를 페이지에 맞게 나눠서 보여줌
       this.slicingforall();
     },
->>>>>>> origin/dev-jhs
     changePageforAll(page) {
       let toPage = 0
       if (page < 1) {
@@ -334,12 +292,8 @@ export default {
     slicingforall() {
       const start = (this.currentPage - 1) * this.postsPerPage;
       const end = start + this.postsPerPage;
-<<<<<<< HEAD
-      this.sclicedPosts = this.yearandCommitSort(this.posts.slice(start, end));
-=======
       // 정렬된 posts 배열에서 현재 페이지에 해당하는 부분만 가져옴
       this.sclicedPosts = this.posts.slice(start, end);
->>>>>>> origin/dev-jhs
     },
     commitSort(li){
       li.sort(function(a,b){
@@ -365,11 +319,7 @@ export default {
       const uniqueArr  = [...ids];
       li.forEach(element => {
         let index = uniqueArr.indexOf(element.id)
-<<<<<<< HEAD
-
-=======
           
->>>>>>> origin/dev-jhs
         if (ret[index] === undefined) {
           var newData = new Object()
           newData.id = element.id
@@ -380,11 +330,8 @@ export default {
           newData.total_issue_count = element.total_issue_count
           newData.fork_count = element.fork_count
           newData.star_count = element.star_count
-<<<<<<< HEAD
-=======
           newData.url = element.url
           newData.contributors_list = element.contributors_list;
->>>>>>> origin/dev-jhs
           ret[index] = newData
         }
         else {
@@ -410,8 +357,6 @@ export default {
       this.toSummarized(this.posts);
       this.slicingforsummary();
     },
-<<<<<<< HEAD
-=======
     // 팝업창 띄우는 메서드
     showContributors(item) {
       this.contributorsList = item.contributors_list || []; // contributors_list 데이터를 가져와서 설정
@@ -422,7 +367,6 @@ export default {
       this.showOverlay = false;
       this.contributorsList = []; // 팝업창 닫을 때 contributors_list 초기화
     }
->>>>>>> origin/dev-jhs
   },
   mounted() {
     this.currentPage = parseInt(this.$route.query.page) || 1;
@@ -445,11 +389,7 @@ export default {
   watch: {
     postss(to, from) {
       this.posts = to;
-<<<<<<< HEAD
-      console.log(this.posts)
-=======
       console.log('초기 데이터',this.posts)
->>>>>>> origin/dev-jhs
       this.slicingforall();
       if (this.$route.query.page > this.totalPagesforAll) {
         this.changePageforAll(this.totalPagesforAll);
@@ -521,8 +461,6 @@ export default {
       opacity: 0;
     }
   }
-<<<<<<< HEAD
-=======
   .Contributor-btn {
     min-height: 34px;
     min-width: 117px;
@@ -556,8 +494,6 @@ export default {
       }
     }
   }
-
->>>>>>> origin/dev-jhs
   .search-box {
     min-height: 44px;
     margin-left: auto;
@@ -670,8 +606,6 @@ export default {
   }
 }
 
-<<<<<<< HEAD
-=======
 .contributor-table-over {
   border-collapse: collapse;
   width: 180%;
@@ -708,7 +642,6 @@ export default {
   font-weight: bold; /* 글자를 좀 더 두껍게 표현 */
 }
 
->>>>>>> origin/dev-jhs
 .table {
   .pagenation-container {
     height: 44px;
@@ -800,8 +733,6 @@ export default {
     
   }
 }
-<<<<<<< HEAD
-=======
 .icon-button {
   background-color: transparent;
   border: none;
@@ -812,7 +743,6 @@ export default {
   width: 24px;
   height: 24px;
 }
->>>>>>> origin/dev-jhs
 
 .import-overlay {
   position: fixed;
