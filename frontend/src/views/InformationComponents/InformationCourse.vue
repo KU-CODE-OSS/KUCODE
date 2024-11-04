@@ -73,9 +73,10 @@
       </div>
       <div class="search-box">
         <div class="form__group field">
-          <input type="input" class="form-field" :value="searchField" />
+          <input type="input" class="form-field" v-model="searchField" @keyup.enter="performSearch" />
           <label class="form__label">SEARCH</label>
         </div>
+        <button @click="performSearch" class="search-button">Search</button>
       </div>
       <div class="import-btn" v-on:click="changeOverlay">
         <div class="import-btn-svg">
@@ -93,7 +94,7 @@
         <table class="table-over" style="table-layout: fixed"> 
           <thead class="table-header-wrapper"><th class="table-header" v-for="item in header" v-bind:style="{width: tablewidth(item[1])}">{{item[0]}}</th></thead>
           <tbody>
-            <tr v-for="item in posts" class="table-row">
+            <tr v-for="item in filteredPosts" class="table-row">
               <!-- {{item}} -->
               <td>{{item.yearandsemester}}</td>
               <td>{{item.course_name}}</td>
@@ -107,6 +108,9 @@
             </tr>
           </tbody>
         </table>
+        <div v-if="filteredPosts.length === 0" class="no-results">
+          검색 결과가 없습니다.
+        </div>
         <div class="pagenation-container">
           <div class="pagenation-wrapper">
             <button @click="firstPageforAll" :disabled="firstPageDisabled" class="prev-button">
@@ -193,6 +197,17 @@ export default {
     };
   },
   computed: {
+    filteredPosts() {
+      if (this.searchField.trim() === '') {
+        return this.sclicedPosts;
+      }
+      // 아래 데이터가 검색됨
+      return this.sclicedPosts.filter(item =>
+        item.course_name.toLowerCase().includes(this.searchField.toLowerCase()) ||
+        item.course_id.toLowerCase().includes(this.searchField.toLowerCase()) ||
+        item.prof.toLowerCase().includes(this.searchField.toLowerCase())
+      );
+    },
     totalPages() {
       return Math.ceil(this.postss.length / this.postsPerPage);
     },
@@ -222,6 +237,9 @@ export default {
     },
   },
   methods: {
+    performSearch() {
+      this.slicingforall();
+    },
     changePageforAll(page) {
       let toPage = 0
       if (page < 1) {
@@ -450,6 +468,25 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.search-box {
+  display: flex;
+  align-items: center;
+}
+.search-button {
+  margin-left: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.no-results {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 16px;
+  color: #999;
+}
+</style>
+
 
 <style scoped>
 .cursorblock {
