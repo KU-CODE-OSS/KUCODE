@@ -74,7 +74,9 @@
                 <td :title="item.department">{{item.department}}</td>
                 <td :title="item.id">{{item.id}}</td>
                 <td :title="item.enrollment">{{item.enrollment}}</td>
-                <td :title="item.github">{{item.github}}</td>
+                <td :title="item.github">
+                  <a :href="`https://github.com/${item.github}`" target="_blank">{{ item.github }}</a>
+                </td>
                 <td :title="item.commit">{{item.commit}}</td>
                 <td :title="item.pr">{{item.pr}}</td>
                 <td :title="item.issue">{{item.issue}}</td>
@@ -164,7 +166,9 @@
                 <td :title="item.department">{{item.department}}</td>
                 <td :title="item.id">{{item.id}}</td>
                 <td :title="item.enrollment">{{item.enrollment}}</td>
-                <td :title="item.github">{{item.github}}</td>
+                <td :title="item.github">
+                  <a :href="`https://github.com/${item.github}`" target="_blank">{{ item.github }}</a>
+                </td>
                 <td :title="item.course_name">{{item.course_name}}</td>
                 <td :title="item.course_id">{{item.course_id}}</td>
                 <td :title="item.commit">{{item.commit}}</td>
