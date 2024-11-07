@@ -76,7 +76,6 @@
           <input type="input" class="form-field" v-model="searchField" @keyup.enter="performSearch" />
           <label class="form__label">SEARCH</label>
         </div>
-        <button @click="performSearch" class="search-button">Search</button>
       </div>
       <div class="import-btn" v-on:click="changeOverlay">
         <div class="import-btn-svg">

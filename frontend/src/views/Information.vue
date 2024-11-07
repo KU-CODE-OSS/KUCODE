@@ -109,14 +109,14 @@
             </ul>
           </transition>
           <!-- 과목명 필터 한 개 끝 -->
-          <!-- 학기 필터 한 개 시작 -->
+          <!-- (과목 탭) 분반 필터 한 개 시작 -->
           <div class=types :class="[this.courseIdDropped ? 'types-focused' :'types-unfocused']">
 
             <svg v-show="this.courseIdDropped" id="type-svg"  xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
-              <path d="M7.9405 9.5H11.9109M7.9405 13.5H15.8812M7.9405 17.5H15.8812M15.8808 2.5V5.5M7.94002 2.5V5.5M6.94791 4H16.8738C19.0666 4 20.8442 5.79086 20.8442 8V18.5C20.8442 20.7091 19.0666 22.5 16.8738 22.5H6.94791C4.75513 22.5 2.97754 20.7091 2.97754 18.5V8C2.97754 5.79086 4.75513 4 6.94791 4Z" stroke="#910024" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" stroke="#910024" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <svg v-show="!this.courseIdDropped" id="type-svg"  xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
-              <path d="M7.9405 9.5H11.9109M7.9405 13.5H15.8812M7.9405 17.5H15.8812M15.8808 2.5V5.5M7.94002 2.5V5.5M6.94791 4H16.8738C19.0666 4 20.8442 5.79086 20.8442 8V18.5C20.8442 20.7091 19.0666 22.5 16.8738 22.5H6.94791C4.75513 22.5 2.97754 20.7091 2.97754 18.5V8C2.97754 5.79086 4.75513 4 6.94791 4Z" stroke="#262626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" stroke="#262626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <p class="type-title">
               분반
@@ -142,7 +142,7 @@
               </li>
             </ul>
           </transition>
-           <!-- 학기 필터 한 개 끝 -->
+           <!-- 분반 필터 한 개 끝 -->
         </div>
       </div>
       <!-- course filter 끝 -->
@@ -243,16 +243,51 @@
           </div>
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="coursenameDropped">
-              <li class="item" v-for="(course, index) in studentsFilterCourseNameCheckbox" :key="index">
+              <li class="item" v-for="(course, index) in uniqueCourses" :key="index">
                 <label :for="'course-student' + index" class="checkbox-label">
                   <input :id="'course-student' + index" type="checkbox" class="checkbox" :value="course.course_name" v-model="selectedCourseNameItemsforStudents" @change="courseNameFilterEventChangeforStudents(semester, $event)">
-                  <p v-if="course.course_name === '기타' || course.course_name === ''" class="label-text">기타</p>
-                  <p v-else class="label-text">{{course.course_name}} ({{course.course_id}})</p>
+                  <!-- <p v-if="course.course_name === '기타' || course.course_name === ''" class="label-text">기타</p>
+                  <p v-else class="label-text">{{course.course_name}} ({{course.course_id}})</p> -->
+                  <p class="label-text">{{course.course_name}}</p> <!-- course_id 제거 버전-->
                 </label>
               </li>
             </ul>
           </transition>
-           <!-- 과목명 필터 한 개 끝 -->
+          <!-- 과목명 필터 한 개 끝 -->
+          <!-- (학생 탭) 분반 필터 한 개 시작 -->
+          <div class=types :class="[this.courseIdDropped ? 'types-focused' :'types-unfocused']">
+
+            <svg v-show="this.courseIdDropped" id="type-svg"  xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+              <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" stroke="#910024" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg v-show="!this.courseIdDropped" id="type-svg"  xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+              <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" stroke="#262626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p class="type-title">
+              분반
+            </p>
+            <button class="drop-btn"><i class="drop-btn-container" v-on:click="courseIdbtnclick">
+              <svg class="toggle-btn" v-show="this.courseIdDropped" xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                <path d="M1 6.5L5.29289 2.20711C5.68342 1.81658 6.31658 1.81658 6.70711 2.20711L11 6.5" stroke="#910024" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <svg class="toggle-btn" v-show="!this.courseIdDropped" xmlns="http://www.w3.org/2000/svg" width="13" height="7" viewBox="0 0 13 7" fill="none">
+                <path d="M11.4521 1L7.15925 5.29289C6.76873 5.68342 6.13557 5.68342 5.74504 5.29289L1.45215 0.999999" stroke="#CDCDCD" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </i></button>
+          </div>
+          <transition name="slide">
+            <ul class="year-filter no-dot" v-if="courseIdDropped">
+              <li class="item" v-for="(course_id, index) in uniqueCourseIDs" :key="index">
+                <label :for="'course_id' + index" class="checkbox-label">
+                  <input :id="'course_id' + index" type="checkbox" class="checkbox" :value="course_id" v-model="selectedCourseIDItemsforStudents" @change="courseIDFilterEventChangeforStudents(course_id, $event)">
+                  <p v-if="course_id === '-1' || course_id === ''" class="label-text">기타</p>
+                  <p v-else class="label-text">{{course_id}}</p>
+                  <!-- <p class="label-text">{{course_id}}</p> -->
+                </label>
+              </li>
+            </ul>
+          </transition>
+           <!-- 분반 필터 한 개 끝 -->
         </div>
       </div>
       <!-- student filter 끝 -->
@@ -317,6 +352,7 @@ export default {
       selectedYearItemsforStudents: [],
       selectedSemesterItemsforStudents: [],
       selectedCourseNameItemsforStudents: [],
+      selectedCourseIDItemsforStudents: [],
 
       // repository data
       repoPosts: [],
@@ -684,12 +720,16 @@ export default {
         });
       }
       this.courseFilteredPosts = this.combineFilterDataforCourse();
-      },
+    },
     courseIDFilterEventChangeforStudents(item, event) {
       if(this.selectedCourseIDItemsforStudents.length === 0) {
         this.studentsFilteredPostsforCourseID = this.coursePosts
       } else {
-        this.studentsFilteredPostsforCourseID = this.coursePosts.filter(item => this.selectedCourseIDItemsforStudents.includes(item.course_id));
+        this.studentsFilteredPostsforCourseID = this.coursePosts.filter(item => {
+          // 선택된 마지막 두 자리 값과 원래 course_id의 마지막 두 자리를 비교하여 필터링
+          const lastTwoDigits = item.course_id.split('-').pop(); // 현재 item의 course_id의 마지막 두 자리
+          return this.selectedCourseIDItemsforStudents.includes(lastTwoDigits);
+        });
       }
       this.studentsFilteredPosts = this.combineFilterDataforStudents()
     },

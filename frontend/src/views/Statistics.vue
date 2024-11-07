@@ -98,16 +98,50 @@
           </div>
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="coursenameDropped">
-              <li class="item" v-for="(course, index) in studentFilterCourseNameCheckbox" :key="index">
+              <li class="item" v-for="(course, index) in uniqueCourses" :key="index">
                 <label :for="'course' + index + 'student'" class="checkbox-label">
                   <input :id="'course' + index + 'student'" type="checkbox" class="checkbox" :value="course.course_name" v-model="selectedCourseNameItemsforStudent" @change="courseNameFilterEventChangeforStudent(course, $event)">
                   <p v-if="course.course_name === '기타' || course.course_name === ''" class="label-text">기타</p>
-                  <p v-else class="label-text">{{course.course_name}} ({{course.course_id}})</p>
+                  <p v-else class="label-text">{{course.course_name}}</p>
                 </label>
               </li>
             </ul>
           </transition>
-           <!-- 과목명 필터 한 개 끝 -->
+          <!-- 과목명 필터 한 개 끝 -->
+          <!-- (학생 탭) 분반 필터 한 개 시작 -->
+          <div class=types :class="[this.courseIdDropped ? 'types-focused' :'types-unfocused']">
+
+          <svg v-show="this.courseIdDropped" id="type-svg"  xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+            <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" stroke="#910024" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg v-show="!this.courseIdDropped" id="type-svg"  xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+            <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" stroke="#262626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p class="type-title">
+            분반
+          </p>
+          <button class="drop-btn"><i class="drop-btn-container" v-on:click="courseIdbtnclick">
+            <svg class="toggle-btn" v-show="this.courseIdDropped" xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" fill="none">
+              <path d="M1 6.5L5.29289 2.20711C5.68342 1.81658 6.31658 1.81658 6.70711 2.20711L11 6.5" stroke="#910024" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <svg class="toggle-btn" v-show="!this.courseIdDropped" xmlns="http://www.w3.org/2000/svg" width="13" height="7" viewBox="0 0 13 7" fill="none">
+              <path d="M11.4521 1L7.15925 5.29289C6.76873 5.68342 6.13557 5.68342 5.74504 5.29289L1.45215 0.999999" stroke="#CDCDCD" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </i></button>
+          </div>
+          <transition name="slide">
+          <ul class="year-filter no-dot" v-if="courseIdDropped">
+            <li class="item" v-for="(course_id, index) in uniqueCourseIDs" :key="index">
+              <label :for="'course_id' + index" class="checkbox-label">
+                <input :id="'course_id' + index" type="checkbox" class="checkbox" :value="course_id" v-model="selectedCourseIDItemsforStudents" @change="courseIDFilterEventChangeforStudents(course_id, $event)">
+                <p v-if="course_id === '-1' || course_id === ''" class="label-text">기타</p>
+                <p v-else class="label-text">{{course_id}}</p>
+                <!-- <p class="label-text">{{course_id}}</p> -->
+              </label>
+            </li>
+          </ul>
+          </transition>
+          <!-- 분반 필터 한 개 끝 -->
         </div>
       </div>
       <!-- 전체 filter 끝 -->
@@ -142,11 +176,12 @@
           </div>
           <transition name="slide">
             <ul class="year-filter no-dot" v-if="coursenameDropped">
-              <li class="item" v-for="(coursename, index) in courseFilterCourseNameCheckbox" :key="index">
+              <li class="item" v-for="(course, index) in courseFilterCourseNameCheckbox" :key="index">
                 <label :for="'course' + index + 'course'" class="checkbox-label">
-                  <input :id="'course' + index + 'course'" type="checkbox" class="checkbox" :value="coursename" :checked="isCheckedforCourse(coursename)" @change="courseNameFilterEventChangeforCourse(coursename, $event)">
-                  <p v-if="coursename === '기타' || coursename === ''" class="label-text">기타</p>
-                  <p v-else class="label-text">{{coursename}}</p>
+                  <input :id="'course' + index + 'course'" type="checkbox" class="checkbox" :value="course.course_id" :checked="isCheckedforCourse(course.course_id)" @change="courseNameFilterEventChangeforCourse(course.course_id, $event)">
+                  <p v-if="course.course_id === '-1' || course.course_id === ''" class="label-text">기타</p>
+                  <p v-else class="label-text">{{ course.course_name }} ({{ course.course_id }})</p>
+
                 </label>
               </li>
             </ul>
@@ -295,6 +330,7 @@ export default {
       yearDropped: false,
       semesterDropped: false,
       coursenameDropped: false,
+      courseIdDropped: false,
 
       // 전체 data
       studentPosts: [],
@@ -302,12 +338,15 @@ export default {
       studentFilteredPostsforYear: [],
       studentFilteredPostsforSemester: [],
       studentFilteredPostsforCourseName: [],
+      studentFilteredPostsforCourseID: [],
       studentFilterYearsCheckbox: [],
       studentFilterSemesterCheckbox: [],
       studentFilterCourseNameCheckbox: [],
+      studentFilterCourseIDCheckbox: [],
       selectedYearItemsforStudent: [],
       selectedSemesterItemsforStudent: [],
       selectedCourseNameItemsforStudent: [],
+      selectedCourseIDItemsforStudents: [],
 
       // 과목별 data
       coursePosts: [],
@@ -315,12 +354,15 @@ export default {
       courseFilteredPostsforYear: [],
       courseFilteredPostsforSemester: [],
       courseFilteredPostsforCourseName: [],
+      courseFilteredPostsforCourseID: [],
       courseFilterYearsCheckbox: [],
       courseFilterSemesterCheckbox: [],
       courseFilterCourseNameCheckbox: [],
+      courseFilterCourseIDCheckbox: [],
       selectedYearItemsforCourse: [],
       selectedSemesterItemsforCourse: [],
       selectedCourseNameItemsforCourse: [],
+      selectedCourseIDItemsforCourse: [],
 
       // 학과별 data
       departmentPosts: [],
@@ -373,6 +415,7 @@ export default {
           this.studentFilteredPostsforYear = this.studentPosts
           this.studentFilteredPostsforSemester = this.studentPosts
           this.studentFilteredPostsforCourseName = this.studentPosts
+          this.studentFilteredPostsforCourseID = this.studentPosts
           this.studentPosts = this.yearSort(this.studentPosts)
         })
       }
@@ -413,12 +456,21 @@ export default {
     coursenamebtnclick() {
       this.coursenameDropped = !this.coursenameDropped
     },
+    courseIdbtnclick() {
+      this.courseIdDropped = !this.courseIdDropped
+    },
     studentFiltering(courses) {
       const yearset = new Set(courses.map(row=>row.year));
       this.studentFilterYearsCheckbox = [...yearset];
 
       const semesterset = new Set(courses.map(row=>row.semester));
       this.studentFilterSemesterCheckbox = [...semesterset];
+
+      const courseIDset = new Set(courses.map(row => row.course_id));
+      let courseIDArray = [...courseIDset];
+      let etcCourseIDs = courseIDArray.filter(id => id === '-1' || id === ''); // 기타 항목
+      let sortedCourseIDs = courseIDArray.filter(id => id !== '-1' && id !== '').sort((a, b) => a.localeCompare(b, 'ko', { numeric: true, sensitivity: 'base' })); // 문자 오름차순 정렬
+      this.courseFilterCourseIDCheckbox = [...sortedCourseIDs, ...etcCourseIDs]; // 정렬된 배열과 기타 항목 결합
 
       //const courseset = new Set(courses.map(row=>row.course_name));
       // course 정보에 course id도 추가, 중복 제거 기능 추가
@@ -437,8 +489,21 @@ export default {
       });
     },
     courseFiltering(courses) {
-      const courseset = new Set(courses.map(row=>row.course_id));
-      this.courseFilterCourseNameCheckbox = [...courseset];
+      // course 정보에 course id도 추가, 중복 제거 기능 추가
+      const courseMap = new Map();
+      courses.forEach(course => {
+        if (!courseMap.has(course.course_id)) {
+          courseMap.set(course.course_id, {
+            course_name: course.course_name,
+            course_id: course.course_id
+          });
+        }
+      });
+      
+      // 정렬 기능 추가
+      this.courseFilterCourseNameCheckbox = Array.from(courseMap.values()).sort((a, b) => {
+        return a.course_name.localeCompare(b.course_name, 'ko', { numeric: true, sensitivity: 'base' });
+      });
     },
 
     // 전체 및 과목용 전처리
@@ -753,7 +818,7 @@ export default {
     // 전체용 필터
     /////////////////////////
     combineFilterDataforStudent() {
-      const allData = [this.studentFilteredPostsforYear, this.studentFilteredPostsforSemester, this.studentFilteredPostsforCourseName];
+      const allData = [this.studentFilteredPostsforYear, this.studentFilteredPostsforSemester, this.studentFilteredPostsforCourseName, this.studentFilteredPostsforCourseID];
       if (allData.length === 0) return this.studentPosts;
 
       let common = allData[0];
@@ -789,34 +854,49 @@ export default {
       }
       this.studentFilteredPosts = this.combineFilterDataforStudent()
     },
+    courseIDFilterEventChangeforStudents(item, event) {
+      if(this.selectedCourseIDItemsforStudents.length === 0) {
+        this.studentFilteredPostsforCourseID = this.studentPosts
+      } else {
+        this.studentFilteredPostsforCourseID = this.studentPosts.filter(item => {
+          // 선택된 마지막 두 자리 값과 원래 course_id의 마지막 두 자리를 비교하여 필터링
+          const lastTwoDigits = item.course_id.split('-').pop(); // 현재 item의 course_id의 마지막 두 자리
+          return this.selectedCourseIDItemsforStudents.includes(lastTwoDigits);
+        });
+      }
+      this.studentFilteredPosts = this.combineFilterDataforStudent()
+    },
     resetFilterforStudent() {
       this.selectedYearItemsforStudent = []
       this.selectedSemesterItemsforStudent = []
       this.selectedCourseNameItemsforStudent = []
+      this.selectedCourseIDItemsforStudents = []
       this.studentFilteredPostsforYear = this.studentPosts
       this.studentFilteredPostsforSemester = this.studentPosts
       this.studentFilteredPostsforCourseName = this.studentPosts
+      this.studentFilteredPostsforCourseID = this.studentPosts
       this.studentFilteredPosts = this.studentPosts
     },
 
     //////////////////
     // 과목용 필터
     //////////////////
-    courseNameFilterEventChangeforCourse(item, event) {
-      
-      if(this.selectedCourseNameItemsforCourse.includes(item)) {
-        var idx = this.selectedCourseNameItemsforCourse.indexOf(item)
-        this.selectedCourseNameItemsforCourse.splice(idx, 1)
+    courseNameFilterEventChangeforCourse(course_id, event) {
+      if (this.selectedCourseNameItemsforCourse.includes(course_id)) {
+        var idx = this.selectedCourseNameItemsforCourse.indexOf(course_id);
+        this.selectedCourseNameItemsforCourse.splice(idx, 1);
       } else {
-        this.selectedCourseNameItemsforCourse = []
-        this.selectedCourseNameItemsforCourse.push(item)
+        this.selectedCourseNameItemsforCourse = [];
+        this.selectedCourseNameItemsforCourse.push(course_id);
       }
-      if(this.selectedCourseNameItemsforCourse.length === 0) {
-        this.courseFilteredPostsforCourseName = []
+
+      if (this.selectedCourseNameItemsforCourse.length === 0) {
+        this.courseFilteredPostsforCourseName = [];
       } else {
         this.courseFilteredPostsforCourseName = this.coursePosts.filter(item => this.selectedCourseNameItemsforCourse.includes(item.course_id));
       }
-      this.courseFilteredPosts = this.combineFilterDataforCourse()
+
+      this.courseFilteredPosts = this.combineFilterDataforCourse();
     },
     combineFilterDataforCourse() {
 
@@ -1012,6 +1092,33 @@ export default {
     },
   },
   computed: {
+    uniqueCourses() {
+      // 과목 이름을 기준으로 중복된 항목을 제거
+      const seen = new Set();
+      return this.studentFilterCourseNameCheckbox.filter(course => {
+        if (seen.has(course.course_name)) {
+          return false;
+        } else {
+          seen.add(course.course_name);
+          return true;
+        }
+      });
+    },
+    uniqueCourseIDs() {
+      // 마지막 두 자리만 추출하고 중복을 제거한 배열 반환
+      const lastTwoDigitsSet = new Set(this.courseFilterCourseIDCheckbox.map(course_id => {
+        return course_id.split('-').pop(); // '-'로 나눈 후, 마지막 부분을 가져옴
+      }));
+
+      let courseIDsArray = [...lastTwoDigitsSet]; // Set을 배열로 변환
+
+      // '기타' 항목과 숫자 항목을 분리
+      let etcItem = courseIDsArray.filter(id => id === '-1' || id === ''); // 기타 항목 추출
+      let sortedItems = courseIDsArray.filter(id => id !== '-1' && id !== '').sort((a, b) => a - b); // 숫자 항목 정렬
+
+      // 정렬된 숫자 항목 뒤에 기타 항목 추가
+      return [...sortedItems, ...etcItem];
+    }
   },
   beforeMount() {
     if(this.$route.fullPath === "/statistics") {
