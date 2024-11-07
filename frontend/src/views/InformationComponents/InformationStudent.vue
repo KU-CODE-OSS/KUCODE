@@ -12,7 +12,7 @@
       </div>
       <div class="search-box">
         <div class="form__group field">
-          <input type="input" class="form-field" :value="searchField" />
+            <input type="input" class="form-field" v-model="searchField" @input="filterResults" />
           <label class="form__label">SEARCH</label>
         </div>
       </div>
@@ -69,12 +69,14 @@
               </th>
             </thead>
             <tbody>
-              <tr v-for="(item, index) in slicedsummarizedStudents" :key="index" class="table-row">
+                <tr v-for="(item, index) in paginatedFilteredSummarizedStudents" :key="index" class="table-row">
                 <td :title="item.name">{{item.name}}</td>
                 <td :title="item.department">{{item.department}}</td>
                 <td :title="item.id">{{item.id}}</td>
                 <td :title="item.enrollment">{{item.enrollment}}</td>
-                <td :title="item.github">{{item.github}}</td>
+                <td :title="item.github">
+                  <a :href="`https://github.com/${item.github}`" target="_blank">{{ item.github }}</a>
+                </td>
                 <td :title="item.commit">{{item.commit}}</td>
                 <td :title="item.pr">{{item.pr}}</td>
                 <td :title="item.issue">{{item.issue}}</td>
@@ -158,13 +160,15 @@
               </th>
             </thead>
             <tbody>
-              <tr v-for="(item, index) in sclicedPosts" :key="index" class="table-row">
+                <tr v-for="(item, index) in paginatedFilteredPosts" :key="index" class="table-row">
                 <td :title="item.yearandsemester">{{item.yearandsemester}}</td>
                 <td :title="item.name">{{item.name}}</td>
                 <td :title="item.department">{{item.department}}</td>
                 <td :title="item.id">{{item.id}}</td>
                 <td :title="item.enrollment">{{item.enrollment}}</td>
-                <td :title="item.github">{{item.github}}</td>
+                <td :title="item.github">
+                  <a :href="`https://github.com/${item.github}`" target="_blank">{{ item.github }}</a>
+                </td>
                 <td :title="item.course_name">{{item.course_name}}</td>
                 <td :title="item.course_id">{{item.course_id}}</td>
                 <td :title="item.commit">{{item.commit}}</td>
@@ -257,6 +261,36 @@ export default {
     };
   },
   computed: {
+    filteredSummarizedStudents() {
+      return this.summarizedStudents.filter(item => {
+        return Object.values(item).some(value =>
+          String(value).toLowerCase().includes(this.searchField.toLowerCase())
+        );
+      });
+    },
+    filteredPosts() {
+      return this.posts.filter(item => {
+        return Object.values(item).some(value =>
+          String(value).toLowerCase().includes(this.searchField.toLowerCase())
+        );
+      });
+    },
+    paginatedFilteredSummarizedStudents() {
+        const start = (this.currentPageforSummary - 1) * this.postsPerPage;
+        const end = start + this.postsPerPage;
+        return this.filteredSummarizedStudents.slice(start, end);
+      },
+      paginatedFilteredPosts() {
+      const start = (this.currentPageforAll - 1) * this.postsPerPage;
+      const end = start + this.postsPerPage;
+      return this.filteredPosts.slice(start, end);
+    },
+    totalPagesforFilteredSummarized() {
+      return Math.ceil(this.filteredSummarizedStudents.length / this.postsPerPage);
+    },
+    totalPagesforFilteredPosts() {
+      return Math.ceil(this.filteredPosts.length / this.postsPerPage);
+    },
     totalPagesforAll() {
       return Math.ceil(this.postss.length / this.postsPerPage);
     },
@@ -270,16 +304,16 @@ export default {
       return  Math.floor(Math.ceil(this.summarizedStudents.length / this.postsPerPage) / 10) + 1;
     },
     prevPageDisabledforAll() {
-      return Math.floor((this.currentPageforAll - 1) / 10) === 0
+      return this.currentPageforAll === 1; // 첫 번째 페이지일 경우에만 비활성화
     },
     prevPageDisabledforSummary() {
-      return Math.floor((this.currentPageforSummary - 1) / 10) === 0
+      return this.currentPageforSummary === 1; // 첫 번째 페이지일 경우에만 비활성화
     },
     nextPageDisabledforAll() {
-      return Math.floor((this.currentPageforAll - 1) / 10) + 1 >= this.totalPagesPerListforAll
+      return this.currentPageforAll === this.totalPagesforFilteredPosts; // 마지막 페이지일 경우에만 비활성화
     },
     nextPageDisabledforSummary() {
-      return Math.floor((this.currentPageforSummary - 1) / 10) + 1 >= this.totalPagesPerListforSummary
+      return this.currentPageforSummary === this.totalPagesforFilteredSummarized; // 마지막 페이지일 경우에만 비활성화
     },
     firstPageDisabledforAll() {
       return this.currentPageforAll === 1
@@ -288,14 +322,14 @@ export default {
       return this.currentPageforSummary === 1
     },
     lastPageDisabledforAll() {
-      return this.currentPageforAll === this.totalPagesforAll
+      return this.currentPageforAll === this.totalPagesforFilteredPosts
     },
     lastPageDisabledforSummary() {
-      return this.currentPageforSummary === this.totalPagesforSummary
+      return this.currentPageforSummary === this.totalPagesforFilteredSummarized
     },
     pagesToShowforAll() {
       const startPage = Math.floor((this.currentPageforAll - 1) / 10) * 10 + 1;
-      const endPage = Math.min(startPage + 9, this.totalPagesforAll);
+      const endPage = Math.min(startPage + 9, this.totalPagesforFilteredPosts);
       const pages = [];
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
@@ -304,7 +338,7 @@ export default {
     },
     pagesToShowforSummary() {
       const startPage = Math.floor((this.currentPageforSummary - 1) / 10) * 10 + 1;
-      const endPage = Math.min(startPage + 9, this.totalPagesforSummary);
+      const endPage = Math.min(startPage + 9, this.totalPagesforFilteredSummarized);
       const pages = [];
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
@@ -313,6 +347,10 @@ export default {
     }
   },
   methods: {
+    filterResults() {
+      this.slicingforall();
+      this.slicingforsummary();
+    },
     // 정렬 메서드
     sortTable(column) {
       if (this.currentSort === column) {
@@ -360,8 +398,8 @@ export default {
       let toPage = 0
       if (page < 1) {
         toPage = 1;  
-      } else if (page > this.totalPagesforAll) {
-        toPage = this.totalPagesforAll;
+      } else if (page > this.totalPagesforFilteredPosts) {
+        toPage = this.totalPagesforFilteredPosts;
       } else {
         toPage = page;
       }
@@ -370,11 +408,11 @@ export default {
       this.currentPageforAll = toPage;
     },
     changePageforSummary(page) {
-      let toPage = 0
+      let toPage = 0;
       if (page < 1) {
         toPage = 1;  
-      } else if (page > this.totalPagesforSummary) {
-        toPage = this.totalPagesforSummary;
+      } else if (page > this.totalPagesforFilteredSummarized) {
+        toPage = this.totalPagesforFilteredSummarized;
       } else {
         toPage = page;
       }
@@ -394,32 +432,32 @@ export default {
     },
     prevPageforAll() {
       if (this.currentPageforAll > 1) {
-        this.changePageforAll(Math.floor((this.currentPageforAll - 1) / 10));
+        this.changePageforAll(this.currentPageforAll - 1);
       }
     },
     prevPageforSummary() {
       if (this.currentPageforSummary > 1) {
-        this.changePageforSummary(Math.floor((this.currentPageforSummary - 1) / 10));
+        this.changePageforSummary(this.currentPageforSummary - 1);
       }
     },
     nextPageforAll() {
-      if (Math.floor((this.currentPageforAll - 1) / 10) + 1 < this.totalPagesPerListforAll) {
-        this.changePageforAll(Math.floor((this.currentPageforAll - 1) / 10) + 11);
+      if (this.currentPageforAll < this.totalPagesforFilteredPosts) {
+        this.changePageforAll(this.currentPageforAll + 1);
       }
     },
     nextPageforSummary() {
-      if (Math.floor((this.currentPageforSummary - 1) / 10) + 1 < this.totalPagesPerListforSummary) {
-        this.changePageforSummary(Math.floor((this.currentPageforSummary - 1) / 10) + 11);
+      if (this.currentPageforSummary < this.totalPagesforFilteredSummarized) {
+        this.changePageforSummary(this.currentPageforSummary + 1);
       }
     },
     lastPageforAll() {
-      if (this.currentPageforAll < this.totalPagesforAll) {
-        this.changePageforAll(this.totalPagesforAll);
+      if (this.currentPageforAll < this.totalPagesforFilteredPosts) {
+        this.changePageforAll(this.totalPagesforFilteredPosts);
       }
     },
     lastPageforSummary() {
-      if (this.currentPageforSummary < this.totalPagesforSummary) {
-        this.changePageforSummary(this.totalPagesforSummary);
+      if (this.currentPageforSummary < this.totalPagesforFilteredSummarized) {
+        this.changePageforSummary(this.totalPagesforFilteredSummarized);
       }
     },
     toggle() {
@@ -550,13 +588,13 @@ export default {
     postss(to, from) {
       this.posts = to;
       this.slicingforall();
-      if (this.$route.query.type === 'all' && this.$route.query.page > this.totalPagesforAll) {
-        this.changePageforAll(this.totalPagesforAll);
+      if (this.$route.query.type === 'all' && this.$route.query.page > this.totalPagesforFilteredPosts) {
+        this.changePageforAll(this.totalPagesforFilteredPosts);
       }
       this.toSummarized(this.posts);
       this.slicingforsummary();
-      if (this.$route.query.type === 'summary' && this.$route.query.page > this.totalPagesforSummary) {
-        this.changePageforSummary(this.totalPagesforSummary);
+      if (this.$route.query.type === 'summary' && this.$route.query.page > this.totalPagesforFilteredSummarized) {
+        this.changePageforSummary(this.totalPagesforFilteredSummarized);
       }
     },
     $route(to, from) {
