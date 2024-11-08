@@ -394,6 +394,7 @@ export default {
         return 3
       }
     },
+
     async setInit() {
       if(this.$route.name === "StatisticsStudent") {
         this.titles = '전체 통계'
@@ -506,7 +507,6 @@ export default {
       });
     },
 
-
     // 전체 및 과목용 전처리
     coursePreprocessingTableData(datalist) {
       var li = []
@@ -556,6 +556,19 @@ export default {
 
           li[index] = appendData;
         }
+      });
+
+      li = this.yearSort(li)
+    
+      // 통계값 계산
+      li.forEach(course => {
+        course.commit_stats = calculateStats(course.commit);
+        course.pr_stats = calculateStats(course.pr);
+        course.issue_stats = calculateStats(course.issue);
+        course.num_repos_stats = calculateStats(course.num_repos);
+        course.stars_stats = calculateStats(course.stars);
+        course.is_contributor_stats = calculateStats(course.is_contributor);
+        //console.log(course.is_contributor_stats.sum)
       });
     
       return li;
