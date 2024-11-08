@@ -10,26 +10,31 @@
       <div class="menu">
         <router-link v-bind:to="'/statistics/department'" class="default-router plan-text" append>학과별</router-link>
       </div>
-      <div class="toggle-box" @click.self.prevent="toggle">
-        <div class="wrapper">
-          <input type="checkbox" id="switchstudent" v-model="showTable">
-          <label for="switchstudent" class="switch_label">
-            <span class="onf_btn"></span>
-            <div class="toggle_img">
-                <div class="img1">
-                    <svg class="toggle-image-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g id="Huge-icon">
-                            <path id="Vector" d="M10 6H16M10 14H16M10 10H22M10 18H22M3 10H5C5.55228 10 6 9.55228 6 9V7C6 6.44772 5.55228 6 5 6H3C2.44772 6 2 6.44772 2 7V9C2 9.55228 2.44772 10 3 10ZM3 18H5C5.55228 18 6 17.5523 6 17V15C6 14.4477 5.55228 14 5 14H3C2.44772 14 2 14.4477 2 15V17C2 17.5523 2.44772 18 3 18Z"  stroke-width="1.5" stroke-linecap="round"/>
-                        </g>
-                    </svg>
-                </div>
-                <div class="img2">
-                    <svg class="toggle-image-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-                        <path d="M8 14L9.08225 12.1963C9.72077 11.132 11.2247 11.0309 12 12C12.7753 12.9691 14.2792 12.8679 14.9178 11.8037L16 10M12 18V22M4 6H20C21.1046 6 22 5.10457 22 4C22 2.89543 21.1046 2 20 2H4C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6ZM3 6H21V16C21 17.1046 20.1046 18 19 18H5C3.89543 18 3 17.1046 3 16V6Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-            </div>
-          </label>
+      <div class="export-and-toggle">
+        <button class="export-button" @click="exportToExcel">
+          내보내기
+        </button>
+        <div class="toggle-box" @click.self.prevent="toggle">
+          <div class="wrapper">
+            <input type="checkbox" id="switchstudent" v-model="showTable">
+            <label for="switchstudent" class="switch_label">
+              <span class="onf_btn"></span>
+              <div class="toggle_img">
+                  <div class="img1">
+                      <svg class="toggle-image-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <g id="Huge-icon">
+                              <path id="Vector" d="M10 6H16M10 14H16M10 10H22M10 18H22M3 10H5C5.55228 10 6 9.55228 6 9V7C6 6.44772 5.55228 6 5 6H3C2.44772 6 2 6.44772 2 7V9C2 9.55228 2.44772 10 3 10ZM3 18H5C5.55228 18 6 17.5523 6 17V15C6 14.4477 5.55228 14 5 14H3C2.44772 14 2 14.4477 2 15V17C2 17.5523 2.44772 18 3 18Z"  stroke-width="1.5" stroke-linecap="round"/>
+                          </g>
+                      </svg>
+                  </div>
+                  <div class="img2">
+                      <svg class="toggle-image-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                          <path d="M8 14L9.08225 12.1963C9.72077 11.132 11.2247 11.0309 12 12C12.7753 12.9691 14.2792 12.8679 14.9178 11.8037L16 10M12 18V22M4 6H20C21.1046 6 22 5.10457 22 4C22 2.89543 21.1046 2 20 2H4C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6ZM3 6H21V16C21 17.1046 20.1046 18 19 18H5C3.89543 18 3 17.1046 3 16V6Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                  </div>
+              </div>
+            </label>
+          </div>
         </div>
       </div>
     </div>
@@ -448,8 +453,10 @@
 </template>
 
 <script>
-import StudentGroupBarCharts from '@/views/StatisticsCharts/Students/StudentGroupBarCharts.vue'
-import StudentGroupBoxCharts from '@/views/StatisticsCharts/Students/StudentGroupBoxCharts.vue'
+import StudentGroupBarCharts from '@/views/StatisticsCharts/Students/StudentGroupBarCharts.vue';
+import StudentGroupBoxCharts from '@/views/StatisticsCharts/Students/StudentGroupBoxCharts.vue';
+import * as XLSX from 'xlsx';
+
 export default {
   name: 'StatisticsStudent',
   props: ["course"],
@@ -507,28 +514,120 @@ export default {
       this.showTable = !this.showTable;
     },
     tablewidth(length) {
-      return length
+      return length;
     },
     allStudentToggleButton() {
-      this.subToggleButton = false
+      this.subToggleButton = false;
       this.$router.replace({ path: this.$route.path, query: { type: 'all' } });
     },
     eachStudentToggleButton() {
-      this.subToggleButton = true
+      this.subToggleButton = true;
       this.$router.replace({ path: this.$route.path, query: { type: 'each' } });
+    },
+    exportToExcel() {
+      // 현재 표시된 데이터 가져오기 (필터가 이미 적용된 this.posts 사용)
+      const dataToExport = this.getExportData();
+      
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+      const excelBuffer = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' });
+      const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+
+      // 파일 다운로드 링크 생성
+      const url = window.URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'student_data.xlsx'; // 다운로드 파일명 설정
+      link.click();
+      window.URL.revokeObjectURL(url);
+    },
+    getExportData() {
+      // 현재 표시된 데이터(this.posts)를 엑셀에 적합한 형식으로 변환
+
+      return this.posts.map(item => {
+        let rowData = {
+          '학수번호': item.course_id_for_stats,
+          '과목명': item.course_name
+        };
+        
+        if (!this.showTable) {
+          // 테이블이 표시되는 경우
+          if (!this.subToggleButton) {
+            console.log(item)
+            // '전체 학생' 탭
+            rowData['활동 학생 수'] = item.students;
+            rowData['Total Repos'] = item.num_repos_stats ? item.num_repos_stats.sum : 0;
+            rowData['Total Commits'] = item.commit_stats ? item.commit_stats.sum : 0;
+            rowData['Total Issues'] = item.issue_stats ? item.issue_stats.sum : 0;
+            rowData['Total PRs'] = item.pr_stats ? item.pr_stats.sum : 0;
+            rowData['Total Stars'] = item.stars_stats ? item.stars_stats.sum : 0;
+            rowData['KPI Repos'] = item.num_repos_stats ? ((item.num_repos_stats.sum / item.students) * 100).toFixed(2) + '%' : '0%';
+            rowData['KPI Commits'] = item.commit_stats ? ((item.commit_stats.sum / item.students) * 100).toFixed(2) + '%' : '0%';
+            rowData['KPI contributors'] = item.is_contributor_stats ? ((item.is_contributor_stats.sum / item.students) * 100).toFixed(10) + '%' : '0%';
+            // console.log(item.is_contributors_stats.sum)
+
+          } else {
+            // '학생별' 탭
+            // Repos 통계 데이터 추가
+            rowData['Repos 25%'] = item.num_repos_stats ? item.num_repos_stats.q1 : 0;
+            rowData['Repos 50%'] = item.num_repos_stats ? item.num_repos_stats.median : 0;
+            rowData['Repos 75%'] = item.num_repos_stats ? item.num_repos_stats.q3 : 0;
+            rowData['Repos 최대'] = item.num_repos_stats ? item.num_repos_stats.max : 0;
+            rowData['Repos 평균'] = item.num_repos_stats ? item.num_repos_stats.mean : 0;
+            rowData['Repos 표준편차'] = item.num_repos_stats ? item.num_repos_stats.stdDev : 0;
+
+            // Commits 통계 데이터 추가
+            rowData['Commits 25%'] = item.commit_stats ? item.commit_stats.q1 : 0;
+            rowData['Commits 50%'] = item.commit_stats ? item.commit_stats.median : 0;
+            rowData['Commits 75%'] = item.commit_stats ? item.commit_stats.q3 : 0;
+            rowData['Commits 최대'] = item.commit_stats ? item.commit_stats.max : 0;
+            rowData['Commits 평균'] = item.commit_stats ? item.commit_stats.mean : 0;
+            rowData['Commits 표준편차'] = item.commit_stats ? item.commit_stats.stdDev : 0;
+
+            // Issues 통계 데이터 추가
+            rowData['Issues 25%'] = item.issue_stats ? item.issue_stats.q1 : 0;
+            rowData['Issues 50%'] = item.issue_stats ? item.issue_stats.median : 0;
+            rowData['Issues 75%'] = item.issue_stats ? item.issue_stats.q3 : 0;
+            rowData['Issues 최대'] = item.issue_stats ? item.issue_stats.max : 0;
+            rowData['Issues 평균'] = item.issue_stats ? item.issue_stats.mean : 0;
+            rowData['Issues 표준편차'] = item.issue_stats ? item.issue_stats.stdDev : 0;
+
+            // PRs 통계 데이터 추가
+            rowData['PRs 25%'] = item.pr_stats ? item.pr_stats.q1 : 0;
+            rowData['PRs 50%'] = item.pr_stats ? item.pr_stats.median : 0;
+            rowData['PRs 75%'] = item.pr_stats ? item.pr_stats.q3 : 0;
+            rowData['PRs 최대'] = item.pr_stats ? item.pr_stats.max : 0;
+            rowData['PRs 평균'] = item.pr_stats ? item.pr_stats.mean : 0;
+            rowData['PRs 표준편차'] = item.pr_stats ? item.pr_stats.stdDev : 0;
+
+            // Stars 통계 데이터 추가
+            rowData['Stars 25%'] = item.stars_stats ? item.stars_stats.q1 : 0;
+            rowData['Stars 50%'] = item.stars_stats ? item.stars_stats.median : 0;
+            rowData['Stars 75%'] = item.stars_stats ? item.stars_stats.q3 : 0;
+            rowData['Stars 최대'] = item.stars_stats ? item.stars_stats.max : 0;
+            rowData['Stars 평균'] = item.stars_stats ? item.stars_stats.mean : 0;
+            rowData['Stars 표준편차'] = item.stars_stats ? item.stars_stats.stdDev : 0;
+          }
+        } else {
+          // 차트가 표시되는 경우
+          // 필요에 따라 rowData를 구성하거나, 차트 데이터를 내보내기 원치 않으면 무시할 수 있습니다.
+        }
+
+        return rowData;
+      });
     },
   },
   mounted() {
-    this.posts = this.course
+    this.posts = this.course;
   },
   watch: {
     course(to, from) {
-      const vm = this
-      this.posts = vm.course
-      // console.log(this.posts)
+      this.posts = this.course;
     },
-  }
+  },
 };
+
 </script>
 
 <style scoped>
@@ -952,6 +1051,29 @@ export default {
     white-space: nowrap;
   }
 }
+
+.export-and-toggle {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+
+  .export-button {
+    margin-right: 10px;
+    padding: 8px 16px;
+    background-color: #CB385C;
+    color: #FFF;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .export-button:hover {
+    background-color: #a82e4a;
+  }
+}
+
 
 .chart {
   margin: 20px 0;
