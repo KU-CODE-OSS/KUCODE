@@ -554,12 +554,7 @@ export default {
         if (!this.showTable) {
           // 테이블이 표시되는 경우
           if (!this.subToggleButton) {
-            console.log(ite=======
-
-        if (!this.showTable) {
-          // 테이블이 표시되는 경우
-          if (!this.subToggleButton) {
-
+            console.log(item)
             // '전체 학생' 탭
             rowData['활동 학생 수'] = item.students;
             rowData['Total Repos'] = item.num_repos_stats ? item.num_repos_stats.sum : 0;
@@ -571,7 +566,6 @@ export default {
             rowData['KPI Commits'] = item.commit_stats ? ((item.commit_stats.sum / item.students) * 100).toFixed(2) + '%' : '0%';
             rowData['KPI contributors'] = item.is_contributor_stats ? ((item.is_contributor_stats.sum / item.students) * 100).toFixed(10) + '%' : '0%';
             // console.log(item.is_contributors_stats.sum)
-
 
           } else {
             // '학생별' 탭
