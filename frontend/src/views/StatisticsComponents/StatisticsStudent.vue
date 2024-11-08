@@ -550,10 +550,16 @@ export default {
           '학수번호': item.course_id_for_stats,
           '과목명': item.course_name
         };
+        
+        if (!this.showTable) {
+          // 테이블이 표시되는 경우
+          if (!this.subToggleButton) {
+            console.log(ite=======
 
         if (!this.showTable) {
           // 테이블이 표시되는 경우
           if (!this.subToggleButton) {
+
             // '전체 학생' 탭
             rowData['활동 학생 수'] = item.students;
             rowData['Total Repos'] = item.num_repos_stats ? item.num_repos_stats.sum : 0;
@@ -563,6 +569,9 @@ export default {
             rowData['Total Stars'] = item.stars_stats ? item.stars_stats.sum : 0;
             rowData['KPI Repos'] = item.num_repos_stats ? ((item.num_repos_stats.sum / item.students) * 100).toFixed(2) + '%' : '0%';
             rowData['KPI Commits'] = item.commit_stats ? ((item.commit_stats.sum / item.students) * 100).toFixed(2) + '%' : '0%';
+            rowData['KPI contributors'] = item.is_contributor_stats ? ((item.is_contributor_stats.sum / item.students) * 100).toFixed(10) + '%' : '0%';
+            // console.log(item.is_contributors_stats.sum)
+
 
           } else {
             // '학생별' 탭
