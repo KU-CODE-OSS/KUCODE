@@ -271,21 +271,20 @@ def student_read_course_info(request):
             try:
                 print(f'student is:{student.name}')
                 # 특정 하나의 학생에 대해 진행             
-                # 특정 하나의 학생에 대해 진행             
-                total_commit =0 
-                total_pr =0
-                total_issue =0
-                total_repo =0
-                total_star =0
+                total_commit = 0 
+                total_pr = 0
+                total_issue = 0
+                total_repo = 0
+                total_star = 0
 
-                etc_total_commit =0 
-                etc_total_pr =0
-                etc_total_issue =0
-                etc_total_repo =0
-                etc_total_star =0
+                etc_total_commit = 0 
+                etc_total_pr = 0
+                etc_total_issue = 0
+                etc_total_repo = 0
+                etc_total_star = 0
 
                 # 특정 학생의 모든 레포지토리 가져옴
-                student_repos= Repository.objects.filter(owner_github_id=student.github_id)
+                student_repos = Repository.objects.filter(owner_github_id=student.github_id)
                 
                 # 특정 학생의 수강 목록들 가져옴
                 course_reg_list = Course_registration.objects.filter(student=student)
@@ -294,8 +293,8 @@ def student_read_course_info(request):
                 courses_repos = Course_project.objects.filter(repo__in=student_repos)
                 
                 # 특정 학생이 듣는 모든 course_id 테이블 및 딕셔너리 생성
-                course_ids=[]
-                for course_reg in course_reg_list :
+                course_ids = []
+                for course_reg in course_reg_list:
                     course_ids.append(course_reg.course.course_id)
 
                 # 딕셔너리 초기화
@@ -308,14 +307,15 @@ def student_read_course_info(request):
 
                 # 각 repo에 대한 정보 추가
                 for repo in student_repos:
-
-                    if repo in courses_project_repos: # 특정 학생의 현재 가리키는 repo가 과목과 관련이 있는 경우
+                    if repo in courses_project_repos:  # 특정 학생의 현재 가리키는 repo가 과목과 관련이 있는 경우
                         specific_course = Course_project.objects.get(repo=repo)
                         course_id = specific_course.course.course_id
                         
                         # Commit 수 합산
-                        # course_dict[course_id]['commit'] += repo.commit_count
-                        course_dict[course_id]['commit'] += Repo_commit.objects.filter(repo_url__contains=specific_course.course.course_repo_name,owner_github_id=student.github_id).count()
+                        course_dict[course_id]['commit'] += Repo_commit.objects.filter(
+                            repo_url__contains=specific_course.course.course_repo_name,
+                            owner_github_id=student.github_id
+                        ).count()
                         
                         # PR 수 합산
                         course_dict[course_id]['pr'] += Repo_pr.objects.filter(repo_id=repo.id).count()
@@ -329,23 +329,32 @@ def student_read_course_info(request):
                         # Star 수 합산
                         course_dict[course_id]['star'] += Repository.objects.get(id=repo.id).star_count or 0
 
-                    else: # 특정 학생의 repo가 과목과 관련 없는 경우
+                    else:  # 특정 학생의 repo가 과목과 관련 없는 경우
                         etc_total_commit += repo.commit_count or 0 
                         etc_total_pr += Repo_pr.objects.filter(repo_id=repo.id).count()
                         etc_total_issue += Repo_issue.objects.filter(repo_id=repo.id).count()
                         etc_total_repo += 1
                         etc_total_star += Repository.objects.get(id=repo.id).star_count or 0
 
-                # 각 과목에 대한 정보 추가
+                # 학생별 total_contributes와 is_contributor 계산
+                total_contributions_data = Repo_contributor.objects.filter(
+                    contributor_id=student.github_id
+                ).exclude(
+                    owner_github_id=student.github_id
+                ).aggregate(
+                    total_contributes=Sum('contribution_count')
+                )
+                total_contributes = total_contributions_data.get('total_contributes') or 0
+                is_contributor = 1 if total_contributes >= 1 else 0
 
+                # 각 과목에 대한 정보 추가
                 for course_id, course_count in course_dict.items():
-                    
                     course = Course.objects.get(course_id=course_id)
 
                     course_info = {
                         "id": student.id,
                         "github_id": student.github_id,
-                        "name":student.name,
+                        "name": student.name,
                         "department": student.department,
                         "enrollment": student.enrollment,
                         "year": course.year,
@@ -356,8 +365,10 @@ def student_read_course_info(request):
                         "issue": course_count['issue'],
                         "num_repos": course_count['repo'],
                         "star_count": course_count['star'],
-                        "prof":course.prof,
-                        "course_id":course.course_id
+                        "prof": course.prof,
+                        "course_id": course.course_id,
+                        "total_contributes": total_contributes,
+                        "is_contributor": is_contributor
                     }
                     total_commit += course_count['commit']
                     total_pr += course_count['pr']
@@ -366,9 +377,8 @@ def student_read_course_info(request):
                     total_star += course_count['star']
 
                     data.append(course_info)
-                
-                        
 
+                # 기타 정보 추가
                 etc_info = {
                     "id": student.id,
                     "github_id": student.github_id,
@@ -383,10 +393,12 @@ def student_read_course_info(request):
                     "issue": etc_total_issue,
                     "num_repos": etc_total_repo,
                     "star_count": etc_total_star,
-                    "prof":"",
-                    "course_id":""
-                    }
-                    
+                    "prof": "",
+                    "course_id": "",
+                    "total_contributes": total_contributes,
+                    "is_contributor": is_contributor
+                }
+
                 total_commit += etc_total_commit
                 total_pr += etc_total_pr
                 total_issue += etc_total_issue
@@ -394,12 +406,12 @@ def student_read_course_info(request):
                 total_star += etc_total_star
 
                 data.append(etc_info)               
-                
+
             except Exception as e:
                 print(f'Error processing student {student.name}: {e}')
                 continue       
         
-        return JsonResponse(data , safe=False)
+        return JsonResponse(data, safe=False)
 
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
