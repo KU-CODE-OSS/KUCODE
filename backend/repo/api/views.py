@@ -85,7 +85,17 @@ def sync_repo_db(request):
                     continue
 
                 repo_data = repo_response.json()
+
                 try:
+                    commit_count = 0
+                    if repo_data["forked"] == True:
+                        # Ensure commit_count is a single integer count of matching Repo_commit entries
+                        commit_count = Repo_commit.objects.filter(author_github_id=github_id, repo_id=repo_id).values('sha').distinct().count()
+                        print(f"commit_count : {commit_count}")
+
+                    else:
+                        commit_count =  repo_data.get('commit_count')
+
                     repository_record, created = Repository.objects.update_or_create(
                         owner_github_id=github_id,
                         id=repo_id,
@@ -97,16 +107,16 @@ def sync_repo_db(request):
                             'forked': repo_data.get('forked'),
                             'fork_count': repo_data.get('forks_count'),
                             'star_count': repo_data.get('stars_count'),
-                            'commit_count': repo_data.get('commit_count'),
+                            'commit_count': commit_count,
                             'open_issue_count': repo_data.get('open_issue_count'),
                             'closed_issue_count': repo_data.get('closed_issue_count'),
                             'open_pr_count': repo_data.get('open_pr_count'),
                             'closed_pr_count': repo_data.get('closed_pr_count'),
-                            'owern_commit_count': repo_data.get('owner_commit_count'),
-                            'owner_open_issue_count': repo_data.get('owner_open_issue_count'),
-                            'owner_closed_issue_count': repo_data.get('owner_closed_issue_count'),
-                            'owner_open_pr_count': repo_data.get('owner_open_pr_count'),
-                            'owner_closed_pr_count': repo_data.get('owner_closed_pr_count'),
+                            'contributed_commit_count': repo_data.get('contributed_commit_count'),
+                            'contributed_open_issue_count': repo_data.get('contributed_open_issue_count'),
+                            'contributed_closed_issue_count': repo_data.get('contributed_closed_issue_count'),
+                            'contributed_open_pr_count': repo_data.get('contributed_open_pr_count'),
+                            'contributed_closed_pr_count': repo_data.get('contributed_closed_pr_count'),
                             'language': ', '.join(repo_data.get('language', [])) if isinstance(repo_data.get('language'), list) else 'None',
                             'contributors': ', '.join(repo_data.get('contributors', [])) if isinstance(repo_data.get('contributors'), list) else 'None',
                             'license': repo_data.get('license'),
@@ -120,12 +130,14 @@ def sync_repo_db(request):
                     action = "Created" if created else "Updated"
                     print(f"  {action} repository: {repo_name} (ID: {repo_id})")
                     success_repo_count += 1
+
                 except Exception as e:
                     message = f"Error processing repository {repo_name} (ID: {repo_id}) for GitHub user {github_id}: {str(e)}"
                     print(f"[ERROR] {message}")
                     failure_repo_count += 1
                     failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
 
+            # account_student -> star_count 
             total_star_count = Repository.objects.filter(owner_github_id=github_id).aggregate(total_star_count=Sum('star_count'))['total_star_count'] or 0
             student_record = Student.objects.get(id=id)
             student_record.starred_count = total_star_count
@@ -134,6 +146,7 @@ def sync_repo_db(request):
             print(f"  Total star count ({total_star_count}) for GitHub user {github_id} saved.")
             success_student_count += 1
             print(f'{"-"*5} Processed GitHub user: {github_id} {"-"*5}')
+
 
         return JsonResponse({
             "status": "OK",
@@ -686,7 +699,7 @@ def sync_repo_commit_db(request):
                             'repo_id': repo_id,
                             'repo_url': commit_data.get('repo_url'),
                             'owner_github_id': commit_data.get('owner_github_id'),
-                            'committer_github_id': commit_data.get('committer_github_id'),
+                            'author_github_id': commit_data.get('author_github_id'),
                             'added_lines': commit_data.get('added_lines'),
                             'deleted_lines': commit_data.get('deleted_lines'),
                             'last_update': commit_data.get('last_update')
