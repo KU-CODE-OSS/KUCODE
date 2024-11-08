@@ -441,11 +441,13 @@ export default {
       this.courseFilterCourseNameCheckbox = [...courseset];
     },
 
+
     // 전체 및 과목용 전처리
     coursePreprocessingTableData(datalist) {
       var li = []
       const set = new Set(datalist.map(row => row.course_id));
       const uniqueArr = [...set];
+
 
       datalist.forEach(element => {
         let index = uniqueArr.indexOf(element.course_id);
@@ -458,7 +460,7 @@ export default {
           } else {
             newData.year = element.year;
             newData.course_id_for_stats = element.course_id + ' (' + element.year + '-' + element.semester + ')';
-          }
+          }       
           newData.semester = element.semester;
           newData.yearandsemester = element.year + '-' + element.semester;
           newData.course_name = element.course_name;
@@ -472,6 +474,7 @@ export default {
           newData.issue = [element.issue];
           newData.num_repos = [element.num_repos];
           newData.stars = [element.star_count];
+          newData.is_contributor = [element.is_contributor]
 
           li[index] = newData;
         } else {
@@ -484,20 +487,10 @@ export default {
           appendData.issue.push(element.issue);
           appendData.num_repos.push(element.num_repos);
           appendData.stars.push(element.star_count);
+          appendData.is_contributor.push(element.is_contributor);
 
           li[index] = appendData;
         }
-      });
-
-      li = this.yearSort(li)
-    
-      // 통계값 계산
-      li.forEach(course => {
-        course.commit_stats = calculateStats(course.commit);
-        course.pr_stats = calculateStats(course.pr);
-        course.issue_stats = calculateStats(course.issue);
-        course.num_repos_stats = calculateStats(course.num_repos);
-        course.stars_stats = calculateStats(course.stars);
       });
     
       return li;
@@ -506,7 +499,7 @@ export default {
       function calculateStats(arr) {
         arr.sort((a, b) => a - b);
         const n = arr.length;
-      
+        
         const sum = arr.reduce((acc, val) => acc + val, 0);
         const mean = (sum / n).toFixed(2);
         const variance = (arr.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / n).toFixed(2);
@@ -516,7 +509,6 @@ export default {
         const q1 = arr[Math.floor((n - 1) * 0.25)];
         const q2 = arr[Math.floor((n - 1) * 0.5)];
         const q3 = arr[Math.floor((n - 1) * 0.75)];
-      
         return {
           sum: sum,
           max: max,
