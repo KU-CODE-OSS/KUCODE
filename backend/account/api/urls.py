@@ -39,7 +39,12 @@ urlpatterns = [
     path("none_githubid_list",views.none_githubid_list, name ="none_githubid_list"),
 
     # Students without githubids but only for attending students
-    path("none_githubid_list_only_attending",views.none_githubid_list_only_attending, name ="none_githubid_list_only_attending")
+    path("none_githubid_list_only_attending",views.none_githubid_list_only_attending, name ="none_githubid_list_only_attending"),
 
+    # Counting num of contributors and contributions per student
+    path("count_contributors_per_student",views.count_contributors_per_student, name ="count_contributors_per_student"),
+
+    #update foreign students
+    path("update_foreign_students",views.update_foreign_students, name ="update_foreign_students"),
 
 ]   

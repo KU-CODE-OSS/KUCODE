@@ -12,7 +12,7 @@
       </div>
       <div class="search-box">
         <div class="form__group field">
-          <input type="input" class="form-field" :value="searchField" />
+          <input type="input" class="form-field" v-model="searchField" @keyup.enter="performSearch" />
           <label class="form__label">SEARCH</label>
         </div>
       </div>
@@ -65,7 +65,7 @@
         </thead>
 
         <tbody>
-          <tr v-for="item in sclicedPosts" :key="item.id" class="table-row">
+            <tr v-for="item in filteredPosts" :key="item.id" class="table-row">
             <!-- 테이블 데이터 부분은 그대로 유지 -->
             <td :title="item.name">
               <a :href="item.url" target="_blank">{{ item.name }}</a> <!-- 하이퍼링크 추가 -->
@@ -88,6 +88,10 @@
           </tr>
         </tbody>
       </table>
+        <!-- 검색 결과가 없을 경우 표시 -->
+        <!-- <div v-if="filteredPosts.length === 0" class="no-results">
+          검색 결과가 없습니다.
+        </div> -->
         <!-- 팝업 창 -->
         <div class="import-overlay" v-show="showOverlay" v-on:click="closeOverlay">
           <div class="pannel-container" @click.stop>
@@ -197,6 +201,15 @@ export default {
     };
   },
   computed: {
+    filteredPosts() {
+      if (this.searchField.trim() === '') {
+        return this.sclicedPosts;
+      }
+      return this.sclicedPosts.filter(item =>
+        item.name.toLowerCase().includes(this.searchField.toLowerCase()) ||
+        item.owner_github_id.toLowerCase().includes(this.searchField.toLowerCase())
+      );
+    },
     totalPagesforAll() {
       return Math.ceil(this.postss.length / this.postsPerPage);
     },
@@ -226,6 +239,9 @@ export default {
     },
   },
   methods: {
+        performSearch() {
+      this.slicingforall();
+    },
     // 테이블 정렬 메서드
     sortTable(column) {
       if (this.currentSort === column) {
@@ -492,6 +508,7 @@ export default {
       }
     }
   }
+
   .search-box {
     min-height: 44px;
     margin-left: auto;

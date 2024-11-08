@@ -10,8 +10,8 @@ from rest_framework import status
 
 from account.models import User,Student
 from course.models import Course, Course_registration, Course_project
-from repo.models import Repo_commit, Repo_pr ,Repo_issue, Repository
-from django.db.models import Sum
+from repo.models import Repo_commit, Repo_pr ,Repo_issue, Repository,Repo_contributor
+from django.db.models import Sum,Count
 from openpyxl import load_workbook
 from django.db.models import Q
 from datetime import datetime
@@ -327,14 +327,14 @@ def student_read_course_info(request):
                         course_dict[course_id]['repo'] += 1
                         
                         # Star 수 합산
-                        course_dict[course_id]['star'] += Repository.objects.get(id=repo.id).star_count
+                        course_dict[course_id]['star'] += Repository.objects.get(id=repo.id).star_count or 0
 
                     else: # 특정 학생의 repo가 과목과 관련 없는 경우
-                        etc_total_commit += repo.commit_count
+                        etc_total_commit += repo.commit_count or 0 
                         etc_total_pr += Repo_pr.objects.filter(repo_id=repo.id).count()
                         etc_total_issue += Repo_issue.objects.filter(repo_id=repo.id).count()
                         etc_total_repo += 1
-                        etc_total_star += Repository.objects.get(id=repo.id).star_count
+                        etc_total_star += Repository.objects.get(id=repo.id).star_count or 0
 
                 # 각 과목에 대한 정보 추가
 
@@ -1204,3 +1204,86 @@ def none_githubid_list_only_attending(request):
 
     # JsonResponse 반환
     return JsonResponse(data, safe=False)
+
+
+
+def count_contributors_per_student(request):
+    try:
+        # 모든 Repo_contributor 데이터를 가져오고 이후 파이썬 코드에서 필터링
+        all_contributors = (
+            Repo_contributor.objects
+            .values('contributor_id', 'owner_github_id')  # 필터링에 필요한 필드만 선택
+            .annotate(
+                total_contributions=Sum('contribution_count')  # contribution_count 합계 계산
+            )
+        )
+
+        # owner_github_id와 contributor_id가 다른 데이터만 남기기
+        filtered_data = [
+            entry for entry in all_contributors
+            if entry['owner_github_id'] != entry['contributor_id']
+        ]
+
+        # 학생 데이터를 저장할 딕셔너리 초기화
+        student_data = {}
+
+        for entry in filtered_data:
+            try:
+                # contributor_id로 Student 테이블에서 해당하는 학생을 찾기
+                student = Student.objects.get(github_id=entry['contributor_id'])
+                student_id = student.id
+
+                # 이미 student_id가 존재하면 기존 값에 누적, 없으면 새로 추가
+                if student_id in student_data:
+                    student_data[student_id]['total_contributions'] += entry['total_contributions']
+                else:
+                    # 새로운 student_id인 경우 초기 데이터 설정
+                    student_data[student_id] = {
+                        'student_id': student_id,
+                        'student_name': student.name,
+                        'total_contributions': entry['total_contributions']
+                    }
+
+            except Student.DoesNotExist:
+                # 해당 contributor_id에 해당하는 학생이 없으면 무시
+                continue
+
+        # commit_exist 필드 추가
+        for student_id, info in student_data.items():
+            info['commit_exist'] = info['total_contributions'] > 0  # total_contributions가 0보다 크면 True, 아니면 False
+
+        # 결과를 리스트로 변환
+        data = list(student_data.values())
+
+        return JsonResponse(data, safe=False)
+
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+    
+
+def update_foreign_students(request):
+    try:
+       
+        students = Student.objects.all()  # 모든 학생을 조회
+        
+        for student in students:
+            # id 필드에서 'KU'가 포함된 경우
+            if 'KU' in student.id:
+                student.department = '학점교류'
+                student.college = '학점교류'
+                student.enrollment = '해당없음'
+            
+            # id의 5번째 자리가 '9'인 경우
+            elif len(student.id) == 10 and student.id[4] == '9':
+                student.department = '교환학생'
+                student.college = '교환학생'
+                student.enrollment = '해당없음'
+
+            # 변경 사항을 저장
+            student.save()
+        return JsonResponse('foreign_students updated!' , safe=False) 
+    
+    
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})

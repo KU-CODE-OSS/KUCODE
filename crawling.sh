@@ -79,6 +79,7 @@ process_urls_sequentially() {
 run_twice_daily_tasks() {
     for _ in {1..2}; do
         process_urls_sequentially student_urls "Student Synchronization"
+
         sleep 1h
 
         process_urls_sequentially repo_urls "Repo Synchronization"
