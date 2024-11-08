@@ -1,50 +1,37 @@
 #!/bin/bash
 
-# Define colors for success and failure
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# Define colors for success and failure, apply only in interactive terminal
+if [ -t 1 ]; then
+    GREEN='\033[0;32m'
+    RED='\033[0;31m'
+    NC='\033[0m'
+else
+    GREEN=''
+    RED=''
+    NC=''
+fi
 
-# .env 파일에서 환경 변수 로드
+# Load environment variables from .env file
 if [ -f ".env" ]; then
-    export $(cat .env | xargs)
+    source .env
 else
     echo ".env file not found! Make sure it exists in the same directory."
     exit 1
 fi
 
-# Define the URLs for student synchronization
-student_urls=(
-    "$STUDENT_SYNC_URL"
-)
-
-# Define the URLs for repo synchronization
-repo_urls=(
-    "$REPO_SYNC_URL"
-)
-
-# Define the URLs for repo-related synchronization
-repo_commit_urls=(
-    "$REPO_COMMIT_SYNC_URL"
-)
-
-repo_issue_pr_urls=(
-    "$REPO_ISSUE_SYNC_URL"
-    "$REPO_PR_SYNC_URL"
-)
-
-repo_contributor_urls=(
-    "$REPO_CONTRIBUTOR_SYNC_URL"
-)
-
-# Define the URLs to be processed for course-related operations
+# Define URLs for synchronization tasks
+student_urls=("$STUDENT_SYNC_URL")
+repo_urls=("$REPO_SYNC_URL")
+repo_commit_urls=("$REPO_COMMIT_SYNC_URL")
 course_related_urls=(
-    "$COURSE_OS_SYNC_URL"
-    "$COURSE_CAPSTONE_SYNC_URL_1"
-    "$COURSE_CLOUD_SYNC_URL"
-    "$COURSE_SW_PROJECT_SYNC_URL"
-    "$COURSE_CAPSTONE_SYNC_URL_2"
+    "$COURSE_20241OS01_SYNC_URL" "$COURSE_20241CAPSTONE00_SYNC_URL"
+    "$COURSE_20242CLOUD00_SYNC_URL" "$COURSE_20242SWPROJECT00_SYNC_URL"
+    "$COURSE_20242CAPSTONE02_SYNC_URL" "$COURSE_20242SWENGINEERING00_SYNC_URL"
+    "$COURSE_20242DL02_SYNC_URL" "$COURSE_20242CAPSTONE01_SYNC_URL"
 )
+repo_issue_url="$REPO_ISSUE_SYNC_URL"
+repo_pr_url="$REPO_PR_SYNC_URL"
+repo_contributor_url="$REPO_CONTRIBUTOR_SYNC_URL"
 
 # Check if the script is already running
 if [[ $(pgrep -f $(basename "$0") | wc -l) -gt 2 ]]; then
@@ -52,76 +39,76 @@ if [[ $(pgrep -f $(basename "$0") | wc -l) -gt 2 ]]; then
     exit 1
 fi
 
-# Function to print a section header in the log
+# Function to log a section header
 log_section() {
-    local section_name=$1
-    echo "## $section_name"
+    echo "## $1"
 }
 
 # Function to process each URL and log the result
 process_url() {
     local url=$1
-    local job_name=$2
-
-    start_time=$(date +%Y-%m-%d\ %H:%M:%S)
-    echo "## $job_name"
+    echo "Processing URL: $url"
+    local start_time=$(date +%Y-%m-%d\ %H:%M:%S)
     echo "Starting: $start_time"
     
     response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
-    curl_error_code=$?
-    
-    end_time=$(date +%Y-%m-%d\ %H:%M:%S)
+    local end_time=$(date +%Y-%m-%d\ %H:%M:%S)
 
     if [ "$response" -eq 200 ]; then
         echo -e "${GREEN}SUCCESS: Operation completed successfully.${NC}"
     else
-        if [ "$curl_error_code" -ne 0 ]; then
-            echo -e "${RED}FAILED: curl error (code: $curl_error_code)${NC}"
-        else
-            echo -e "${RED}FAILED: HTTP response code $response${NC}"
-        fi
+        echo -e "${RED}FAILED: HTTP response code $response${NC} (URL: $url)"
     fi
     echo "Ended: $end_time"
     echo "---------------------"
 }
 
-# Function to process URLs sequentially
+# Function to process multiple URLs sequentially with a section log
 process_urls_sequentially() {
-    local urls=("$@")
+    local -n urls=$1
     local job_name=$2
+    log_section "$job_name"
     for url in "${urls[@]}"; do
-        process_url "$url" "$job_name"
+        if [ -n "$url" ]; then
+            process_url "$url"
+        fi
     done
 }
 
-cycle_count=0
+# Run twice-daily tasks with a 1-hour delay in between
+run_twice_daily_tasks() {
+    for _ in {1..2}; do
+        process_urls_sequentially student_urls "Student Synchronization"
 
-while true; do
-    # Process student URLs first (student, repository, commit are in one cycle without empty lines)
-    log_section "Student Synchronization"
-    process_urls_sequentially "${student_urls[@]}" "Student Synchronization"
+        sleep 1h
 
-    log_section "Repo Synchronization"
-    process_urls_sequentially "${repo_urls[@]}" "Repo Synchronization"
+        process_urls_sequentially repo_urls "Repo Synchronization"
+        process_urls_sequentially course_related_urls "Course Synchronization"
+        sleep 1h
+    done
+}
 
-    log_section "Repo Commit Synchronization"
-    process_urls_sequentially "${repo_commit_urls[@]}" "Repo Commit Synchronization"
-
-    # Process course-related URLs
-    log_section "Course Synchronization"
-    process_urls_sequentially "${course_related_urls[@]}" "Course Synchronization"
-
-    # 휴식 1시간 (로그에 표시되지 않음)
-    sleep 1h
-
-    # Process repo issue, PR, and contributor URLs sequentially in one cycle
+# Run once-daily tasks sequentially with 1-hour delays in between
+run_once_daily_tasks() {
     log_section "Repo Issue, PR, and Contributor Synchronization"
-    process_urls_sequentially "${repo_issue_pr_urls[0]}" "Repo Issue Synchronization"
-    process_urls_sequentially "${repo_issue_pr_urls[1]}" "Repo PR Synchronization"
-    process_urls_sequentially "${repo_contributor_urls[@]}" "Repo Contributor Synchronization"
-
-    # 휴식 1시간 (로그에 표시되지 않음)
+    process_url "$repo_issue_url"
     sleep 1h
 
-    cycle_count=$((cycle_count + 1))
+    process_url "$repo_pr_url"
+    sleep 1h
+
+    process_url "$repo_contributor_url"
+    sleep 1h
+}
+
+# Main loop
+while true; do
+    run_twice_daily_tasks
+    run_once_daily_tasks
+
+    # Continuously perform repo commit sync with a 1-hour delay
+    while true; do
+        process_urls_sequentially repo_commit_urls "Repo Commit Synchronization"
+        sleep 1h
+    done
 done
