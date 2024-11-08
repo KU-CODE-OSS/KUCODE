@@ -24,9 +24,10 @@ student_urls=("$STUDENT_SYNC_URL")
 repo_urls=("$REPO_SYNC_URL")
 repo_commit_urls=("$REPO_COMMIT_SYNC_URL")
 course_related_urls=(
-    "$COURSE_OS_SYNC_URL" "$COURSE_CAPSTONE_SYNC_URL_1"
-    "$COURSE_CLOUD_SYNC_URL" "$COURSE_SW_PROJECT_SYNC_URL"
-    "$COURSE_CAPSTONE_SYNC_URL_2" "$COURSE_SWENGINEERING_SYNC_URL"
+    "$COURSE_20241OS01_SYNC_URL" "$COURSE_20241CAPSTONE00_SYNC_URL"
+    "$COURSE_20242CLOUD00_SYNC_URL" "$COURSE_20242SWPROJECT00_SYNC_URL"
+    "$COURSE_20242CAPSTONE02_SYNC_URL" "$COURSE_20242SWENGINEERING00_SYNC_URL"
+    "$COURSE_20242DL02_SYNC_URL" "$COURSE_20242CAPSTONE01_SYNC_URL"
 )
 repo_issue_url="$REPO_ISSUE_SYNC_URL"
 repo_pr_url="$REPO_PR_SYNC_URL"
@@ -78,6 +79,8 @@ process_urls_sequentially() {
 run_twice_daily_tasks() {
     for _ in {1..2}; do
         process_urls_sequentially student_urls "Student Synchronization"
+
+        sleep 1h
 
         process_urls_sequentially repo_urls "Repo Synchronization"
         process_urls_sequentially course_related_urls "Course Synchronization"
