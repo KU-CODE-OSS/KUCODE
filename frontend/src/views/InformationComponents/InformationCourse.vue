@@ -103,6 +103,7 @@
               <td>{{item.commit}}</td>
               <td>{{item.pr}}</td>
               <td>{{item.issue}}</td>
+              <td>{{item.stars}}</td>
               <td>{{item.num_repos}}</td>
             </tr>
           </tbody>
@@ -173,7 +174,8 @@ export default {
                 ['수강생', '11%'],
                 ['Commit', '11%'], 
                 ['PR', '11%'], 
-                ['Issue', '11%'], 
+                ['Issue', '11%'],
+                ['Star', '11%'], 
                 ['Repos', '11%']],
       importItem: {
         course_id: '',

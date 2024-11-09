@@ -304,7 +304,7 @@
 </template>
 
 <script>
-import {getCourseInfo, getRepoInfo} from '@/api.js'
+import {getCourseInfo, getRepoInfo, getCourseReadDB} from '@/api.js'
 import InformationCourse from '@/views/InformationComponents/InformationCourse.vue'
 import InformationRepos from '@/views/InformationComponents/InformationRepos.vue'
 import InformationStudent from '@/views/InformationComponents/InformationStudent.vue'
@@ -401,7 +401,7 @@ export default {
         this.titles = '과목 정보'
       }
       if (this.coursePosts.length === 0) {
-        await getCourseInfo().then(res => {
+        await getCourseReadDB().then(res => {
           this.coursePosts = res.data
           this.coursePosts = this.coursePreprocessingTableData(this.coursePosts)
           this.courseFilteredPosts = this.coursePosts
@@ -517,12 +517,7 @@ export default {
     },
     coursePreprocessingTableData(datalist) {
       var li = []
-      const set = new Set(datalist.map(row=>row.course_id));
-      const uniqueArr = [...set];
       datalist.forEach(element => {
-        let index = uniqueArr.indexOf(element.course_id)
-        
-        if (li[index] === undefined) {
           var newData = new Object()
           if(element.year === '' || !element.year) {
             newData.year = '-1'
@@ -534,22 +529,13 @@ export default {
           newData.course_name = element.course_name
           newData.course_id = element.course_id
           newData.prof = element.prof
-          newData.students = 1
-          newData.commit = element.commit
-          newData.pr = element.pr
-          newData.issue = element.issue
-          newData.num_repos = element.num_repos
-          li[index] = newData
-        }
-        else {
-          var appendData = li[index]
-          appendData.students = appendData.students + 1
-          appendData.commit = appendData.commit + element.commit
-          appendData.pr = appendData.pr + element.pr
-          appendData.issue = appendData.issue + element.issue
-          appendData.num_repos = appendData.num_repos + element.num_repos
-          li[index] = appendData   
-        }
+          newData.students = element.name
+          newData.commit = element.total_commits
+          newData.pr = element.total_prs
+          newData.issue = element.total_issues
+          newData.stars = element.total_stars
+          newData.num_repos = element.repository_count
+          li.push(newData)
       });
       return li;
     },
