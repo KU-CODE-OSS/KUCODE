@@ -58,7 +58,9 @@ def course_read_db(request):
         for course in courses:
             
             total_commits = 0
-            
+            total_prs = 0
+            total_issues = 0
+            total_stars =0 
             # Calculate the total commits
             total_course_repos = Repository.objects.filter(url__contains=course.course_repo_name)
             
@@ -66,7 +68,11 @@ def course_read_db(request):
                 if course_repo.forked is True :
                     continue            
                 else :
-                    total_commits += course_repo.commit_count
+                    total_commits += course_repo.commit_count or 0 
+                    total_issues += (course_repo.open_issue_count or 0) + (course_repo.closed_issue_count or 0)
+                    total_prs += (course_repo.open_pr_count or 0) + (course_repo.closed_pr_count or 0)
+                    total_stars += course_repo.star_count or 0 
+
 
             # Calculate the average commits 
 
@@ -110,6 +116,9 @@ def course_read_db(request):
                 "ta": course.ta,
                 "student_count": course.student_count,
                 "total_commits": total_commits ,
+                "total_issues": total_issues,
+                "total_prs": total_prs,
+                "total_stars": total_stars,
                 "avg_commits": avg_commits,
                 "repository_count": repository_count,
                 "contributor_count": contributor_count
