@@ -19,11 +19,15 @@ function handleError(error) {
 }
 
 export function getHealthCheck() {
-    return ajax('/account/healthcheck', 'get');
+  return ajax('/account/healthcheck', 'get');
 }
 
 export function getCourseInfo() {
   return ajax(ip_for_develop + '/account/student_read_course_info', 'get')
+}
+
+export function getCourseReadDB() {
+  return ajax(ip_for_develop + '/course/course_read_db', 'get')
 }
 
 export function getCourseTotalInfo() {
