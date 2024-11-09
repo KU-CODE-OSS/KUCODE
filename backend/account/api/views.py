@@ -312,16 +312,19 @@ def student_read_course_info(request):
                         course_id = specific_course.course.course_id
                         
                         # Commit 수 합산
-                        course_dict[course_id]['commit'] += Repo_commit.objects.filter(
-                            repo_url__contains=specific_course.course.course_repo_name,
+                        total_commit_count = Repository.objects.filter(
+                            url__contains=specific_course.course.course_repo_name,
                             owner_github_id=student.github_id
-                        ).count()
+                        ).aggregate(total_commits=Sum('contributed_commit_count'))['total_commits'] or 0
+
+                        # 합산한 값을 course_dict에 추가
+                        course_dict[course_id]['commit'] += total_commit_count
                         
                         # PR 수 합산
-                        course_dict[course_id]['pr'] += Repo_pr.objects.filter(repo_id=repo.id).count()
+                        course_dict[course_id]['pr'] += ( repo.contributed_open_pr_count or 0) +  (repo.contributed_closed_pr_count or 0)
                         
                         # Issue 수 합산
-                        course_dict[course_id]['issue'] += Repo_issue.objects.filter(repo_id=repo.id).count()
+                        course_dict[course_id]['issue'] += (repo.contributed_open_issue_count or 0) + (repo.contributed_closed_issue_count or 0)
                         
                         # Repo 수 합산
                         course_dict[course_id]['repo'] += 1
@@ -330,9 +333,9 @@ def student_read_course_info(request):
                         course_dict[course_id]['star'] += Repository.objects.get(id=repo.id).star_count or 0
 
                     else:  # 특정 학생의 repo가 과목과 관련 없는 경우
-                        etc_total_commit += repo.commit_count or 0 
-                        etc_total_pr += Repo_pr.objects.filter(repo_id=repo.id).count()
-                        etc_total_issue += Repo_issue.objects.filter(repo_id=repo.id).count()
+                        etc_total_commit += repo.contributed_commit_count or 0 
+                        etc_total_pr +=  ( repo.contributed_open_pr_count or 0) +  (repo.contributed_closed_pr_count or 0)
+                        etc_total_issue += (repo.contributed_open_issue_count or 0) + (repo.contributed_closed_issue_count or 0)
                         etc_total_repo += 1
                         etc_total_star += Repository.objects.get(id=repo.id).star_count or 0
 
@@ -462,22 +465,26 @@ def student_read_total(request):
                         course_id = specific_course.course.course_id
                         
                         # Commit 수 합산
-                        #course_dict[course_id]['commit'] += repo.commit_count
-                        course_dict[course_id]['commit'] += Repo_commit.objects.filter(repo_url__contains=specific_course.course.course_repo_name,owner_github_id=student.github_id).count()
+                        # 해당 학생이 특정 레포지토리에 기여한 커밋 수를 합산
+                        total_commit_count = Repository.objects.filter(
+                            url__contains=specific_course.course.course_repo_name,
+                            owner_github_id=student.github_id
+                        ).aggregate(total_commits=Sum('contributed_commit_count'))['total_commits'] or 0
 
+                        # 합산한 값을 course_dict에 추가
+                        course_dict[course_id]['commit'] += total_commit_count
                         # PR 수 합산
-                        course_dict[course_id]['pr'] += Repo_pr.objects.filter(repo_id=repo.id).count() 
+                        course_dict[course_id]['pr'] += ( repo.contributed_open_pr_count or 0) +  (repo.contributed_closed_pr_count or 0)
                         
                         # Issue 수 합산
-                        course_dict[course_id]['issue'] += Repo_issue.objects.filter(repo_id=repo.id).count()
-                        
+                        course_dict[course_id]['issue'] += (repo.contributed_open_issue_count or 0) + (repo.contributed_closed_issue_count or 0)
                         # Repo 수 합산
                         course_dict[course_id]['repo'] += 1
 
                     else:  # 특정 학생의 repo가 과목과 관련 없는 경우
-                        etc_total_commit += repo.commit_count
-                        etc_total_pr += Repo_pr.objects.filter(repo_id=repo.id).count()
-                        etc_total_issue += Repo_issue.objects.filter(repo_id=repo.id).count()
+                        etc_total_commit += repo.contributed_commit_count or 0 
+                        etc_total_pr +=  ( repo.contributed_open_pr_count or 0) +  (repo.contributed_closed_pr_count or 0)
+                        etc_total_issue += (repo.contributed_open_issue_count or 0) + (repo.contributed_closed_issue_count or 0)
                         etc_total_repo += 1
 
                 # 각 과목에 대한 정보 추가

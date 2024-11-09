@@ -57,10 +57,16 @@ def course_read_db(request):
 
         for course in courses:
             
-
-            # Calculate the total commits
-            total_commits = Repo_commit.objects.filter(repo_url__contains=course.course_repo_name).count()
+            total_commits = 0
             
+            # Calculate the total commits
+            total_course_repos = Repository.objects.filter(url__contains=course.course_repo_name)
+            
+            for course_repo in total_course_repos :
+                if course_repo.forked is True :
+                    continue            
+                else :
+                    total_commits += course_repo.commit_count
 
             # Calculate the average commits 
 
