@@ -85,17 +85,7 @@ def sync_repo_db(request):
                     continue
 
                 repo_data = repo_response.json()
-
                 try:
-                    commit_count = 0
-                    if repo_data["forked"] == True:
-                        # Ensure commit_count is a single integer count of matching Repo_commit entries
-                        commit_count = Repo_commit.objects.filter(author_github_id=github_id, repo_id=repo_id).values('sha').distinct().count()
-                        print(f"commit_count : {commit_count}")
-
-                    else:
-                        commit_count =  repo_data.get('commit_count')
-
                     repository_record, created = Repository.objects.update_or_create(
                         owner_github_id=github_id,
                         id=repo_id,
@@ -107,7 +97,7 @@ def sync_repo_db(request):
                             'forked': repo_data.get('forked'),
                             'fork_count': repo_data.get('forks_count'),
                             'star_count': repo_data.get('stars_count'),
-                            'commit_count': commit_count,
+                            'commit_count': repo_data.get('commit_count'),
                             'open_issue_count': repo_data.get('open_issue_count'),
                             'closed_issue_count': repo_data.get('closed_issue_count'),
                             'open_pr_count': repo_data.get('open_pr_count'),
@@ -161,7 +151,6 @@ def sync_repo_db(request):
 
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
-
 
 def remove_repository(github_id, repository):
     try:
