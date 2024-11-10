@@ -526,10 +526,10 @@ export default {
           }
           newData.semester = element.semester
           newData.yearandsemester = element.year + '-' + element.semester
-          newData.course_name = element.course_name
+          newData.course_name = element.name
           newData.course_id = element.course_id
           newData.prof = element.prof
-          newData.students = element.name
+          newData.students = element.student_count
           newData.commit = element.total_commits
           newData.pr = element.total_prs
           newData.issue = element.total_issues
