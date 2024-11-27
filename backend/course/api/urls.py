@@ -27,7 +27,9 @@ urlpatterns = [
  # Course validation 
    path("course_validation", views.course_validation, name = "course_validation"),
    path("course_reg_validation", views.course_reg_validation, name = "course_reg_validation"),
-   path("course_reg_look", views.course_reg_look, name ="course_reg_look")
-
+   path("course_reg_look", views.course_reg_look, name ="course_reg_look"),
+ 
+ # Courses with min,max,avg
+   path("course_read_min_max_avg", views.course_read_min_max_avg, name="course_read_min_max_avg"),
 
 ]

@@ -12,8 +12,16 @@ from datetime import datetime
 from account.models import User,Student,Administration
 from course.models import Course, Course_registration, Course_project
 from repo.models import Repo_commit, Repo_pr ,Repo_issue, Repository,Repo_contributor
+from itertools import groupby
+from operator import itemgetter
+from collections import defaultdict
+
+import json
+from django.db.models import Min, Max
+from django.http import JsonResponse
+
 import requests
-from account.api.views import get_kuopenapi_access_token,query_student_openapi
+from account.api.views import get_kuopenapi_access_token,query_student_openapi,student_read_course_info
 
 class HealthCheckAPIView(APIView):
     def get(self, request):
@@ -617,3 +625,95 @@ def course_reg_look(request):
         return JsonResponse({'status': 'error', 'message': str(e)})
     
 
+def course_read_min_max_avg(request):
+    try:
+        # courses_info 가져오기
+        courses_info = course_read_db(request)
+        
+        # students_courses_info 가져오기
+        students_courses_info = student_read_course_info(request)
+
+        # courses_info가 JsonResponse인 경우, .content로 바이트 데이터를 가져와서 처리
+        if isinstance(courses_info, JsonResponse):
+            # .content로 바이트 데이터를 가져온 후, 이를 디코딩하여 문자열로 변환
+            courses_str = courses_info.content.decode('utf-8')
+            courses_data = json.loads(courses_str)  # 디코딩된 문자열을 JSON으로 파싱
+        else:
+            courses_data = courses_info  # 이미 JSON 형식이면 그대로 사용
+
+        # students_courses_info가 JsonResponse인 경우, .content로 바이트 데이터를 가져와서 처리
+        if isinstance(students_courses_info, JsonResponse):
+            # .content로 바이트 데이터를 가져온 후, 이를 디코딩하여 문자열로 변환
+            students_str = students_courses_info.content.decode('utf-8')
+            student_data = json.loads(students_str)  # 디코딩된 문자열을 JSON으로 파싱
+        else:
+            student_data = students_courses_info  # 이미 JSON 형식이면 그대로 사용
+
+        # courses_info 그룹화
+        course_grouped_data = defaultdict(list)
+        for course_info in courses_data:
+            group_key = (course_info["course_id"], course_info["year"], course_info["semester"])
+            course_grouped_data[group_key].append(course_info)
+
+        # students_courses_info 그룹화
+        student_grouped_data = defaultdict(list)
+        for student_info in student_data:
+            group_key = (student_info["course_id"], student_info["year"], student_info["semester"])
+            student_grouped_data[group_key].append(student_info)
+
+        # 그룹별 통계 계산 및 데이터 결합
+        merged_stats = []
+        for (course_id, year, semester), course_items in course_grouped_data.items():
+            student_items = student_grouped_data.get((course_id, year, semester), [])
+
+            # 학생들의 데이터를 기반으로 min, max 통계 계산
+            commit_min = min(item['commit'] for item in student_items) if student_items else 0
+            commit_max = max(item['commit'] for item in student_items) if student_items else 0
+            pr_min = min(item['pr'] for item in student_items) if student_items else 0
+            pr_max = max(item['pr'] for item in student_items) if student_items else 0
+            issue_min = min(item['issue'] for item in student_items) if student_items else 0
+            issue_max = max(item['issue'] for item in student_items) if student_items else 0
+            num_repos_min = min(item['num_repos'] for item in student_items) if student_items else 0
+            num_repos_max = max(item['num_repos'] for item in student_items) if student_items else 0
+            star_count_min = min(item['star_count'] for item in student_items) if student_items else 0
+            star_count_max = max(item['star_count'] for item in student_items) if student_items else 0
+
+            # course_items에서 첫 번째 항목을 선택하여 데이터를 가져오고, student_items와 합침
+            course_info = course_items[0]  # 동일한 course_id, year, semester 그룹이므로 첫 번째 항목을 가져옵니다.
+
+            merged_stats.append({
+                "course_id": course_id,
+                "year": year,
+                "semester": semester,
+                "course_name": course_info["name"],
+                "prof": course_info["prof"],
+                "ta": course_info["ta"],
+                "student_count": course_info["student_count"],
+                "total_commits": course_info["total_commits"],
+                "total_issues": course_info["total_issues"],
+                "total_prs": course_info["total_prs"],
+                "total_stars": course_info["total_stars"],
+                "avg_commits": course_info["avg_commits"],
+                "repository_count": course_info["repository_count"],
+                "contributor_count": course_info["contributor_count"],
+                # 추가된 학생들의 통계
+                "commit_min": commit_min,
+                "commit_max": commit_max,
+                "pr_min": pr_min,
+                "pr_max": pr_max,
+                "issue_min": issue_min,
+                "issue_max": issue_max,
+                "num_repos_min": num_repos_min,
+                "num_repos_max": num_repos_max,
+                "star_count_min": star_count_min,
+                "star_count_max": star_count_max
+            })
+
+        # 최종 결과 반환
+        return JsonResponse({
+            "group_stats": merged_stats
+        }, safe=False)
+
+    except Exception as e:
+        print(f"Error grouping students' courses info: {e}")
+        return JsonResponse({"error": str(e)}, safe=False)
