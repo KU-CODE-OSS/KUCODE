@@ -65,9 +65,12 @@ def sync_repo_db(request):
             repo_list = [{'id': repo['id'], 'name': repo['name']} for repo in data]
             
             repos_in_db = Repository.objects.filter(owner_github_id=github_id).values_list('id', flat=True)
+            repo_ids_in_list = [str(repo['id']) for repo in repo_list]
+
             for repo_id in repos_in_db:
-                if repo_id not in [str(repo['id']) for repo in repo_list]:
+                if repo_id not in repo_ids_in_list:
                     remove_repository(github_id, Repository(id=repo_id))
+                    print(f"Repository {repo_id} removed for GitHub ID: {github_id}")
 
             repo_count = 0
             for repo in repo_list:
@@ -85,17 +88,8 @@ def sync_repo_db(request):
                     continue
 
                 repo_data = repo_response.json()
-
                 try:
-                    commit_count = 0
-                    if repo_data["forked"] == True:
-                        # Ensure commit_count is a single integer count of matching Repo_commit entries
-                        commit_count = Repo_commit.objects.filter(author_github_id=github_id, repo_id=repo_id).values('sha').distinct().count()
-                        print(f"commit_count : {commit_count}")
-
-                    else:
-                        commit_count =  repo_data.get('commit_count')
-
+                    print(f"  {github_id}/{repo_name}: {repo_data}")
                     repository_record, created = Repository.objects.update_or_create(
                         owner_github_id=github_id,
                         id=repo_id,
@@ -107,7 +101,7 @@ def sync_repo_db(request):
                             'forked': repo_data.get('forked'),
                             'fork_count': repo_data.get('forks_count'),
                             'star_count': repo_data.get('stars_count'),
-                            'commit_count': commit_count,
+                            'commit_count': repo_data.get('commit_count'),
                             'open_issue_count': repo_data.get('open_issue_count'),
                             'closed_issue_count': repo_data.get('closed_issue_count'),
                             'open_pr_count': repo_data.get('open_pr_count'),

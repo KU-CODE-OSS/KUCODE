@@ -61,8 +61,13 @@ def course_read_db(request):
             total_prs = 0
             total_issues = 0
             total_stars =0 
+
             # Calculate the total commits
-            total_course_repos = Repository.objects.filter(url__contains=course.course_repo_name)
+            course_related_repos_id = Course_project.objects.filter(course_id=course.id).values_list('repo_id', flat=True)
+            
+            # Fetch related repositories
+            total_course_repos = Repository.objects.filter(id__in=course_related_repos_id)
+
             
             for course_repo in total_course_repos :
                 if course_repo.forked is True :
@@ -75,7 +80,6 @@ def course_read_db(request):
 
 
             # Calculate the average commits 
-
             student_count = Course_registration.objects.filter(
                 course=course,
                 course_year=course.year,
@@ -85,7 +89,6 @@ def course_read_db(request):
             avg_commits = round(total_commits / student_count, 2)
             
             # Calculate the number of repositories 
-            
             repository_count = Course_project.objects.filter(
             course=course,
             course_year=course.year,
@@ -94,7 +97,6 @@ def course_read_db(request):
             
             
             # Calculate the number of contributors 
-
             repo_ids = Course_project.objects.filter(
                 course=course,
                 course_year=course.year,

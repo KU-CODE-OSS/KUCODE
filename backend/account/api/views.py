@@ -62,6 +62,7 @@ def sync_student_db(request):
             data = response.json()
             
             try:
+                print(f"Received data for GitHub ID {github_id}: {data}")
                 # Update or create student record
                 student_record, created = Student.objects.update_or_create(
                     github_id__iexact=github_id,
@@ -97,8 +98,6 @@ def sync_student_db(request):
     
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
-
-
 
 # ---------- DELETE ----------#
 def student_delete_db(request):
@@ -258,6 +257,7 @@ def student_excel_import(request):
     except Exception as e:
         print(str(e))
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
 
 
 
@@ -524,7 +524,6 @@ def student_read_total(request):
 
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
-
 
 
 def student_course_year_search(request):
