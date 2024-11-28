@@ -15,6 +15,8 @@ from repo.models import Repo_commit, Repo_pr ,Repo_issue, Repository,Repo_contri
 from itertools import groupby
 from operator import itemgetter
 from collections import defaultdict
+import statistics
+import numpy as np
 
 import json
 from django.db.models import Min, Max
@@ -629,25 +631,21 @@ def course_read_min_max_avg(request):
     try:
         # courses_info 가져오기
         courses_info = course_read_db(request)
-        
-        # students_courses_info 가져오기
         students_courses_info = student_read_course_info(request)
 
-        # courses_info가 JsonResponse인 경우, .content로 바이트 데이터를 가져와서 처리
+        # courses_info가 JsonResponse인 경우 처리
         if isinstance(courses_info, JsonResponse):
-            # .content로 바이트 데이터를 가져온 후, 이를 디코딩하여 문자열로 변환
             courses_str = courses_info.content.decode('utf-8')
-            courses_data = json.loads(courses_str)  # 디코딩된 문자열을 JSON으로 파싱
+            courses_data = json.loads(courses_str)
         else:
-            courses_data = courses_info  # 이미 JSON 형식이면 그대로 사용
+            courses_data = courses_info
 
-        # students_courses_info가 JsonResponse인 경우, .content로 바이트 데이터를 가져와서 처리
+        # students_courses_info가 JsonResponse인 경우 처리
         if isinstance(students_courses_info, JsonResponse):
-            # .content로 바이트 데이터를 가져온 후, 이를 디코딩하여 문자열로 변환
             students_str = students_courses_info.content.decode('utf-8')
-            student_data = json.loads(students_str)  # 디코딩된 문자열을 JSON으로 파싱
+            student_data = json.loads(students_str)
         else:
-            student_data = students_courses_info  # 이미 JSON 형식이면 그대로 사용
+            student_data = students_courses_info
 
         # courses_info 그룹화
         course_grouped_data = defaultdict(list)
@@ -663,25 +661,76 @@ def course_read_min_max_avg(request):
 
         # 그룹별 통계 계산 및 데이터 결합
         merged_stats = []
+        total_os = 0 
+        total_os2 = 0 
+        all_commits = []  # 전체 commit 숫자를 저장할 배열
+
         for (course_id, year, semester), course_items in course_grouped_data.items():
+            # course_id가 'COSE341-01'인 경우에만 출력
+            if course_id == "COSE341-01":
+                print(f"Processing course_id: {course_id}, year: {year}, semester: {semester}")
+                student_items = student_grouped_data.get((course_id, year, semester), [])
+
+                # 필요한 필드만 추출
+                filtered_students = [
+                    {
+                        "commit": student.get("commit"),
+                    }
+                    for student in student_items
+                ]
+
+                # commit 순으로 오름차순 정렬
+                sorted_students = sorted(filtered_students, key=lambda x: x["commit"])
+
+                # 정렬된 결과 출력
+                print("Student Items (sorted by commit):")
+                for student in sorted_students:
+                    print(student)
+                    print("\n")
+                    total_os += 1
+                
+                # commit 합산 계산 및 배열에 추가
+                commits = [item['commit'] for item in student_items]
+                total_commits_sum = sum(commits)
+                all_commits.extend(commits)  # 전체 commit 값을 all_commits 배열에 추가
+                print(f"Total commits for course {course_id}, year {year}, semester {semester}: {total_commits_sum}")
+
             student_items = student_grouped_data.get((course_id, year, semester), [])
+            
+            def calculate_statistics(values):
+                """Helper function to calculate statistics."""
+                if not values:
+                    return 0, 0, 0, 0  # Q1, Q2, Q3, std
+                values = np.array(values)
+                q1 = np.percentile(values, 25)
+                q2 = np.percentile(values, 50)
+                q3 = np.percentile(values, 75)
+                std = np.std(values)
+                return q1, q2, q3, std
 
-            # 학생들의 데이터를 기반으로 min, max 통계 계산
-            commit_min = min(item['commit'] for item in student_items) if student_items else 0
-            commit_max = max(item['commit'] for item in student_items) if student_items else 0
-            pr_min = min(item['pr'] for item in student_items) if student_items else 0
-            pr_max = max(item['pr'] for item in student_items) if student_items else 0
-            issue_min = min(item['issue'] for item in student_items) if student_items else 0
-            issue_max = max(item['issue'] for item in student_items) if student_items else 0
-            num_repos_min = min(item['num_repos'] for item in student_items) if student_items else 0
-            num_repos_max = max(item['num_repos'] for item in student_items) if student_items else 0
-            star_count_min = min(item['star_count'] for item in student_items) if student_items else 0
-            star_count_max = max(item['star_count'] for item in student_items) if student_items else 0
+            # 통계 계산
+            commits = [item['commit'] for item in student_items]
+            prs = [item['pr'] for item in student_items]
+            issues = [item['issue'] for item in student_items]
+            num_repos = [item['num_repos'] for item in student_items]
+            stars = [item['star_count'] for item in student_items]
 
-            # course_items에서 첫 번째 항목을 선택하여 데이터를 가져오고, student_items와 합침
-            course_info = course_items[0]  # 동일한 course_id, year, semester 그룹이므로 첫 번째 항목을 가져옵니다.
+            commit_min, commit_max = (min(commits, default=0), max(commits, default=0))
+            pr_min, pr_max = (min(prs, default=0), max(prs, default=0))
+            issue_min, issue_max = (min(issues, default=0), max(issues, default=0))
+            num_repos_min, num_repos_max = (min(num_repos, default=0), max(num_repos, default=0))
+            star_count_min, star_count_max = (min(stars, default=0), max(stars, default=0))
 
-            merged_stats.append({
+            commit_q1, commit_q2, commit_q3, commit_std = calculate_statistics(commits)
+            pr_q1, pr_q2, pr_q3, pr_std = calculate_statistics(prs)
+            issue_q1, issue_q2, issue_q3, issue_std = calculate_statistics(issues)
+            num_repos_q1, num_repos_q2, num_repos_q3, num_repos_std = calculate_statistics(num_repos)
+            star_q1, star_q2, star_q3, star_std = calculate_statistics(stars)
+
+            # course_items에서 첫 번째 항목 선택
+            course_info = course_items[0]
+
+            course_stat = {
                 "course_id": course_id,
                 "year": year,
                 "semester": semester,
@@ -696,7 +745,7 @@ def course_read_min_max_avg(request):
                 "avg_commits": course_info["avg_commits"],
                 "repository_count": course_info["repository_count"],
                 "contributor_count": course_info["contributor_count"],
-                # 추가된 학생들의 통계
+                # Min, Max 값
                 "commit_min": commit_min,
                 "commit_max": commit_max,
                 "pr_min": pr_min,
@@ -706,12 +755,39 @@ def course_read_min_max_avg(request):
                 "num_repos_min": num_repos_min,
                 "num_repos_max": num_repos_max,
                 "star_count_min": star_count_min,
-                "star_count_max": star_count_max
-            })
+                "star_count_max": star_count_max,
+                # Q1, Q2, Q3, Standard Deviation
+                "commit_q1": commit_q1,
+                "commit_q2": commit_q2,
+                "commit_q3": commit_q3,
+                "commit_std": commit_std,
+                "pr_q1": pr_q1,
+                "pr_q2": pr_q2,
+                "pr_q3": pr_q3,
+                "pr_std": pr_std,
+                "issue_q1": issue_q1,
+                "issue_q2": issue_q2,
+                "issue_q3": issue_q3,
+                "issue_std": issue_std,
+                "num_repos_q1": num_repos_q1,
+                "num_repos_q2": num_repos_q2,
+                "num_repos_q3": num_repos_q3,
+                "num_repos_std": num_repos_std,
+                "star_q1": star_q1,
+                "star_q2": star_q2,
+                "star_q3": star_q3,
+                "star_std": star_std
+            }
+
+            merged_stats.append(course_stat)
+
+        # 전체 commit 숫자 배열 출력
+        print(f"All commits: {all_commits}")
 
         # 최종 결과 반환
         return JsonResponse({
-            "group_stats": merged_stats
+            "group_stats": merged_stats,
+            "all_commits": all_commits  # 전체 commit 배열을 반환
         }, safe=False)
 
     except Exception as e:
