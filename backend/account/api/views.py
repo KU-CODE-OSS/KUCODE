@@ -269,7 +269,6 @@ def student_read_course_info(request):
         students = Student.objects.all()
         for student in students:
             try:
-                print(f'student is:{student.name}')
                 # 특정 하나의 학생에 대해 진행             
                 total_commit = 0 
                 total_pr = 0
@@ -310,13 +309,13 @@ def student_read_course_info(request):
                     if repo in courses_project_repos:  # 특정 학생의 현재 가리키는 repo가 과목과 관련이 있는 경우
                         specific_course = Course_project.objects.get(repo=repo)
                         course_id = specific_course.course.course_id
-                        
+
                         # Commit 수 합산
                         total_commit_count = Repository.objects.filter(
-                            url__contains=specific_course.course.course_repo_name,
+                            id = specific_course.repo.id,
                             owner_github_id=student.github_id
                         ).aggregate(total_commits=Sum('contributed_commit_count'))['total_commits'] or 0
-
+                        
                         # 합산한 값을 course_dict에 추가
                         course_dict[course_id]['commit'] += total_commit_count
                         
@@ -413,11 +412,16 @@ def student_read_course_info(request):
             except Exception as e:
                 print(f'Error processing student {student.name}: {e}')
                 continue       
-        
+
+        # "운영체제"에 대한 commit 합산
+        os_total_commits = sum(item['commit'] for item in data if item['course_name'] == "운영체제")
+        print(f"Total commits for '운영체제': {os_total_commits}")
+
         return JsonResponse(data, safe=False)
 
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
 
 def student_read_total(request):
     try:
@@ -486,6 +490,8 @@ def student_read_total(request):
                         etc_total_pr +=  ( repo.contributed_open_pr_count or 0) +  (repo.contributed_closed_pr_count or 0)
                         etc_total_issue += (repo.contributed_open_issue_count or 0) + (repo.contributed_closed_issue_count or 0)
                         etc_total_repo += 1
+                
+
 
                 # 각 과목에 대한 정보 추가
                 for course_id, course_count in course_dict.items():
