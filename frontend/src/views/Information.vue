@@ -383,8 +383,6 @@ export default {
       }
     },
     async currentPost() {
-      console.log('helelell')
-      console.log(this.coursePosts)
       switch (this.$route.path) {
         case '/info/course':
           return this.coursePosts;
@@ -590,7 +588,6 @@ export default {
           newData.contributors_list = element.contributors_list;
           li.push(newData)
       });
-      console.log('done')
       return li;
     },
     yearSort(li){

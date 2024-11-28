@@ -26,6 +26,11 @@ export function getCourseInfo() {
   return ajax(ip_for_develop + '/account/student_read_course_info', 'get')
 }
 
+export function getCourseReadMinMaxAvg() {
+  return ajax(ip_for_develop + '/course/course_read_min_max_avg', 'get')
+}
+
+
 export function getCourseReadDB() {
   return ajax(ip_for_develop + '/course/course_read_db', 'get')
 }

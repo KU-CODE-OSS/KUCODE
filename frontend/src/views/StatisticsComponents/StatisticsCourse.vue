@@ -54,7 +54,7 @@
                   </thead>
                   <tbody class="table-body-wrapper">
                     <tr v-for="(item, index) in posts" :key="item[0]">
-                      <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                      <td :title="item.course_id">{{ item.course_id }}</td>
                       <td :title="item.students">{{item.students}}</td>
                     </tr>
                   </tbody>
@@ -73,10 +73,10 @@
                   </thead>
                   <tbody class="table-body-wrapper">
                     <tr v-for="(item, index) in posts" :key="item[0]">
-                      <td :title="item.students">{{item.num_repos_stats.sum}}</td>
-                      <td :title="item.students">{{item.num_repos_stats.min}}</td>
-                      <td :title="item.students">{{item.num_repos_stats.max}}</td>
-                      <td :title="item.students">{{item.num_repos_stats.mean}}</td>
+                      <td :title="item.students">{{item.num_repos}}</td>
+                      <td :title="item.students">{{item.num_repos_min}}</td>
+                      <td :title="item.students">{{item.num_repos_max}}</td>
+                      <td :title="item.students">{{item.num_repos_mean}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -95,10 +95,10 @@
                   </thead>
                   <tbody class="table-body-wrapper">
                     <tr v-for="(item, index) in posts" :key="item[0]">
-                      <td :title="item.students">{{item.commit_stats.sum}}</td>
-                      <td :title="item.students">{{item.commit_stats.min}}</td>
-                      <td :title="item.students">{{item.commit_stats.max}}</td>
-                      <td :title="item.students">{{item.commit_stats.mean}}</td>
+                      <td :title="item.students">{{item.commit}}</td>
+                      <td :title="item.students">{{item.commit_min}}</td>
+                      <td :title="item.students">{{item.commit_max}}</td>
+                      <td :title="item.students">{{item.commit_mean}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -116,10 +116,10 @@
                   </thead>
                   <tbody class="table-body-wrapper">
                     <tr v-for="(item, index) in posts" :key="item[0]">
-                      <td :title="item.students">{{item.issue_stats.sum}}</td>
-                      <td :title="item.students">{{item.issue_stats.min}}</td>
-                      <td :title="item.students">{{item.issue_stats.max}}</td>
-                      <td :title="item.students">{{item.issue_stats.mean}}</td>
+                      <td :title="item.students">{{item.issue}}</td>
+                      <td :title="item.students">{{item.issue_min}}</td>
+                      <td :title="item.students">{{item.issue_max}}</td>
+                      <td :title="item.students">{{item.issue_mean}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -138,10 +138,10 @@
                   </thead>
                   <tbody class="table-body-wrapper">
                     <tr v-for="(item, index) in posts" :key="item[0]">
-                      <td :title="item.students">{{item.pr_stats.sum}}</td>
-                      <td :title="item.students">{{item.pr_stats.min}}</td>
-                      <td :title="item.students">{{item.pr_stats.max}}</td>
-                      <td :title="item.students">{{item.pr_stats.mean}}</td>
+                      <td :title="item.students">{{item.pr}}</td>
+                      <td :title="item.students">{{item.pr_min}}</td>
+                      <td :title="item.students">{{item.pr_max}}</td>
+                      <td :title="item.students">{{item.pr_mean}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -159,10 +159,10 @@
                   </thead>
                   <tbody class="table-body-wrapper">
                     <tr v-for="(item, index) in posts" :key="item[0]">
-                      <td :title="item.students">{{item.stars_stats.sum}}</td>
-                      <td :title="item.students">{{item.stars_stats.min}}</td>
-                      <td :title="item.students">{{item.stars_stats.max}}</td>
-                      <td :title="item.students">{{item.stars_stats.mean}}</td>
+                      <td :title="item.students">{{item.star}}</td>
+                      <td :title="item.students">{{item.star_min}}</td>
+                      <td :title="item.students">{{item.star_max}}</td>
+                      <td :title="item.students">{{item.star_mean}}</td>
                     </tr>
                   </tbody>
                 </table>
