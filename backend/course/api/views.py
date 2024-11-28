@@ -788,8 +788,7 @@ def course_read_min_max_avg(request):
 
         # 최종 결과 반환
         return JsonResponse({
-            "group_stats": merged_stats,
-            "all_commits": all_commits  # 전체 commit 배열을 반환
+            "group_stats": merged_stats
         }, safe=False)
 
     except Exception as e:
