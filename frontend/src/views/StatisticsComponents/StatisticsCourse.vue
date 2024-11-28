@@ -349,7 +349,7 @@ export default {
     },
     getExportData() {
       return this.posts.map(item => {
-        const rowData = { '학수번호': item.course_id_for_stats };
+        const rowData = { '학수번호': item.course_id };
 
         if (!this.showTable) {
           rowData['과목명'] = item.course_name;

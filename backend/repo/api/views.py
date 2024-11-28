@@ -453,7 +453,7 @@ def sync_repo_issue_db(request):
                         defaults={
                             'repo_id': repo_id,
                             'repo_url': issue_data.get('repo_url'),
-                            'owner_github_id': issue_data.get('owner_github_id'),
+                            'owner_github_id': issue_data.get('contributed_github_id'),
                             'state': issue_data.get('state'),
                             'title': issue_data.get('title'),
                             'publisher_github_id': issue_data.get('publisher_github_id'),
@@ -526,7 +526,7 @@ def sync_repo_pr_db(request):
         success_repo_count = 0
         failure_repo_count = 0
         failure_repo_details = []
-
+        print("1")
         # Track processed repository IDs to identify deletions later
         processed_repo_ids = set()
 
@@ -575,7 +575,7 @@ def sync_repo_pr_db(request):
                         defaults={
                             'repo_id': repo_id,
                             'repo_url': pr_data.get('repo_url'),
-                            'owner_github_id': pr_data.get('owner_github_id'),
+                            'owner_github_id': pr_data.get('contributed_github_id'),
                             'title': pr_data.get('title'),
                             'requester_id': pr_data.get('requester_id'),
                             'published_date': pr_data.get('published_date'),
@@ -692,8 +692,8 @@ def sync_repo_commit_db(request):
                         defaults={
                             'repo_id': repo_id,
                             'repo_url': commit_data.get('repo_url'),
-                            'owner_github_id': commit_data.get('owner_github_id'),
-                            'author_github_id': commit_data.get('author_github_id'),
+                            'owner_github_id': commit_data.get('contributed_github_id'),
+                            'author_github_id': commit_data.get(''),
                             'added_lines': commit_data.get('added_lines'),
                             'deleted_lines': commit_data.get('deleted_lines'),
                             'last_update': commit_data.get('last_update')
@@ -1190,7 +1190,7 @@ def sync_repo_commit_db_test(request):
                     commit.repo_id = repo_id
                     commit.repo_url = commit_data.get('repo_url')
                     commit.owner_github_id = commit_data.get('owner_github_id')
-                    commit.committer_github_id = commit_data.get('committer_github_id')
+                    commit.author_github_id = commit_data.get('author_github_id')
                     commit.added_lines = commit_data.get('added_lines')
                     commit.deleted_lines = commit_data.get('deleted_lines')
                     commit.last_update = commit_data.get('last_update')
@@ -1204,7 +1204,7 @@ def sync_repo_commit_db_test(request):
                         repo_id=repo_id,
                         repo_url=commit_data.get('repo_url'),
                         owner_github_id=commit_data.get('owner_github_id'),
-                        committer_github_id=commit_data.get('committer_github_id'),
+                        author_github_id=commit_data.get('author_github_id'),
                         added_lines=commit_data.get('added_lines'),
                         deleted_lines=commit_data.get('deleted_lines'),
                         last_update=commit_data.get('last_update')

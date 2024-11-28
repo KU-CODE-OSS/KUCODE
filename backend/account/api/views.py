@@ -413,10 +413,6 @@ def student_read_course_info(request):
                 print(f'Error processing student {student.name}: {e}')
                 continue       
 
-        # "운영체제"에 대한 commit 합산
-        os_total_commits = sum(item['commit'] for item in data if item['course_name'] == "운영체제")
-        print(f"Total commits for '운영체제': {os_total_commits}")
-
         return JsonResponse(data, safe=False)
 
     except Exception as e:
@@ -469,9 +465,8 @@ def student_read_total(request):
                         course_id = specific_course.course.course_id
                         
                         # Commit 수 합산
-                        # 해당 학생이 특정 레포지토리에 기여한 커밋 수를 합산
                         total_commit_count = Repository.objects.filter(
-                            url__contains=specific_course.course.course_repo_name,
+                            id = specific_course.repo.id,
                             owner_github_id=student.github_id
                         ).aggregate(total_commits=Sum('contributed_commit_count'))['total_commits'] or 0
 

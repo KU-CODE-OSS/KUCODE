@@ -409,7 +409,7 @@
 </template>
 
 <script>
-import {getCourseInfo, getCourseReadDB} from '@/api.js'
+import { getCourseInfo, getCourseReadMinMaxAvg } from '@/api.js'
 import StatisticsCourse from '@/views/StatisticsComponents/StatisticsCourse.vue'
 import StatisticsStudent from '@/views/StatisticsComponents/StatisticsStudent.vue'
 import StatisticsDepartment from '@/views/StatisticsComponents/StatisticsDepartment.vue'
