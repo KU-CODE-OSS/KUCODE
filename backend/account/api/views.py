@@ -18,8 +18,6 @@ from datetime import datetime
 
 from django.db.models.functions import ExtractYear
 
-
-
 import requests
 import pandas as pd
 import subprocess
@@ -28,7 +26,10 @@ class HealthCheckAPIView(APIView):
     def get(self, request):
         return Response({"status": "OK"}, status=status.HTTP_200_OK)
 
-#---------- CU ----------#
+# ========================================
+# Backend Function
+# ========================================
+# ------------Main--------------#
 def sync_student_db(request):
     try:
         # Fetch all students
@@ -98,8 +99,9 @@ def sync_student_db(request):
     
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# ---------------------------------------------
 
-# ---------- DELETE ----------#
+# ------------Delete--------------#
 def student_delete_db(request):
     try:
         github_id = request.GET.get('github_id')
@@ -112,58 +114,13 @@ def student_delete_db(request):
         return JsonResponse({"status": "Error", "message": f"Student with github_id '{github_id}' does not exist"}, status=404)
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
-
-
-# ---------- TEST ----------#
-def sync_student_db_test(request):
-    try:
-        github_id = request.GET.get('github_id')
-        if not Student.objects.get(github_id=github_id):
-            return JsonResponse({"status": "Error", "message": f"Student with github_id '{github_id}' does not exist"}, status=404)
-        else:
-            response = requests.get(f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/user", params={'github_id': github_id})
-            if response.status_code == 404:
-                message = f"GitHub user {github_id} not found"
-                print(message)
-            
-            data = response.json()
-            
-            try:
-                student_record = Student.objects.get(github_id__iexact=github_id)
-                student_record.follower_count = data.get('Follower_CNT')
-                student_record.following_count = data.get('Following_CNT')
-                student_record.public_repo_count = data.get('Public_repos_CNT')
-                student_record.starred_count = 0
-                student_record.github_profile_create_at = data.get('Github_profile_Create_Date')
-                student_record.github_profile_update_at = data.get('Github_profile_Update_Date')
-                student_record.save()
-                message = f"Student record with github_id {github_id} updated successfully"
-                print(message)
-            except ObjectDoesNotExist:
-                student_record = Student.objects.create(
-                    github_id=github_id,
-                    follower_count=data.get('Follower_CNT'),
-                    following_count=data.get('Following_CNT'),
-                    public_repo_count=data.get('Public_repos_CNT'),
-                    starred_count=0,
-                    github_profile_create_at=data.get('Github_profile_Create_Date'),
-                    github_profile_update_at=data.get('Github_profile_Update_Date')
-                )
-                message = f"Student record with github_id {github_id} created successfully"
-                print(message)
-            except Exception as e:
-                message = f"Error processing student with id {id} and github_id {github_id}: {str(e)}"
-                print(message)
-
-            return JsonResponse({"status": "OK", "message": "Student record processed successfully"})
-        
-    except ObjectDoesNotExist:
-        return JsonResponse({"status": "Error", "message": f"Student with github_id '{github_id}' does not exist"}, status=404)
-    except Exception as e:
-        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
     
-# ------------Excel import --------------#
+# ---------------------------------------------
 
+# ========================================
+# Frontend Function
+# ========================================
+# ------------Excel import --------------#
 @csrf_exempt
 def student_excel_import(request):
     try:
@@ -257,12 +214,9 @@ def student_excel_import(request):
     except Exception as e:
         print(str(e))
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# ---------------------------------------------
 
-
-
-
-
-
+# ------------Student's course_reated info --------------#
 def student_read_course_info(request):
     try:
         data = []
@@ -417,8 +371,9 @@ def student_read_course_info(request):
 
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# ---------------------------------------------
 
-
+# ------------Student's info --------------#
 def student_read_total(request):
     try:
         data = []
@@ -525,8 +480,9 @@ def student_read_total(request):
 
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# ---------------------------------------------
 
-
+# ------------ETC --------------#
 def student_course_year_search(request):
     try:
         data = []
@@ -629,12 +585,9 @@ def student_course_year_search(request):
 
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# ---------------------------------------------
 
-
-
-
-
-
+# ------------ETC --------------#
 def student_num_read_course_info(request):
     try:
         student_num = int(request.GET.get('num'))  # Fetch the 'num' parameter and convert it to an integer
@@ -758,8 +711,9 @@ def student_num_read_course_info(request):
 
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# ---------------------------------------------
 
-
+# ------------ETC --------------#
 def student_num_read_total(request):
     try:
         student_num = int(request.GET.get('num'))  # Fetch the 'num' parameter and convert it to an integer
@@ -863,8 +817,9 @@ def student_num_read_total(request):
 
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# ---------------------------------------------
 
-
+# ------------Korea UNI OPEN-API TOEKN --------------#
 def get_kuopenapi_access_token():
     
     token_url = "https://kuapi.korea.ac.kr/svc/modules/token"
@@ -887,8 +842,9 @@ def get_kuopenapi_access_token():
 
     print(f'your access token is {access_token}')
     return access_token    
+# ---------------------------------------------
 
-
+# ------------Student validation--------------#
 def student_validation(request):
     try:
         access_token = get_kuopenapi_access_token()
@@ -1016,9 +972,9 @@ def student_validation(request):
 
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# ---------------------------------------------
 
-
-
+# ------------Student validation--------------#
 def query_student_openapi(ids,access_token):
     try:
         student_ids = ids  # Fetch the 'num' parameter and convert it to an integer
@@ -1118,9 +1074,9 @@ def query_student_openapi(ids,access_token):
     
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# ---------------------------------------------
 
-
-
+# ------------Student validation--------------#
 def query_per_get_student_openapi(request):
     try:
         student_id = request.GET.get('id')
@@ -1179,8 +1135,9 @@ def query_per_get_student_openapi(request):
     
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
-    
+# ---------------------------------------------
 
+# ------------Invalid github_id--------------# 
 def none_githubid_list(request):
     # github_id가 빈 문자열이거나 None인 학생의 id와 enrollment 가져오기
     empty_github_ids = Student.objects.filter(
@@ -1192,8 +1149,9 @@ def none_githubid_list(request):
 
     # JsonResponse 반환
     return JsonResponse(data, safe=False)
+# ---------------------------------------------
 
-
+# ------------Invalid github_id for attending students--------------# 
 def none_githubid_list_only_attending(request):
     # github_id가 빈 문자열이거나 None이고 enrollment가 '재학'인 학생의 객체 가져오기
     students_empty_github_ids = Student.objects.filter(
@@ -1223,9 +1181,9 @@ def none_githubid_list_only_attending(request):
 
     # JsonResponse 반환
     return JsonResponse(data, safe=False)
+# ---------------------------------------------
 
-
-
+# ------------student's contributions--------------# 
 def count_contributors_per_student(request):
     try:
         # 모든 Repo_contributor 데이터를 가져오고 이후 파이썬 코드에서 필터링
@@ -1278,9 +1236,9 @@ def count_contributors_per_student(request):
 
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# ---------------------------------------------
 
-    
-
+# ------------foreign student validation--------------# 
 def update_foreign_students(request):
     try:
        
@@ -1306,3 +1264,61 @@ def update_foreign_students(request):
     
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
+# ---------------------------------------------
+
+# ========================================
+# Test Function
+# ========================================
+# ------------Test--------------#
+def sync_student_db_test(request, student_id):
+    try:
+        #get student information form DB
+        student = Student.objects.get(id=student_id)
+        github_id = student.github_id
+        print(f"Processing Student: {student_id} - Github ID: {github_id})")
+
+       
+            
+        # Fetch GitHub user data
+        response = requests.get(f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/user", params={'github_id': github_id})
+        if response.status_code == 404:
+                message = f"[ERROR] GitHub user {github_id} not found"
+                print(message)
+                failure_count += 1
+                exit()
+
+        data = response.json()
+            
+        try:
+            print(f"Received data for GitHub ID {github_id}: {data}")
+            # Update or create student record
+            student_record, created = Student.objects.update_or_create(
+                github_id__iexact=github_id,
+                defaults={
+                    'follower_count': data.get('Follower_CNT'),
+                    'following_count': data.get('Following_CNT'),
+                    'public_repo_count': data.get('Public_repos_CNT'),
+                    'github_profile_create_at': data.get('Github_profile_Create_Date'),
+                    'github_profile_update_at': data.get('Github_profile_Update_Date')
+                }
+            )
+
+            action = "Created" if created else "Updated"
+            message = f"Student record {action}: ID {student_id}, GitHub ID {github_id}"
+            print(f"[SUCCESS] {message}")
+
+
+        except Exception as e:
+            message = f"[ERROR] Error processing student: ID {id}, GitHub ID {github_id} - {str(e)}"
+            print(message)
+            failure_count += 1
+        print(f'-'*5)
+
+        return JsonResponse({
+            "status": "OK", 
+            "message": "Student records processed successfully", 
+        })
+    
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# ---------------------------------------------

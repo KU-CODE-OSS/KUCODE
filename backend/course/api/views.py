@@ -29,6 +29,9 @@ class HealthCheckAPIView(APIView):
     def get(self, request):
         return Response({"status": "OK"}, status=status.HTTP_200_OK)
 
+# ========================================
+# Frontend Function
+# ========================================
 def course_create_db (request):
     try:
         course_id=request.GET.get('course_id')
@@ -72,22 +75,20 @@ def course_read_db(request):
             total_issues = 0
             total_stars =0 
 
-            # Calculate the total commits
+            # Gather course related repos' id
             course_related_repos_id = Course_project.objects.filter(course_id=course.id).values_list('repo_id', flat=True)
+            print(f'{course.name}:[{course.course_id}] - repo_count: {len(course_related_repos_id)}')
             
-            # Fetch related repositories
             total_course_repos = Repository.objects.filter(id__in=course_related_repos_id)
 
-            
             for course_repo in total_course_repos :
                 if course_repo.forked is True :
                     continue            
                 else :
                     total_commits += course_repo.commit_count or 0 
-                    total_issues += (course_repo.open_issue_count or 0) + (course_repo.closed_issue_count or 0)
-                    total_prs += (course_repo.open_pr_count or 0) + (course_repo.closed_pr_count or 0)
+                    total_issues += ((course_repo.open_issue_count or 0) + (course_repo.closed_issue_count or 0))
+                    total_prs += ((course_repo.open_pr_count or 0) + (course_repo.closed_pr_count or 0))
                     total_stars += course_repo.star_count or 0 
-
 
             # Calculate the average commits 
             student_count = Course_registration.objects.filter(
@@ -107,17 +108,31 @@ def course_read_db(request):
             
             
             # Calculate the number of contributors 
-            repo_ids = Course_project.objects.filter(
+            course_repo_ids = Course_project.objects.filter(
                 course=course,
                 course_year=course.year,
                 course_semester=course.semester
-            ).values('repo_id')
+            )
 
-            contributor_count = Repo_contributor.objects.filter(
-            repo_id__in=repo_ids
-            ).values('contributor_id').count()
-
-        
+            contributor_count =0
+            for course_repo_id in course_repo_ids :
+                if course_repo_id.repo.forked == False :
+                    contributors_list_str = course_repo_id.repo.contributors
+                    cleaned_contributors_list = ''.join(contributors_list_str.split())  # 모든 공백 제거
+                    if cleaned_contributors_list == '':
+                        continue
+                    
+                    contributors_number = cleaned_contributors_list.count(',') + 1 # , 코마갯수로 contributor 세기
+                    if course_repo_id.course.course_id == "COSE480-02":
+                        print(course_repo_id.repo.name)
+                        print(course_repo_id.repo.id)
+                        print(cleaned_contributors_list)
+                        print(contributors_number)
+                        print('\n')
+                        contributor_count += contributors_number
+                    else :
+                        continue
+            
             # Gather all the data 
             data.append( {
                 "course_id":course.course_id,
@@ -663,40 +678,11 @@ def course_read_min_max_avg(request):
 
         # 그룹별 통계 계산 및 데이터 결합
         merged_stats = []
-        total_os = 0 
-        total_os2 = 0 
+
         all_commits = []  # 전체 commit 숫자를 저장할 배열
 
         for (course_id, year, semester), course_items in course_grouped_data.items():
-            # course_id가 'COSE341-01'인 경우에만 출력
-            if course_id == "COSE341-01":
-                print(f"Processing course_id: {course_id}, year: {year}, semester: {semester}")
-                student_items = student_grouped_data.get((course_id, year, semester), [])
-
-                # 필요한 필드만 추출
-                filtered_students = [
-                    {
-                        "commit": student.get("commit"),
-                    }
-                    for student in student_items
-                ]
-
-                # commit 순으로 오름차순 정렬
-                sorted_students = sorted(filtered_students, key=lambda x: x["commit"])
-
-                # 정렬된 결과 출력
-                print("Student Items (sorted by commit):")
-                for student in sorted_students:
-                    print(student)
-                    print("\n")
-                    total_os += 1
-                
-                # commit 합산 계산 및 배열에 추가
-                commits = [item['commit'] for item in student_items]
-                total_commits_sum = sum(commits)
-                all_commits.extend(commits)  # 전체 commit 값을 all_commits 배열에 추가
-                print(f"Total commits for course {course_id}, year {year}, semester {semester}: {total_commits_sum}")
-
+            
             student_items = student_grouped_data.get((course_id, year, semester), [])
             
             def calculate_statistics(values):
@@ -782,9 +768,6 @@ def course_read_min_max_avg(request):
             }
 
             merged_stats.append(course_stat)
-
-        # 전체 commit 숫자 배열 출력
-        print(f"All commits: {all_commits}")
 
         # 최종 결과 반환
         return JsonResponse({

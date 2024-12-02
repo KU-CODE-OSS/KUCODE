@@ -11,8 +11,7 @@ urlpatterns = [
     # path("student_update_db", views.student_update_db, name="student_update_db"),
     path("student_delete_db", views.student_delete_db, name="student_delete_db"),
 
-    # test
-    path("sync_student_db_test", views.sync_student_db_test, name="sync_student_db_test"),
+    # excel
     path("student_excel_import", views.student_excel_import, name="student_excel_import"),
 
     # read for ALL students 
@@ -46,5 +45,8 @@ urlpatterns = [
 
     #update foreign students
     path("update_foreign_students",views.update_foreign_students, name ="update_foreign_students"),
+
+    # test
+    path("sync_student_db_test/<int:student_id>/", views.sync_student_db_test, name="sync_student_db_test"),
 
 ]   
