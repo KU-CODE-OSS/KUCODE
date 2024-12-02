@@ -46,6 +46,7 @@ def sync_student_db(request):
         # Process each student
         for student in student_list:
             student_count += 1
+            print("-"*20)
             print(f'\n{"="*10} [{student_count}/{total_student_count}] Processing student ID: {student["id"]} (GitHub ID: {student["github_id"]}) {"="*10}')
             
             id = student['id']
@@ -77,7 +78,7 @@ def sync_student_db(request):
                 )
 
                 action = "Created" if created else "Updated"
-                message = f"Student record {action}: ID {id}, GitHub ID {github_id}"
+                message = f" Student record {action}: ID {id}, GitHub ID {github_id}"
                 print(f"[SUCCESS] {message}")
                 success_count += 1
 
@@ -87,7 +88,7 @@ def sync_student_db(request):
                 failure_count += 1
                 failure_details.append({"id": id, "github_id": github_id, "message": message})
 
-            print(f'-'*5)
+            print(f'-'*20)
 
         return JsonResponse({
             "status": "OK", 
@@ -107,14 +108,13 @@ def student_delete_db(request):
         github_id = request.GET.get('github_id')
         student = Student.objects.get(github_id=github_id)
 
-        student.delete()  # 사용자 객체를 삭제합니다.
+        student.delete()  # Delete the user object.
         return JsonResponse({"status": "OK", "message": "Student record deleted successfully"})
     
     except ObjectDoesNotExist:
         return JsonResponse({"status": "Error", "message": f"Student with github_id '{github_id}' does not exist"}, status=404)
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
-    
 # ---------------------------------------------
 
 # ========================================
@@ -159,25 +159,25 @@ def student_excel_import(request):
         missing_list =[]        
 
         for index, row in df.iloc[1:].iterrows():
-            # 필수 매개변수에 누락된 값이 있는지 확인
+            # Check for missing values for required parameters
             
             if pd.isnull(row[0]) or pd.isnull(row[1]) or pd.isnull(row[2]):
                 print(f"Student with id {row[0]} has missing values")   
                 missing_list.append(str(row[0]))
                 continue
             
-            row[0] = str(row[0])  # 첫 번째 열을 문자열 형식으로 변환
+            row[0] = str(row[0])  # Convert the first column to string format
 
             
-            # 학생이 이미 존재하는지 확인
+            # Check if the student already exists
             if Student.objects.filter(id=row[0]).exists():
                 print(f"Student with id {row[0]} already exists")
             
             else:
-                # 디버깅을 위해 학생 세부 정보 출력
+                # print student details for debugging
                 print(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8])
 
-                # 새 Student 객체 생성
+                # Create a new Student object
                 Student.objects.create(
                     id=row[0],
                     name=row[1],
@@ -223,7 +223,7 @@ def student_read_course_info(request):
         students = Student.objects.all()
         for student in students:
             try:
-                # 특정 하나의 학생에 대해 진행             
+                # Proceed for one specific student             
                 total_commit = 0 
                 total_pr = 0
                 total_issue = 0
@@ -236,7 +236,7 @@ def student_read_course_info(request):
                 etc_total_repo = 0
                 etc_total_star = 0
 
-                # 특정 학생의 모든 레포지토리 가져옴
+                # Get all repositories for a specific student
                 student_repos = Repository.objects.filter(owner_github_id=student.github_id)
                 
                 # 특정 학생의 수강 목록들 가져옴
@@ -1271,6 +1271,7 @@ def update_foreign_students(request):
 # ========================================
 # ------------Test--------------#
 def sync_student_db_test(request, student_id):
+    print("-"*20)
     try:
         #get student information form DB
         student = Student.objects.get(id=student_id)
@@ -1312,7 +1313,7 @@ def sync_student_db_test(request, student_id):
             message = f"[ERROR] Error processing student: ID {id}, GitHub ID {github_id} - {str(e)}"
             print(message)
             failure_count += 1
-        print(f'-'*5)
+        print(f'-'*20)
 
         return JsonResponse({
             "status": "OK", 

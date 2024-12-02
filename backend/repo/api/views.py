@@ -44,6 +44,7 @@ def sync_repo_db(request):
 
         for student in students_list:
             student_count += 1
+            print(f'-'*20)
             print(f'\n{"="*10} [{student_count}/{total_student_count}] Processing GitHub user: {student["github_id"]} {"="*10}')
             id = student['id']
             github_id = student['github_id']
@@ -66,25 +67,22 @@ def sync_repo_db(request):
 
             total_repo_count = len(data)
             repo_list = [{'id': repo['id'], 'name': repo['name']} for repo in data]
+
             
+            # Compare with the list of repositories stored in the current DB
             repos_in_db = Repository.objects.filter(owner_github_id=github_id).values_list('id', flat=True)
-            repo_ids_in_list = [str(repo['id']) for repo in repo_list]
+            repos_in_db_sorted = sorted(repos_in_db)  # Sort the DB repository IDs in ascending order
+            print(f"DB: {repos_in_db_sorted}")
+
+            repo_ids_in_list = sorted([str(repo['id']) for repo in repo_list])  # Sort the list of IDs in ascending order
+            print(f"FASTAPI: {repo_ids_in_list}")
 
             print("Removing deleted repositories...")
-
-            # 삭제된 레포지토리가 있는지 추적
-            removed_any = False
+            
             for repo_id in repos_in_db:
                 if repo_id not in repo_ids_in_list:
                     remove_repository(github_id, Repository(id=repo_id))
                     print(f"Repository {repo_id} removed for GitHub ID: {github_id}")
-                    removed_any = True
-
-            # 결과 출력
-            if not removed_any:
-                print("No repositories were removed.")
-            else:
-                print("All missing repositories were removed.")
 
             repo_count = 0
             for repo in repo_list:
@@ -173,57 +171,74 @@ def sync_repo_db(request):
 # ------------DELETE--------------#
 def remove_repository(github_id, repository):
     try:
-        # 관련된 Course_project deletion
+        # Related Course_project deletion
         try:
             course_project = Course_project.objects.get(repo=repository.id)
             course_project.delete()
+            print(f"  Deleted associated course project for repo ID: {repository.id}")
         except Course_project.DoesNotExist:
-            print(f"No associated course project for repo ID: {repository.id}")
+            print(f"  Already been deleted or does not exist: {repository.id}")
 
-        # delted repositories contributor,issue,pr,commit table deletion
-        # contribution
+        # Related repositories contributor, issue, PR, and commit deletion
+        # Contributor deletion
         try:
-            contributor_table = Repo_contributor.objects.get(repo=repository.id)
-            contributor_table.delete()
-        except contributor_table.DoesNotExist:
-            print(f"No associated repo related contributor for repo ID: {repository.id}")
+            contributors = Repo_contributor.objects.filter(repo=repository.id)
+            if contributors.exists():
+                contributors.delete()
+                print(f"  Deleted all contributors for repo ID: {repository.id}")
+            else:
+                print(f"  Already been deleted or does not exist: {repository.id}")
+        except Exception as e:
+            print(f"  Error deleting contributors for repo ID: {repository.id}: {str(e)}")
 
-        # issue
+        # Issue deletion
         try:
-            issue_table = Repo_issue.objects.get(repo=repository.id)
-            issue_table.delete()
-        except issue_table.DoesNotExist:
-            print(f"No associated repo related issue for repo ID: {repository.id}")
+            issues = Repo_issue.objects.filter(repo=repository.id)
+            if issues.exists():
+                issues.delete()
+                print(f"  Deleted all issues for repo ID: {repository.id}")
+            else:
+                print(f"  Already been deleted or does not exist: {repository.id}")
+        except Exception as e:
+            print(f"  Error deleting issues for repo ID: {repository.id}: {str(e)}")
 
-        # pr
+        # PR deletion
         try:
-            pr_table = Repo_pr.objects.get(repo=repository.id)
-            pr_table.delete()
-        except pr_table.DoesNotExist:
-            print(f"No associated repo related pr for repo ID: {repository.id}")
+            prs = Repo_pr.objects.filter(repo=repository.id)
+            if prs.exists():
+                prs.delete()
+                print(f"  Deleted all pull requests for repo ID: {repository.id}")
+            else:
+                print(f"  Already been deleted or does not exist: {repository.id}")
+        except Exception as e:
+            print(f"  Error deleting pull requests for repo ID: {repository.id}: {str(e)}")
 
-        # pr
+        # Commit deletion
         try:
-            commit_table = Repo_commit.objects.get(repo=repository.id)
-            commit_table.delete()
-        except commit_table.DoesNotExist:
-            print(f"No associated repo related commit for repo ID: {repository.id}")
-            
-        # Repository 삭제
-        repository_obj = Repository.objects.get(owner_github_id=github_id, id=repository.id)
-        repo_name = repository_obj.name  # 안전하게 속성 접근
-        repository_obj.delete()
+            commits = Repo_commit.objects.filter(repo=repository.id)
+            if commits.exists():
+                commits.delete()
+                print(f"  Deleted all commits for repo ID: {repository.id}")
+            else:
+                print(f"  Already been deleted or does not exist: {repository.id}")
+        except Exception as e:
+            print(f"  Error deleting commits for repo ID: {repository.id}: {str(e)}")
 
-        print(f"The repo {repo_name} has been deleted successfully for GitHub user {github_id}")
-        return {"status": "OK", "message": "The repo has been deleted successfully"}
-
-    except Repository.DoesNotExist:
-        print(f"Repo with ID '{repository.id}' does not exist for GitHub user {github_id}")
-        return {"status": "Error", "message": f"Repo with ID '{repository.id}' does not exist"}
+        # Repository deletion
+        try:
+            repository_obj = Repository.objects.get(owner_github_id=github_id, id=repository.id)
+            repo_name = repository_obj.name  # Access the name attribute safely
+            repository_obj.delete()
+            print(f"  The repo {repo_name} has been deleted successfully for GitHub user {github_id}")
+            return {"status": "OK", "message": "The repo has been deleted successfully"}
+        except Repository.DoesNotExist:
+            print(f"  Repo with ID '{repository.id}' does not exist for GitHub user {github_id}")
+            return {"status": "Error", "message": f"Repo with ID '{repository.id}' does not exist"}
 
     except Exception as e:
-        print(f"Error deleting repo with ID '{repository.id}' for GitHub user {github_id}: {str(e)}")
+        print(f"  Error deleting repo with ID '{repository.id}' for GitHub user {github_id}: {str(e)}")
         return {"status": "Error", "message": str(e)}
+
 # ---------------------------------------------
     
 # ------------REPO READ--------------#
@@ -751,6 +766,7 @@ def repo_course_read_db(request):
 # ========================================
 # ------------Repo Test--------------#
 def sync_repo_db_test(request, student_id):
+    print("-"*20)
     try:
         # 특정 학생 가져오기
         student = Student.objects.get(id=student_id)
@@ -781,9 +797,10 @@ def sync_repo_db_test(request, student_id):
 
         # 현재 DB에 저장된 저장소 목록과 비교
         repos_in_db = Repository.objects.filter(owner_github_id=github_id).values_list('id', flat=True)
-        print(f"DB: {repos_in_db}")
-    
-        repo_ids_in_list = [str(repo['id']) for repo in repo_list]
+        repos_in_db_sorted = sorted(repos_in_db)  # Sort the DB repository IDs in ascending order
+        print(f"DB: {repos_in_db_sorted}")
+
+        repo_ids_in_list = sorted([str(repo['id']) for repo in repo_list])  # Sort the list of IDs in ascending order
         print(f"FASTAPI: {repo_ids_in_list}")
 
         # DB와 FASTAPI 데이터를 비교하여 DB에는 있지만 FASTAPI에는 없는 값 찾기
