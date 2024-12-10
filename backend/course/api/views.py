@@ -123,15 +123,8 @@ def course_read_db(request):
                         continue
                     
                     contributors_number = cleaned_contributors_list.count(',') + 1 # , 코마갯수로 contributor 세기
-                    if course_repo_id.course.course_id == "COSE480-02":
-                        print(course_repo_id.repo.name)
-                        print(course_repo_id.repo.id)
-                        print(cleaned_contributors_list)
-                        print(contributors_number)
-                        print('\n')
-                        contributor_count += contributors_number
-                    else :
-                        continue
+                    contributor_count += contributors_number
+
             
             # Gather all the data 
             data.append( {
@@ -291,8 +284,6 @@ def course_read_db_specific(request):
         ).values('contributor_id').count()
 
         
-
-
         # Gather all the data 
         data = {
             "course_id":course.course_id,
@@ -312,8 +303,6 @@ def course_read_db_specific(request):
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
     
-
-
 
 def course_year_search(request):
     try:
