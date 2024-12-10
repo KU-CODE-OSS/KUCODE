@@ -47,7 +47,7 @@ def sync_student_db(request):
         for student in student_list:
             student_count += 1
             print("-"*20)
-            print(f'\n{"="*10} [{student_count}/{total_student_count}] Processing student ID: {student["id"]} (GitHub ID: {student["github_id"]}) {"="*10}')
+            print(f'{"="*10} [{student_count}/{total_student_count}] Processing student ID: {student["id"]} (GitHub ID: {student["github_id"]}) {"="*10}')
             
             id = student['id']
             github_id = student['github_id']
@@ -87,8 +87,6 @@ def sync_student_db(request):
                 print(message)
                 failure_count += 1
                 failure_details.append({"id": id, "github_id": github_id, "message": message})
-
-            print(f'-'*20)
 
         return JsonResponse({
             "status": "OK", 
@@ -238,13 +236,13 @@ def student_read_course_info(request):
 
                 # Get all repositories for a specific student
                 student_repos = Repository.objects.filter(owner_github_id=student.github_id)
-                
+
                 # 특정 학생의 수강 목록들 가져옴
                 course_reg_list = Course_registration.objects.filter(student=student)
 
                 # 특정 학생의 과목 관련된 레포지토리들을 가져옴.
                 courses_repos = Course_project.objects.filter(repo__in=student_repos)
-                
+
                 # 특정 학생이 듣는 모든 course_id 테이블 및 딕셔너리 생성
                 course_ids = []
                 for course_reg in course_reg_list:
