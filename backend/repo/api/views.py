@@ -44,7 +44,6 @@ def sync_repo_db(request):
 
         for student in students_list:
             student_count += 1
-            print(f'-'*20)
             print(f'\n{"="*10} [{student_count}/{total_student_count}] Processing GitHub user: {student["github_id"]} {"="*10}')
             id = student['id']
             github_id = student['github_id']
@@ -72,17 +71,22 @@ def sync_repo_db(request):
             # Compare with the list of repositories stored in the current DB
             repos_in_db = Repository.objects.filter(owner_github_id=github_id).values_list('id', flat=True)
             repos_in_db_sorted = sorted(repos_in_db)  # Sort the DB repository IDs in ascending order
-            print(f"DB: {repos_in_db_sorted}")
+            print("-"*5 + f"\nDB: {repos_in_db_sorted}")
 
             repo_ids_in_list = sorted([str(repo['id']) for repo in repo_list])  # Sort the list of IDs in ascending order
-            print(f"FASTAPI: {repo_ids_in_list}")
+            print("-"*5 + f"\nFASTAPI: {repo_ids_in_list}")
 
-            print("Removing deleted repositories...")
-            
+            missing_in_fastapi = set(repos_in_db) - set(repo_ids_in_list)
+
+            if missing_in_fastapi:  # Check if the set is not empty
+                print("-"*5 + f"\n Need to Remove: {missing_in_fastapi}\n"+"-"*5)
+            else:
+                print("-"*5 + f"\n No repositories need to be removed.\n"+"-"*5)
+
             for repo_id in repos_in_db:
                 if repo_id not in repo_ids_in_list:
                     remove_repository(github_id, Repository(id=repo_id))
-                    print(f"Repository {repo_id} removed for GitHub ID: {github_id}")
+                    print(f" Repository {repo_id} removed for GitHub ID: {github_id}\n"+"-"*5)
 
             repo_count = 0
             for repo in repo_list:
@@ -811,7 +815,6 @@ def sync_repo_db_test(request, student_id):
 
         
         # 기존에 없어진 저장소 삭제
-        print(f"-"*10 + "Removing deleted repositories")
         for repo_id in repos_in_db:
             if repo_id not in repo_ids_in_list:
                 remove_repository(github_id, Repository(id=repo_id))
@@ -897,6 +900,305 @@ def sync_repo_db_test(request, student_id):
             "success_repo_count": success_repo_count,
             "failure_repo_count": failure_repo_count,
             "failure_repo_details": failure_repo_details
+        })
+
+    except Student.DoesNotExist:
+        return JsonResponse({"status": "Error", "message": "Student not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# -----------------------------------------------------
+
+# ------------Contributor Test--------------#
+def sync_repo_contributor_db_test(request, student_id):
+    print("-" * 20)
+    try:
+        student = Student.objects.get(id=student_id)
+        github_id = student.github_id
+        print(f"Processing GitHub user: {github_id} (Student ID: {student_id})")
+
+        response = requests.get(
+            f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/user/repos",
+            params={'github_id': github_id}
+        )
+        if response.status_code != 200:
+            return JsonResponse({"status": "Error", "message": "Failed to fetch repositories"}, status=500)
+
+        data = response.json()
+        if not isinstance(data, list):
+            return JsonResponse({"status": "Error", "message": "Invalid response format"}, status=500)
+
+        contributor_count_per_repo = {}
+        success_contributor_count = 0
+        failure_contributor_count = 0
+        failure_contributor_details = []
+
+        for repo in data:
+            repo_id = repo['id']
+            repo_name = repo['name']
+            print(f"Processing contributors for repository: {repo_name} (ID: {repo_id})")
+
+            response = requests.get(
+                f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/contributor",
+                params={'github_id': github_id, 'repo_name': repo_name}
+            )
+            if response.status_code != 200:
+                failure_contributor_count += 1
+                failure_contributor_details.append({"repo_id": repo_id, "repo_name": repo_name})
+                continue
+
+            contributor_data = response.json()
+            contributor_count = 0
+
+            for contributor in contributor_data:
+                contributor_count += 1
+                try:
+                    Repo_contributor.objects.update_or_create(
+                        owner_github_id=github_id,
+                        repo_id=repo_id,
+                        contributor_id=contributor.get('login'),
+                        defaults={
+                            'contribution_count': contributor.get('contributions'),
+                            'repo_url': contributor.get('repo_url')
+                        }
+                    )
+                    success_contributor_count += 1
+                except Exception:
+                    failure_contributor_count += 1
+
+            contributor_count_per_repo[repo_name] = contributor_count
+            
+        print(contributor_count_per_repo)
+        return JsonResponse({
+            "status": "OK",
+            "contributors_per_repo": contributor_count_per_repo,
+            "success_contributor_count": success_contributor_count,
+            "failure_contributor_count": failure_contributor_count,
+            "failure_contributor_details": failure_contributor_details
+        })
+
+    except Student.DoesNotExist:
+        return JsonResponse({"status": "Error", "message": "Student not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# -----------------------------------------------------
+
+# ------------Issue Test--------------#
+def sync_repo_issue_db_test(request, student_id):
+    print("-" * 20)
+    try:
+        student = Student.objects.get(id=student_id)
+        github_id = student.github_id
+        print(f"Processing GitHub user: {github_id} (Student ID: {student_id})")
+
+        response = requests.get(
+            f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/user/repos",
+            params={'github_id': github_id}
+        )
+        if response.status_code != 200:
+            return JsonResponse({"status": "Error", "message": "Failed to fetch repositories"}, status=500)
+
+        data = response.json()
+        if not isinstance(data, list):
+            return JsonResponse({"status": "Error", "message": "Invalid response format"}, status=500)
+
+        issue_count_per_repo = {}
+        success_issue_count = 0
+        failure_issue_count = 0
+        failure_issue_details = []
+
+        for repo in data:
+            repo_id = repo['id']
+            repo_name = repo['name']
+            print(f"Processing issues for repository: {repo_name} (ID: {repo_id})")
+
+            response = requests.get(
+                f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/issues",
+                params={'github_id': github_id, 'repo_name': repo_name}
+            )
+            if response.status_code != 200:
+                failure_issue_count += 1
+                failure_issue_details.append({"repo_id": repo_id, "repo_name": repo_name})
+                continue
+
+            issue_data = response.json()
+            issue_count = 0
+
+            for issue in issue_data:
+                issue_count += 1
+                try:
+                    Repo_issue.objects.update_or_create(
+                        id=issue.get('id'),
+                        defaults={
+                            'repo_id': repo_id,
+                            'state': issue.get('state'),
+                            'title': issue.get('title'),
+                            'publisher_github_id': issue.get('publisher_github_id'),
+                            'last_update': issue.get('last_update')
+                        }
+                    )
+                    success_issue_count += 1
+                except Exception:
+                    failure_issue_count += 1
+
+            issue_count_per_repo[repo_name] = issue_count
+            
+        print(issue_count_per_repo)
+        return JsonResponse({
+            "status": "OK",
+            "issues_per_repo": issue_count_per_repo,
+            "success_issue_count": success_issue_count,
+            "failure_issue_count": failure_issue_count,
+            "failure_issue_details": failure_issue_details
+        })
+
+    except Student.DoesNotExist:
+        return JsonResponse({"status": "Error", "message": "Student not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# -----------------------------------------------------
+
+# ------------PR Test--------------#
+def sync_repo_pr_db_test(request, student_id):
+    print("-" * 20)
+    try:
+        student = Student.objects.get(id=student_id)
+        github_id = student.github_id
+        print(f"Processing GitHub user: {github_id} (Student ID: {student_id})")
+
+        response = requests.get(
+            f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/user/repos",
+            params={'github_id': github_id}
+        )
+        if response.status_code != 200:
+            return JsonResponse({"status": "Error", "message": "Failed to fetch repositories"}, status=500)
+
+        data = response.json()
+        if not isinstance(data, list):
+            return JsonResponse({"status": "Error", "message": "Invalid response format"}, status=500)
+
+        pr_count_per_repo = {}
+        success_pr_count = 0
+        failure_pr_count = 0
+        failure_pr_details = []
+
+        for repo in data:
+            repo_id = repo['id']
+            repo_name = repo['name']
+            print(f"Processing PRs for repository: {repo_name} (ID: {repo_id})")
+
+            response = requests.get(
+                f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/pulls",
+                params={'github_id': github_id, 'repo_name': repo_name}
+            )
+            if response.status_code != 200:
+                failure_pr_count += 1
+                failure_pr_details.append({"repo_id": repo_id, "repo_name": repo_name})
+                continue
+
+            pr_data = response.json()
+            pr_count = 0
+
+            for pr in pr_data:
+                pr_count += 1
+                try:
+                    Repo_pr.objects.update_or_create(
+                        id=pr.get('id'),
+                        defaults={
+                            'repo_id': repo_id,
+                            'state': pr.get('state'),
+                            'title': pr.get('title'),
+                            'requester_id': pr.get('requester_id'),
+                            'last_update': pr.get('last_update')
+                        }
+                    )
+                    success_pr_count += 1
+                except Exception:
+                    failure_pr_count += 1
+
+            pr_count_per_repo[repo_name] = pr_count
+            
+        print(pr_count_per_repo)
+        return JsonResponse({
+            "status": "OK",
+            "prs_per_repo": pr_count_per_repo,
+            "success_pr_count": success_pr_count,
+            "failure_pr_count": failure_pr_count,
+            "failure_pr_details": failure_pr_details
+        })
+
+    except Student.DoesNotExist:
+        return JsonResponse({"status": "Error", "message": "Student not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+# -----------------------------------------------------
+
+# ------------commit Test--------------#
+def sync_repo_commit_db_test(request, student_id):
+    print("-" * 20)
+    try:
+        student = Student.objects.get(id=student_id)
+        github_id = student.github_id
+        print(f"Processing GitHub user: {github_id} (Student ID: {student_id})")
+
+        response = requests.get(
+            f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/user/repos",
+            params={'github_id': github_id}
+        )
+        if response.status_code != 200:
+            return JsonResponse({"status": "Error", "message": "Failed to fetch repositories"}, status=500)
+
+        data = response.json()
+        if not isinstance(data, list):
+            return JsonResponse({"status": "Error", "message": "Invalid response format"}, status=500)
+
+        commit_count_per_repo = {}
+        success_commit_count = 0
+        failure_commit_count = 0
+        failure_commit_details = []
+
+        for repo in data:
+            repo_id = repo['id']
+            repo_name = repo['name']
+            print(f"Processing commits for repository: {repo_name} (ID: {repo_id})")
+
+            response = requests.get(
+                f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/commit",
+                params={'github_id': github_id, 'repo_name': repo_name}
+            )
+            if response.status_code != 200:
+                failure_commit_count += 1
+                failure_commit_details.append({"repo_id": repo_id, "repo_name": repo_name})
+                continue
+
+            commit_data = response.json()
+            commit_count = 0
+
+            for commit in commit_data:
+                commit_count += 1
+                try:
+                    Repo_commit.objects.update_or_create(
+                        sha=commit.get('sha'),
+                        defaults={
+                            'repo_id': repo_id,
+                            'author_github_id': commit.get('author_github_id'),
+                            'added_lines': commit.get('added_lines'),
+                            'deleted_lines': commit.get('deleted_lines'),
+                            'last_update': commit.get('last_update')
+                        }
+                    )
+                    success_commit_count += 1
+                except Exception:
+                    failure_commit_count += 1
+
+            commit_count_per_repo[repo_name] = commit_count
+            
+        print(commit_count_per_repo)
+        return JsonResponse({
+            "status": "OK",
+            "commits_per_repo": commit_count_per_repo,
+            "success_commit_count": success_commit_count,
+            "failure_commit_count": failure_commit_count,
+            "failure_commit_details": failure_commit_details
         })
 
     except Student.DoesNotExist:
