@@ -207,38 +207,35 @@ def course_registration_create_db(request):
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 
-
+    
 def course_project_update(request):
     try:
-        course_id = request.GET.get('course_id')
-        year = request.GET.get('year')
-        semester = request.GET.get('semester')  
 
-        course = Course.objects.get(course_id=course_id, year=year, semester=semester)
+        courses = Course.objects.all()
 
-        repos = Repository.objects.filter(name__icontains=course.course_repo_name)
+        for course in courses:
+            repos = Repository.objects.filter(name__icontains=course.course_repo_name)
 
-        for repo in repos:
-            # 이미 해당 course_id, year, semester, repo_id를 가지는 레코드가 있는지 확인
-            if Course_project.objects.filter(course=course, course_year=year, course_semester=semester, repo_id=repo.id).exists():
-                print(f"{repo.owner_github_id}'s {repo.name} Course projects already exists!")
-                continue
-            
-            # 존재하지 않는다면 새로운 레코드 생성
-            Course_project.objects.create(  
-                course=course,
-                course_year=year,
-                course_semester=semester,
-                repo_id=repo.id,
-                repo_name=repo.name
-            )
-            print(f"{repo.owner_github_id}'s {repo.name} has been created!")
+            for repo in repos:
+                # 이미 해당 course_id, year, semester, repo_id를 가지는 레코드가 있는지 확인
+                if Course_project.objects.filter(course=course, course_year=course.year, course_semester=course.semester, repo_id=repo.id).exists():
+                    print(f"{repo.owner_github_id}'s {repo.name} Course projects already exists!")
+                    continue
+                
+                # 존재하지 않는다면 새로운 레코드 생성
+                Course_project.objects.create(  
+                    course=course,
+                    course_year=course.year,
+                    course_semester=course.semester,
+                    repo_id=repo.id,
+                    repo_name=repo.name
+                )
+                print(f"{repo.owner_github_id}'s {repo.name} has been created!")
 
         
         return JsonResponse({"status": "OK", "message": "course_project record created successfully"})
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
-    
     
 def course_read_db_specific(request):
     try:
