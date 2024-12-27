@@ -29,4 +29,8 @@ urlpatterns = [
 
   # test
   path('sync_repo_db_test/<int:student_id>/', views.sync_repo_db_test, name='sync_repo_db_test'),
+  path('sync_repo_contributor_db_test/<int:student_id>/', views.sync_repo_contributor_db_test, name='sync_repo_contributor_db_test'),
+  path('sync_repo_issue_db_test/<int:student_id>/', views.sync_repo_issue_db_test, name='sync_repo_issue_db_test'),
+  path('sync_repo_pr_db_test/<int:student_id>/', views.sync_repo_pr_db_test, name='sync_repo_pr_db_test'),
+  path('sync_repo_commit_db_test/<int:student_id>/', views.sync_repo_commit_db_test, name='sync_repo_commit_db_test'),
 ]

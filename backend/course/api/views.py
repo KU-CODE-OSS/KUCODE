@@ -243,8 +243,6 @@ def course_project_update(request):
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 
-
-
 def course_year_search(request):
     try:
         data = []
