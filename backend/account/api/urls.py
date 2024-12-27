@@ -49,4 +49,7 @@ urlpatterns = [
     # test
     path("sync_student_db_test/<int:student_id>/", views.sync_student_db_test, name="sync_student_db_test"),
 
+    # 학생관점 과목 수강 엑셀 리스트
+    path("student_course_read_excel", views.student_course_read_excel, name="student_course_read_excel"),
+
 ]   

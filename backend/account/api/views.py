@@ -15,6 +15,12 @@ from django.db.models import Sum,Count
 from openpyxl import load_workbook
 from django.db.models import Q
 from datetime import datetime
+import openpyxl
+from openpyxl.styles import Font
+from django.http import HttpResponse
+import io
+import json
+import zipfile  # zipfile 모듈 추가
 
 from django.db.models.functions import ExtractYear
 
@@ -235,6 +241,7 @@ def student_read_course_info(request):
                 etc_total_issue = 0
                 etc_total_repo = 0
                 etc_total_star = 0
+                etc_total_contributor=0
 
                 # Get all repositories for a specific student
                 student_repos = Repository.objects.filter(owner_github_id=student.github_id)
@@ -251,7 +258,7 @@ def student_read_course_info(request):
                     course_ids.append(course_reg.course.course_id)
 
                 # 딕셔너리 초기화
-                course_dict = {course_id: {'commit': 0, 'pr': 0, 'issue': 0, 'repo': 0, 'star': 0} for course_id in course_ids}
+                course_dict = {course_id: {'commit': 0, 'pr': 0, 'issue': 0, 'repo': 0, 'star': 0, 'contributors': 0,} for course_id in course_ids}
 
                 courses_project_repos = []
 
@@ -260,6 +267,8 @@ def student_read_course_info(request):
 
                 # 각 repo에 대한 정보 추가
                 for repo in student_repos:
+                    sanitized_url = repo.url.replace(":", "")
+
                     if repo in courses_project_repos:  # 특정 학생의 현재 가리키는 repo가 과목과 관련이 있는 경우
                         specific_course = Course_project.objects.get(repo=repo)
                         course_id = specific_course.course.course_id
@@ -280,10 +289,13 @@ def student_read_course_info(request):
                         course_dict[course_id]['issue'] += (repo.contributed_open_issue_count or 0) + (repo.contributed_closed_issue_count or 0)
                         
                         # Repo 수 합산
-                        course_dict[course_id]['repo'] += 1
+                        course_dict[course_id]['repo'] += 1 
                         
                         # Star 수 합산
                         course_dict[course_id]['star'] += Repository.objects.get(id=repo.id).star_count or 0
+                        print(repo.url)
+
+                        course_dict[course_id]['contributors'] += Repo_contributor.objects.filter(repo_url = sanitized_url).count() or 0 
 
                     else:  # 특정 학생의 repo가 과목과 관련 없는 경우
                         etc_total_commit += repo.contributed_commit_count or 0 
@@ -291,17 +303,7 @@ def student_read_course_info(request):
                         etc_total_issue += (repo.contributed_open_issue_count or 0) + (repo.contributed_closed_issue_count or 0)
                         etc_total_repo += 1
                         etc_total_star += Repository.objects.get(id=repo.id).star_count or 0
-
-                # 학생별 total_contributes와 is_contributor 계산
-                total_contributions_data = Repo_contributor.objects.filter(
-                    contributor_id=student.github_id
-                ).exclude(
-                    owner_github_id=student.github_id
-                ).aggregate(
-                    total_contributes=Sum('contribution_count')
-                )
-                total_contributes = total_contributions_data.get('total_contributes') or 0
-                is_contributor = 1 if total_contributes >= 1 else 0
+                        etc_total_contributor += Repo_contributor.objects.filter(repo_url = sanitized_url).count() or 0
 
                 # 각 과목에 대한 정보 추가
                 for course_id, course_count in course_dict.items():
@@ -323,8 +325,7 @@ def student_read_course_info(request):
                         "star_count": course_count['star'],
                         "prof": course.prof,
                         "course_id": course.course_id,
-                        "total_contributes": total_contributes,
-                        "is_contributor": is_contributor
+                        "total_contributors": course_count['contributors']
                     }
                     total_commit += course_count['commit']
                     total_pr += course_count['pr']
@@ -351,8 +352,7 @@ def student_read_course_info(request):
                     "star_count": etc_total_star,
                     "prof": "",
                     "course_id": "",
-                    "total_contributes": total_contributes,
-                    "is_contributor": is_contributor
+                    "total_contributors": etc_total_contributor
                 }
 
                 total_commit += etc_total_commit
@@ -472,8 +472,7 @@ def student_read_total(request):
                 data.append(total_info)
 
             except Exception as e:
-                if student.name == '홍종현':
-                    print(f'Error processing student {student.name}: {e}')
+                print(f'Error processing student {student.name}: {e}')
                 continue
             
         return JsonResponse(data, safe=False)
@@ -1323,3 +1322,108 @@ def sync_student_db_test(request, student_id):
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # ---------------------------------------------
+
+def student_course_read_excel(request):
+    try:
+        # 데이터를 가져오는 함수 호출
+        response = student_read_course_info(request)
+
+        # JsonResponse에서 데이터 추출
+        if hasattr(response, 'content'):
+            student_course_list = json.loads(response.content.decode('utf-8'))
+        else:
+            raise ValueError("Invalid response format from student_read_course_info")
+
+        # 반환 데이터 형식 확인
+        if not isinstance(student_course_list, list):
+            raise ValueError("Invalid data format: Expected a list of dictionaries.")
+
+    except Exception as e:
+        return HttpResponse(f"Error processing student data: {str(e)}", status=500)
+
+    # ID로 데이터 그룹화
+    grouped_data = {}
+    for student in student_course_list:
+        try:
+            student_id = student.get("id")
+            if not student_id:
+                raise ValueError("Student record missing ID")
+
+            if student_id not in grouped_data:
+                grouped_data[student_id] = []
+
+            # Repository Name 가져오기
+            try:
+                course_id = student.get("course_id")
+                year = student.get("year")
+                semester = student.get("semester")
+                year = year if year else 0
+                semester = semester if semester else 0
+                specific_student = Student.objects.get(id=student_id)
+                course_info = Course.objects.get(course_id=course_id, year=year, semester=semester)
+                course_repositories = Course_project.objects.filter(course=course_info)
+                for course_repo in course_repositories:
+                    if course_repo.repo.owner_github_id == specific_student.github_id:
+                        repository_name = course_repo.repo.name
+                        break
+                else:
+                    repository_name = "Unknown"
+            except ObjectDoesNotExist:
+                repository_name = "Unknown"
+
+            student["repository_name"] = repository_name
+            grouped_data[student_id].append(student)
+
+        except Exception as e:
+            return HttpResponse(f"Error processing student record: {str(e)}", status=500)
+
+    # 단일 엑셀 파일 생성
+    output = io.BytesIO()
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Student Data"
+
+    # 헤더 작성
+    headers = [
+        "ID", "GitHub ID", "Name", "Department", "Enrollment",
+        "Year", "Semester", "Course Name", "Commit", "PR", "Issue",
+        "Num Repos", "Star Count", "Professor", "Total Contributors", "Repository Names"
+    ]
+    sheet.append(headers)
+    for col in sheet[1]:
+        col.font = Font(bold=True)
+
+    # 모든 학생 데이터 삽입
+    for student_id, students in grouped_data.items():
+        for student in students:
+            row = [
+                student.get("id"),
+                student.get("github_id"),
+                student.get("name"),
+                student.get("department"),
+                student.get("enrollment"),
+                student.get("year"),
+                student.get("semester"),
+                student.get("course_name"),
+                student.get("commit"),
+                student.get("pr"),
+                student.get("issue"),
+                student.get("num_repos"),
+                student.get("star_count"),
+                student.get("prof"),
+                student.get("total_contributors"),
+                student.get("repository_name"),
+            ]
+            sheet.append(row)
+
+    # 엑셀 파일 저장
+    workbook.save(output)
+    output.seek(0)
+
+    # HTTP 응답으로 단일 엑셀 파일 반환
+    response = HttpResponse(
+        output,
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = 'attachment; filename="students_data.xlsx"'
+    return response
