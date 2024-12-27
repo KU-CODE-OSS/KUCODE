@@ -17,6 +17,12 @@ from operator import itemgetter
 from collections import defaultdict
 import statistics
 import numpy as np
+from openpyxl.styles import Alignment
+from io import BytesIO
+import openpyxl
+from django.http import HttpResponse
+from openpyxl.styles import Font
+import io
 
 import json
 from django.db.models import Min, Max
@@ -236,70 +242,6 @@ def course_project_update(request):
         return JsonResponse({"status": "OK", "message": "course_project record created successfully"})
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
-    
-def course_read_db_specific(request):
-    try:
-        course_id=request.GET.get('course_id')
-        year = request.GET.get('year')
-        semester = request.GET.get('semester')    
-        course = Course.objects.get(course_id=course_id, year=year, semester=semester)
-
-        # Calculate the total commits
-        total_commits = Repo_commit.objects.filter(repo_url__contains=course.course_repo_name).count()
-        
-
-
-        # Calculate the average commits 
-
-        student_count = Course_registration.objects.filter(
-            course=course,
-            course_year=year,
-            course_semester=semester
-        ).count()
-        
-        avg_commits = round(total_commits / student_count, 2)
-        
-        # Calculate the number of repositories 
-        
-        repository_count = Course_project.objects.filter(
-        course=course,
-        course_year=course.year,
-        course_semester=course.semester
-        ).count()
-        
-        
-        # Calculate the number of contributors 
-
-        repo_ids = Course_project.objects.filter(
-            course=course,
-            course_year=course.year,
-            course_semester=course.semester
-        ).values('repo_id')
-
-        contributor_count = Repo_contributor.objects.filter(
-        repo_id__in=repo_ids
-        ).values('contributor_id').count()
-
-        
-        # Gather all the data 
-        data = {
-            "course_id":course.course_id,
-            "year": course.year,
-            "semester": course.semester,
-            "name": course.name,
-            "prof": course.prof,
-            "ta": course.ta,
-            "student_count": course.student_count,
-            "total_commits": total_commits ,
-            "avg_commits": avg_commits,
-            "repository_count": repository_count,
-            "contributor_count": contributor_count
-        }
-        return JsonResponse(data)
-           
-    except Exception as e:
-        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
-    
 
 def course_year_search(request):
     try:
@@ -763,3 +705,439 @@ def course_read_min_max_avg(request):
     except Exception as e:
         print(f"Error grouping students' courses info: {e}")
         return JsonResponse({"error": str(e)}, safe=False)
+    
+
+
+def course_read_db_total_excel(request):
+    try:
+        data = []
+        courses = Course.objects.all()
+
+        for course in courses:
+
+            total_commits = 0
+            total_prs = 0
+            total_issues = 0
+            total_stars = 0
+
+            # Gather course related repos' id
+            course_related_repos_id = Course_project.objects.filter(course_id=course.id).values_list('repo_id', flat=True)
+            print(f'{course.name}:[{course.course_id}] - repo_count: {len(course_related_repos_id)}')
+
+            total_course_repos = Repository.objects.filter(id__in=course_related_repos_id)
+
+            for course_repo in total_course_repos:
+                if course_repo.forked is True:
+                    continue
+                else:
+                    total_commits += course_repo.commit_count or 0
+                    total_issues += ((course_repo.open_issue_count or 0) + (course_repo.closed_issue_count or 0))
+                    total_prs += ((course_repo.open_pr_count or 0) + (course_repo.closed_pr_count or 0))
+                    total_stars += course_repo.star_count or 0
+
+            # Calculate the average commits
+            student_count = Course_registration.objects.filter(
+                course=course,
+                course_year=course.year,
+                course_semester=course.semester
+            ).count()
+
+            avg_commits = round(total_commits / student_count, 2) if student_count > 0 else 0
+
+            # Calculate the number of repositories
+            repository_count = Course_project.objects.filter(
+                course=course,
+                course_year=course.year,
+                course_semester=course.semester
+            ).count()
+
+            # Calculate the number of contributors
+            course_repo_ids = Course_project.objects.filter(
+                course=course,
+                course_year=course.year,
+                course_semester=course.semester
+            )
+
+            contributor_count = 0
+            for course_repo_id in course_repo_ids:
+                if course_repo_id.repo.forked == False:
+                    contributors_list_str = course_repo_id.repo.contributors
+                    cleaned_contributors_list = ''.join(contributors_list_str.split())  # Remove all whitespace
+                    if cleaned_contributors_list == '':
+                        continue
+
+                    contributors_number = cleaned_contributors_list.count(',') + 1  # Count contributors by commas
+                    contributor_count += contributors_number
+
+            # Gather all the data
+            data.append({
+                "course_id": course.course_id,
+                "year": course.year,
+                "semester": course.semester,
+                "name": course.name,
+                "prof": course.prof,
+                "ta": course.ta,
+                "student_count": course.student_count,
+                "total_commits": total_commits,
+                "total_issues": total_issues,
+                "total_prs": total_prs,
+                "total_stars": total_stars,
+                "avg_commits": avg_commits,
+                "repository_count": repository_count,
+                "contributor_count": contributor_count
+            })
+
+        # Create Excel file
+        output = BytesIO()
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet.title = "Course Data"
+
+        # Write headers
+        headers = [
+            "Course ID", "Year", "Semester", "Name", "Professor", "TA", "Student Count",
+            "Total Commits", "Total Issues", "Total PRs", "Total Stars", "Average Commits",
+            "Repository Count", "Contributor Count"
+        ]
+        sheet.append(headers)
+
+        # Write data rows
+        for row in data:
+            sheet.append([
+                row["course_id"], row["year"], row["semester"], row["name"], row["prof"], row["ta"],
+                row["student_count"], row["total_commits"], row["total_issues"], row["total_prs"],
+                row["total_stars"], row["avg_commits"], row["repository_count"], row["contributor_count"]
+            ])
+
+        # Adjust column widths
+        for column_cells in sheet.columns:
+            max_length = 0
+            column = column_cells[0].column_letter  # Get the column name
+            for cell in column_cells:
+                try:  # Necessary to avoid issues with NoneType
+                    if cell.value:
+                        max_length = max(max_length, len(str(cell.value)))
+                except Exception:
+                    pass
+            adjusted_width = max_length + 2
+            sheet.column_dimensions[column].width = adjusted_width
+
+        # Save workbook to BytesIO
+        workbook.save(output)
+        output.seek(0)
+
+        # Return as Excel file response
+        response = HttpResponse(
+            output,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response['Content-Disposition'] = 'attachment; filename="course_data.xlsx"'
+        return response
+
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+def course_student_db_excel(request):
+    try:
+        # 데이터를 가져오는 함수 호출
+        response = student_read_course_info(request)
+
+        # JsonResponse에서 데이터 추출
+        if hasattr(response, 'content'):
+            student_course_list = json.loads(response.content.decode('utf-8'))
+        else:
+            raise ValueError("Invalid response format from student_read_course_info")
+
+        # 반환 데이터 형식 확인
+        if not isinstance(student_course_list, list):
+            raise ValueError("Invalid data format: Expected a list of dictionaries.")
+
+    except Exception as e:
+        return HttpResponse(f"Error processing student data: {str(e)}", status=500)
+
+    # course_id, year, semester로 데이터 그룹화
+    grouped_data = {}
+    for student in student_course_list:
+        try:
+            course_id = student.get("course_id", "").strip() or "기타"
+            year = student.get("year") or 0  # 기본값을 0으로 설정
+            semester = student.get("semester") or 0  # 기본값을 0으로 설정
+
+            # Ensure year and semester are integers
+            year = int(year) if year else 0
+            semester = int(semester) if semester else 0
+
+            group_key = f"{course_id}_{year}_{semester}"
+            if group_key not in grouped_data:
+                grouped_data[group_key] = []
+            
+            # Repository Name 가져오기
+            try:
+                student_id = student.get("id")
+                specific_student = Student.objects.get(id=student_id)
+                course_info= Course.objects.get(course_id=course_id, year=year, semester=semester)
+                course_repositories = Course_project.objects.filter(course = course_info)
+                for course_repo in course_repositories:
+                    if course_repo.repo.owner_github_id == specific_student.github_id :
+                        repository_name = course_repo.repo.name
+                        break
+                    else :
+                        continue
+            except ObjectDoesNotExist:
+                repository_name = "Unknown"
+
+            student["repository_name"] = repository_name
+            grouped_data[group_key].append(student)
+        except AttributeError as e:
+            return HttpResponse(f"Error processing student record: {str(e)}", status=500)
+
+    # 엑셀 파일 생성
+    output = io.BytesIO()
+    workbook = openpyxl.Workbook()
+    workbook.remove(workbook.active)  # 기본 시트 제거
+
+    for group_key, students in grouped_data.items():
+        # 시트 이름 생성 (길이 제한 고려)
+        sheet_name = group_key[:31]  # 시트 이름은 최대 31자
+        sheet = workbook.create_sheet(title=sheet_name)
+
+        # 헤더 작성
+        headers = [
+            "ID", "GitHub ID", "Name", "Department", "Enrollment",
+            "Year", "Semester", "Course Name", "Commit", "PR", "Issue",
+            "Num Repos", "Star Count", "Professor", "Total Contributors",  "Repository Names"
+        ]
+        sheet.append(headers)
+        for col in sheet[1]:
+            col.font = Font(bold=True)
+
+        # 학생 데이터 삽입
+        for student in students:
+            row = [
+                student.get("id"),
+                student.get("github_id"),
+                student.get("name"),
+                student.get("department"),
+                student.get("enrollment"),
+                student.get("year"),
+                student.get("semester"),
+                student.get("course_name"),
+                student.get("commit"),
+                student.get("pr"),
+                student.get("issue"),
+                student.get("num_repos"),
+                student.get("star_count"),
+                student.get("prof"),
+                student.get("total_contributors"),
+                student.get("repository_name")
+            ]
+            sheet.append(row)
+
+    # 엑셀 파일 저장
+    workbook.save(output)
+    output.seek(0)
+
+    # HTTP 응답으로 엑셀 파일 반환
+    response = HttpResponse(
+        output,
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = 'attachment; filename=\"course_students.xlsx\"'
+    return response
+# def course_student_db_excel(request):
+#     try:
+#         data = []
+#         courses = Course.objects.all()
+
+#         for course in courses:
+            
+#             course_id = course.course_id
+#             year = course.year
+#             semester = course.semester
+
+
+#             # Gather course related repos' id
+#             course_related_repos_id = Course_project.objects.filter(course_id=course.id).values_list('repo_id', flat=True)
+#             print(f'{course.name}:[{course.course_id}] - repo_count: {len(course_related_repos_id)}')
+            
+            
+#             total_course_repos = Repository.objects.filter(id__in=course_related_repos_id)
+
+#             for course_repo in total_course_repos :
+
+#                 if course_repo.forked is True :
+#                     continue            
+#                 else :
+                    
+#                     student = Student.objects.get(github_id = course_repo.owner_github_id)                
+#                     student_id = student.id 
+#                     student_github_id = student.github_id
+#                     student_name = student.name 
+#                     student_department = student.department
+#                     student_enrollment = student.enrollment
+                    
+#                     commit_couunt = course_repo.commit_count or 0 
+#                     issue_count =  ((course_repo.open_issue_count or 0) + (course_repo.closed_issue_count or 0))
+#                     pr_count = ((course_repo.open_pr_count or 0) + (course_repo.closed_pr_count or 0))
+#                     star_count = course_repo.star_count or 0 
+            
+
+#                     if course_repo.forked == False :
+#                         contributors_list_str = course_repo.contributors
+#                         cleaned_contributors_list = ''.join(contributors_list_str.split())  # 모든 공백 제거
+#                         if cleaned_contributors_list == '':
+#                             continue
+#                         contributors_number = cleaned_contributors_list.count(',') + 1 # , 코마갯수로 contributor 세기
+
+#     except Exception as e:
+#         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+
+def only_for_course_student_db_excel(request): #과목 관점에서 읽기 
+    try:
+        data = []
+        students = Student.objects.all()
+        for student in students:
+            try:
+                # Proceed for one specific student             
+                total_commit = 0 
+                total_pr = 0
+                total_issue = 0
+                total_repo = 0
+                total_star = 0
+
+                etc_total_commit = 0 
+                etc_total_pr = 0
+                etc_total_issue = 0
+                etc_total_repo = 0
+                etc_total_star = 0
+                etc_total_contributor=0
+
+                # Get all repositories for a specific student
+                student_repos = Repository.objects.filter(owner_github_id=student.github_id)
+                
+                # 특정 학생의 수강 목록들 가져옴
+                course_reg_list = Course_registration.objects.filter(student=student)
+
+                # 특정 학생의 과목 관련된 레포지토리들을 가져옴.
+                courses_repos = Course_project.objects.filter(repo__in=student_repos)
+                
+                # 특정 학생이 듣는 모든 course_id 테이블 및 딕셔너리 생성
+                course_ids = []
+                for course_reg in course_reg_list:
+                    course_ids.append(course_reg.course.course_id)
+
+                # 딕셔너리 초기화
+                course_dict = {course_id: {'commit': 0, 'pr': 0, 'issue': 0, 'repo': 0, 'star': 0, 'contributors': 0,} for course_id in course_ids}
+
+                courses_project_repos = []
+
+                for c in courses_repos:
+                    courses_project_repos.append(c.repo)
+
+                # 각 repo에 대한 정보 추가
+                for repo in student_repos:
+                    sanitized_url = repo.url.replace(":", "")
+
+                    if repo in courses_project_repos:  # 특정 학생의 현재 가리키는 repo가 과목과 관련이 있는 경우
+                        specific_course = Course_project.objects.get(repo=repo)
+                        course_id = specific_course.course.course_id
+
+                        # Commit 수 합산
+                        total_commit_count = Repository.objects.filter(
+                            id = specific_course.repo.id,
+                            owner_github_id=student.github_id
+                        ).aggregate(total_commits=Sum('contributed_commit_count'))['total_commits'] or 0
+                        
+                        # 합산한 값을 course_dict에 추가
+                        course_dict[course_id]['commit'] += total_commit_count
+                        
+                        # PR 수 합산
+                        course_dict[course_id]['pr'] += ( repo.contributed_open_pr_count or 0) +  (repo.contributed_closed_pr_count or 0)
+                        
+                        # Issue 수 합산
+                        course_dict[course_id]['issue'] += (repo.contributed_open_issue_count or 0) + (repo.contributed_closed_issue_count or 0)
+                        
+                        # Repo 수 합산
+                        course_dict[course_id]['repo'] += 1 
+                        
+                        # Star 수 합산
+                        course_dict[course_id]['star'] += Repository.objects.get(id=repo.id).star_count or 0
+                        print(repo.url)
+
+                        course_dict[course_id]['contributors'] += Repo_contributor.objects.filter(repo_url = sanitized_url).count() or 0 
+
+                    else:  # 특정 학생의 repo가 과목과 관련 없는 경우
+                        etc_total_commit += repo.contributed_commit_count or 0 
+                        etc_total_pr +=  ( repo.contributed_open_pr_count or 0) +  (repo.contributed_closed_pr_count or 0)
+                        etc_total_issue += (repo.contributed_open_issue_count or 0) + (repo.contributed_closed_issue_count or 0)
+                        etc_total_repo += 1
+                        etc_total_star += Repository.objects.get(id=repo.id).star_count or 0
+                        etc_total_contributor += Repo_contributor.objects.filter(repo_url = sanitized_url).count() or 0
+
+                # 각 과목에 대한 정보 추가
+                for course_id, course_count in course_dict.items():
+                    course = Course.objects.get(course_id=course_id)
+
+                    course_info = {
+                        "id": student.id,
+                        "github_id": student.github_id,
+                        "name": student.name,
+                        "department": student.department,
+                        "enrollment": student.enrollment,
+                        "year": course.year,
+                        "semester": course.semester,
+                        "course_name": course.name,
+                        "commit": course_count['commit'],
+                        "pr": course_count['pr'],
+                        "issue": course_count['issue'],
+                        "num_repos": course_count['repo'],
+                        "star_count": course_count['star'],
+                        "prof": course.prof,
+                        "course_id": course.course_id,
+                        "total_contributors": course_count['contributors']
+                    }
+                    total_commit += course_count['commit']
+                    total_pr += course_count['pr']
+                    total_issue += course_count['issue']
+                    total_repo += course_count['repo']
+                    total_star += course_count['star']
+
+                    data.append(course_info)
+
+                # 기타 정보 추가
+                etc_info = {
+                    "id": student.id,
+                    "github_id": student.github_id,
+                    "name": student.name,
+                    "department": student.department,
+                    "enrollment": student.enrollment,
+                    "year": "",
+                    "semester": "",
+                    "course_name": "기타",
+                    "commit": etc_total_commit,
+                    "pr": etc_total_pr,
+                    "issue": etc_total_issue,
+                    "num_repos": etc_total_repo,
+                    "star_count": etc_total_star,
+                    "prof": "",
+                    "course_id": "",
+                    "total_contributors": etc_total_contributor
+                }
+
+                total_commit += etc_total_commit
+                total_pr += etc_total_pr
+                total_issue += etc_total_issue
+                total_repo += etc_total_repo
+                total_star += etc_total_star
+
+                data.append(etc_info)               
+
+            except Exception as e:
+                print(f'Error processing student {student.name}: {e}')
+                continue       
+
+        return JsonResponse(data, safe=False)
+
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
