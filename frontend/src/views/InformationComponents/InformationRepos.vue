@@ -65,7 +65,7 @@
         </thead>
 
         <tbody>
-            <tr v-for="item in filteredPosts" :key="item.id" class="table-row">
+            <tr v-for="item in sclicedPosts" :key="item.id" class="table-row">
             <!-- 테이블 데이터 부분은 그대로 유지 -->
             <td :title="item.name">
               <a :href="item.url" target="_blank">{{ item.name }}</a> <!-- 하이퍼링크 추가 -->
@@ -198,23 +198,34 @@ export default {
         ['기여자 수', '7%'],
         ['상세보기', '7%']
       ],
+      filteredResults: [], // 검색된 결과를 저장
     };
   },
   computed: {
     filteredPosts() {
-      if (this.searchField.trim() === '') {
-        return this.sclicedPosts;
-      }
-      return this.sclicedPosts.filter(item =>
-        item.name.toLowerCase().includes(this.searchField.toLowerCase()) ||
-        item.owner_github_id.toLowerCase().includes(this.searchField.toLowerCase())
-      );
+      const filtered = this.searchField.trim() === ''
+        ? this.posts
+        : this.posts.filter(item =>
+            item.name.toLowerCase().includes(this.searchField.toLowerCase()) ||
+            item.owner_github_id.toLowerCase().includes(this.searchField.toLowerCase())
+          );
+
+      // 검색된 결과를 현재 정렬 기준으로 정렬
+      return filtered.sort((a, b) => {
+        if (!this.currentSort) return 0;
+        let modifier = this.currentSortDir === 'asc' ? 1 : -1;
+        if (a[this.currentSort] < b[this.currentSort]) return -1 * modifier;
+        if (a[this.currentSort] > b[this.currentSort]) return 1 * modifier;
+        return 0;
+      });
     },
     totalPagesforAll() {
-      return Math.ceil(this.postss.length / this.postsPerPage);
-    },
+      // 검색 결과가 있을 경우 검색 결과를 기준으로 총 페이지 수 계산
+      const data = this.filteredResults.length > 0 ? this.filteredResults : this.posts;
+      return Math.ceil(data.length / this.postsPerPage);
+      },
     totalPagesPerListforAll() {
-      return  Math.floor(Math.ceil(this.postss.length / this.postsPerPage) / 10) + 1;
+      return Math.ceil(this.totalPagesforAll / 10);
     },
     prevPageDisabledforAll() {
       return Math.floor((this.currentPage - 1) / 10) === 0
@@ -230,7 +241,7 @@ export default {
     },
     pagesToShowforAll() {
       const startPage = Math.floor((this.currentPage - 1) / 10) * 10 + 1;
-      const endPage = Math.min(startPage + 9, this.totalPagesforAll);
+      const endPage = Math.min(startPage + 9, this.totalPagesforAll); // 검색된 데이터의 총 페이지 수를 기준으로 끝 페이지 계산
       const pages = [];
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
@@ -239,10 +250,23 @@ export default {
     },
   },
   methods: {
-        performSearch() {
-      this.slicingforall();
+    performSearch() {
+      if (this.searchField.trim() === '') {
+        this.filteredResults = this.posts; // 전체 데이터를 검색 결과로 설정
+      } else {
+        this.filteredResults = this.posts.filter(item =>
+          item.name.toLowerCase().includes(this.searchField.toLowerCase()) ||
+          item.owner_github_id.toLowerCase().includes(this.searchField.toLowerCase())
+        );
+      }
+
+      if (this.filteredResults.length === 0) {
+        alert('검색 결과가 없습니다.');
+      } else {
+        this.currentPage = 1; // 검색 시 첫 페이지로 이동
+        this.slicingforall();
+      }
     },
-    // 테이블 정렬 메서드
     sortTable(column) {
       if (this.currentSort === column) {
         // 같은 열을 다시 클릭하면 정렬 방향을 변경
@@ -253,29 +277,28 @@ export default {
         this.currentSortDir = 'asc';
       }
 
-      // 전체 데이터인 posts 배열을 정렬
-      this.posts.sort((a, b) => {
+      // 검색 결과가 있는 경우 검색된 데이터를 정렬
+      const dataToSort = this.filteredResults.length > 0 ? this.filteredResults : this.posts;
+
+      dataToSort.sort((a, b) => {
         let modifier = this.currentSortDir === 'asc' ? 1 : -1;
         if (a[column] < b[column]) return -1 * modifier;
         if (a[column] > b[column]) return 1 * modifier;
         return 0;
       });
 
-      // 정렬된 데이터를 페이지에 맞게 나눠서 보여줌
+      // 정렬된 데이터로 페이지 갱신
       this.slicingforall();
     },
     changePageforAll(page) {
-      let toPage = 0
       if (page < 1) {
-        toPage = 1;  
+        this.currentPage = 1;
       } else if (page > this.totalPagesforAll) {
-        toPage = this.totalPagesforAll;
+        this.currentPage = this.totalPagesforAll; // 검색된 데이터에 맞게 페이지 제한
       } else {
-        toPage = page;
+        this.currentPage = page;
       }
-      const query = { ...this.$route.query, page: toPage };
-      this.$router.replace({ path: this.$route.path, query: query });
-      this.currentPage = toPage;
+      this.slicingforall();
     },
     firstPageforAll() {
       if (this.currentPage > 1) {
@@ -306,8 +329,12 @@ export default {
     slicingforall() {
       const start = (this.currentPage - 1) * this.postsPerPage;
       const end = start + this.postsPerPage;
-      // 정렬된 posts 배열에서 현재 페이지에 해당하는 부분만 가져옴
-      this.sclicedPosts = this.posts.slice(start, end);
+
+      if (this.filteredResults.length > 0) {
+        this.sclicedPosts = this.filteredResults.slice(start, end);
+      } else {
+        this.sclicedPosts = this.posts.slice(start, end);
+      }
     },
     commitSort(li){
       li.sort(function(a,b){
@@ -384,6 +411,7 @@ export default {
   },
   mounted() {
     this.currentPage = parseInt(this.$route.query.page) || 1;
+    this.filteredResults = this.posts; // 검색 결과 초기화
     this.slicingforall();
     this.toSummarized(this.posts);
   },
@@ -418,7 +446,13 @@ export default {
     currentPage(to, from) {
       this.slicingforall();
       this.toSummarized(this.posts);
-
+    },
+    currentPage(to, from) {
+    this.slicingforall();
+    },
+    searchField(to, from) {
+      // 검색어가 변경되었을 때 자동으로 검색 수행
+      this.performSearch();
     },
   }
 };
