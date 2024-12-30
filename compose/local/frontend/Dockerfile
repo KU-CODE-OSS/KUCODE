@@ -1,8 +1,8 @@
-FROM node:20-slim
+FROM node:18.20.4-slim
 
 WORKDIR /app
 
-COPY ./frontend/package*.json .
+COPY ./frontend/package*.json ./
 
 RUN npm install
 
