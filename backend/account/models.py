@@ -3,13 +3,37 @@ from django.db import models
 # Create your models here.
 from django.contrib.auth.models import AbstractUser
 
-class User(AbstractUser):
-    # 권한을 설정하는 ENUM 클래스
-    pass
+# Created by KMW before but unused
+# class User(AbstractUser):
+#     # 권한을 설정하는 ENUM 클래스
+#     pass
 
-    github_id = models.CharField(max_length=255,default='null')
-    name = models.CharField(max_length=255,default='null')
+#     github_id = models.CharField(max_length=255,default='null')
+#     name = models.CharField(max_length=255,default='null')
 
+# New user table
+class Role(models.TextChoices):
+    ADMIN = 'ADMIN', 'Admin'
+    PROFESSOR = 'PROFESSOR', 'Professor'
+    STUDENT = 'STUDENT', 'Student'
+
+class Status(models.TextChoices):
+    ACTIVE = 'ACTIVE', 'Active'
+    LOCKED = 'LOCKED', 'Locked'
+    PENDING = 'PENDING', 'Pending'
+
+class Member(models.Model):
+    id = models.UUIDField(primary_key=True)
+    role = models.CharField(
+        max_length=9,
+        choices=Role.choices
+    )
+    email = models.EmailField()
+    # hashed_pw = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.id
+    
 class Student(models.Model):
     id = models.CharField(max_length=50, primary_key=True)
     name = models.CharField(max_length=100)
@@ -26,9 +50,30 @@ class Student(models.Model):
     starred_count = models.IntegerField(null=True)
     github_profile_create_at = models.CharField(max_length=100, null=True)
     github_profile_update_at = models.CharField(max_length=100, null=True)
+    # FK connected with user table
+    member = models.ForeignKey(
+        Member,
+        on_delete=models.CASCADE
+    )
+    github_auth = models.CharField(
+        max_length=7,
+        choices=Status.choices
+    )
     
     def __str__(self):
         return self.name
+
+class Professor(models.Model):
+    member = models.ForeignKey(
+        Member,
+        on_delete=models.CASCADE
+    )
+    id = models.CharField(max_length=50, primary_key=True)
+    name = models.CharField(max_length=255)
+    # hashed_pw = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.id
     
 class Administration(models.Model):
     id = models.CharField(max_length=50, primary_key=True)
