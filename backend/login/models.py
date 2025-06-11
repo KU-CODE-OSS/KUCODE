@@ -19,6 +19,7 @@ class Member(models.Model):
         choices=Role.choices,
         default=Role.STUDENT  # 기본값을 STUDENT로 설정
     )
+    name = models.CharField(max_length=30)
     email = models.EmailField()
     # hashed_pw = models.CharField(max_length=255)
 
@@ -26,13 +27,13 @@ class Member(models.Model):
         return self.id
 
 class Student(models.Model):
-    name = models.CharField(max_length=100)
     # FK connected with user table
     member = models.ForeignKey(
         Member,
         on_delete=models.CASCADE,
         null=True
     )
+    id = models.CharField(max_length=50, primary_key=True)
     github_auth = models.CharField(
         max_length=7,
         choices=Status.choices,
@@ -45,10 +46,10 @@ class Student(models.Model):
 class Professor(models.Model):
     member = models.ForeignKey(
         Member,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        null=True
     )
     id = models.CharField(max_length=50, primary_key=True)
-    name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.id
