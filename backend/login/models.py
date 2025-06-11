@@ -41,7 +41,7 @@ class Student(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return self.id
     
 class Professor(models.Model):
     member = models.ForeignKey(
