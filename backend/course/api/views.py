@@ -103,7 +103,11 @@ def course_read_db(request):
                 course_semester=course.semester
             ).count()
             
-            avg_commits = round(total_commits / student_count, 2)
+            if student_count != 0:
+                avg_commits = round(total_commits / student_count, 2)
+            else:
+                # Skip if no students are registered
+                continue  
             
             # Calculate the number of repositories 
             repository_count = Course_project.objects.filter(
