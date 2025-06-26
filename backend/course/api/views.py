@@ -380,50 +380,19 @@ def course_department_count(request):
 
                 
 
+
 def course_validation(request):
     try:
-        access_token = get_kuopenapi_access_token()
         courses = Course.objects.all()
-        data = []
+
         for specific_course in courses:
-            course_id, course_class = specific_course.course_id.split('-')
-            
-            #API 요청
-            api_url = "https://kuapi.korea.ac.kr/svc/lecture/class/class-information"  # 실제 API 엔드포인트로 변경
-            headers = {
-                'AUTH_KEY': access_token
-            }
-            
-            # 요청 파라미터 설정
-            params = {
-                'client_id': settings.KOREAUNIV_OPENAPI_CLIENT_ID,
-                "year":str(specific_course.year),
-                'term':str(specific_course.semester)+'R',
-                'course_code': course_id,
-                'course_class': course_class
-            }
-            
-            # API 호출
-            response = requests.get(api_url, headers=headers, params=params)
-            # JSON 응답을 파싱
-            
-            response_data = response.json()
-            
-            result_items = response_data.get("result", [])
-            result_item = result_items[0]
-            course_name = result_item.get("COURSE_NAME")
-
-            specific_course.name = course_name 
-            specific_course.save()
-
             # 과목 학생 수 count validation 
-            specific_course_count = Course_registration.objects.filter(course = specific_course).count()
+            specific_course_count = Course_registration.objects.filter(course=specific_course).count()
             specific_course.student_count = specific_course_count
+            print(f'{specific_course.name} {specific_course.course_id} student count has been changed to {specific_course.student_count}')
             specific_course.save()
 
-            data.append(response_data)
-        
-        return JsonResponse(data , safe=False) 
+        return JsonResponse({'status': 'success', 'message': 'Course student count updated'})
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
