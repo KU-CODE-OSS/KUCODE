@@ -179,7 +179,7 @@ def student_excel_import(request):
             
             else:
                 # print student details for debugging
-                print(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8])
+                print(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7])
 
                 # Create a new Student object
                 Student.objects.create(
@@ -190,8 +190,7 @@ def student_excel_import(request):
                     double_major=row[4],
                     college=row[5],
                     primary_email=row[6],
-                    secondary_email=row[7],
-                    enrollment=row[8],
+                    secondary_email=row[7]
                 )
                 print(f"{row[0]} Student has been created! ")
 
