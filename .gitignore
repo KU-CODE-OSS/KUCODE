@@ -173,3 +173,6 @@ frontend/node_modules
 
 #crawling
 *crawling.sh*
+
+#backup file
+*.bak
