@@ -41,10 +41,11 @@
           <div class="input-section-frame">
             <div class="input-field">
               <input 
-                type="text" 
-                v-model="username"
-                placeholder="아이디"
+                type="email" 
+                v-model="email"
+                placeholder="이메일 (@korea.ac.kr)"
                 class="input-control"
+                @keyup.enter="handleLogin"
               />
             </div>
             <div class="input-field">
@@ -53,6 +54,7 @@
                 v-model="password"
                 placeholder="비밀번호"
                 class="input-control"
+                @keyup.enter="handleLogin"
               />
             </div>
           </div>
@@ -88,45 +90,60 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 // Form data
-const username = ref('')
+const email = ref('')
 const password = ref('')
-const loading = ref(false)
 const errorMessage = ref('')
 
-// Router
+// Store and router
+const authStore = useAuthStore()
 const router = useRouter()
+
+// Computed properties
+const loading = computed(() => authStore.loading)
 
 // Handle login
 const handleLogin = async () => {
   try {
-    loading.value = true
     errorMessage.value = ''
     
-    // Check if email contains @korea.ac.kr
-    if (username.value && !username.value.includes('@korea.ac.kr')) {
+    // Validate email domain
+    if (!email.value.endsWith('@korea.ac.kr')) {
       errorMessage.value = '사용 가능한 @korea.ac.kr 이메일을 입력해주세요'
       return
     }
     
-    // Simulate login API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Validate password
+    if (!password.value) {
+      errorMessage.value = '비밀번호를 입력해주세요'
+      return
+    }
     
-    // Demo validation - you can replace with real authentication
-    if (username.value === 'admin@korea.ac.kr' && password.value === 'password') {
-      router.push('/dashboard')
+    // Attempt login
+    const result = await authStore.login(email.value, password.value)
+    
+    if (result.success) {
+      router.push('/board')
     } else {
-      errorMessage.value = '이메일/비밀번호가 일치하지 않습니다'
+      errorMessage.value = result.error || '이메일/비밀번호가 일치하지 않습니다'
     }
   } catch (error) {
-    errorMessage.value = '이메일/비밀번호가 일치하지 않습니다'
-  } finally {
-    loading.value = false
+    errorMessage.value = '로그인 중 오류가 발생했습니다'
+    console.error('Login error:', error)
   }
 }
+
+// Check if user is already logged in
+onMounted(async () => {
+  await authStore.checkSession()
+  if (authStore.isAuthenticated) {
+    router.push('/board')
+  }
+})
 </script>
 
 <style scoped>
