@@ -13,11 +13,12 @@ export const authGuard = async (to, from, next) => {
   
   const currentUser = auth.currentUser  // Current Firebase user
   
-  // if (currentUser && currentUser.emailVerified) {
-  if (currentUser) {
-    next()
-  } else {
-    next('/login')
+  if (currentUser && currentUser.emailVerified) {
+    if (currentUser) {
+      next()
+    } else {
+      next('/login')
+    }
   }
 }
 

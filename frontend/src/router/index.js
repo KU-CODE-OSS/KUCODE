@@ -5,6 +5,7 @@ import Information from '@/views/Information.vue';
 import Statistics from '@/views/Statistics.vue';
 import Login from '@/views/Login.vue';
 import Register from '@/views/Register.vue';
+import EmailVerification from '@/views/EmailVerification.vue';
 import { authGuard, guestGuard } from './guards'
 
 const StatisticsCourse = () => import('@/views/StatisticsComponents/StatisticsCourse.vue');
@@ -31,6 +32,12 @@ const routes = [
     path: '/register',
     name: 'register',
     component: Register,
+    beforeEnter: guestGuard
+  },
+  {
+    path: '/emailVerification',
+    name: 'emailVerification',
+    component: EmailVerification,
     beforeEnter: guestGuard
   },
   {

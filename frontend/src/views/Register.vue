@@ -263,9 +263,11 @@ const handleSignUp = async () => {
     const firebaseUser = userCredential.user
     
     // Send email verification
-    // await firebaseUser.sendEmailVerification()
+    await sendEmailVerification(firebaseUser)
 
-    router.push('/login')
+    router.push({
+      name: 'emailVerification'
+    })
     
   } catch (error) {
     if (error.code === 'auth/email-already-in-use') {
