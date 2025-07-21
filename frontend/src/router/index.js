@@ -3,6 +3,10 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Dashboard from '@/views/Dashboard.vue';
 import Information from '@/views/Information.vue';
 import Statistics from '@/views/Statistics.vue';
+import Login from '@/views/Login.vue';
+import Register from '@/views/Register.vue';
+import EmailVerification from '@/views/EmailVerification.vue';
+import { authGuard, guestGuard } from './guards'
 
 const StatisticsCourse = () => import('@/views/StatisticsComponents/StatisticsCourse.vue');
 const StatisticsStudent = () => import('@/views/StatisticsComponents/StatisticsStudent.vue');
@@ -15,14 +19,38 @@ import QnA from '../views/QnA.vue'
 
 const routes = [
   {
+    path: '/',
+    redirect: '/login'
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: Login,
+    beforeEnter: guestGuard
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: Register,
+    beforeEnter: guestGuard
+  },
+  {
+    path: '/emailVerification',
+    name: 'emailVerification',
+    component: EmailVerification,
+    beforeEnter: guestGuard
+  },
+  {
     path: '/board',
     name: 'board',
-    component: Dashboard
+    component: Dashboard,
+    beforeEnter: authGuard
   },
   {
     path: '/info',
     name: 'Information',
     component: Information,
+    beforeEnter: authGuard,
     children: [
       { // default path
         path: '',
