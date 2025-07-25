@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const ip_for_develop = 'http://61.72.142.8:10004/api'
+const ip_for_develop = process.env.VUE_APP_API_URL;
+
 // Axios 인스턴스 생성
 const api = axios.create({
   baseURL: process.env.VUE_APP_API_URL,

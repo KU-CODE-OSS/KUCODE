@@ -7,8 +7,9 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.sessions.models import Session
 from django.utils.decorators import method_decorator
 from django.views import View
-from .models import CustomUser
-from .firebase_config import verify_firebase_token, get_firebase_user
+from authentication.models import FirebaseAuthUser
+from django.conf import settings
+# from .firebase_config import verify_firebase_token, get_firebase_user
 
 @method_decorator(csrf_exempt, name='dispatch')
 class FirebaseLoginView(View):
@@ -21,7 +22,7 @@ class FirebaseLoginView(View):
                 return JsonResponse({'error': 'ID token is required'}, status=400)
             
             # Verify Firebase token
-            decoded_token = verify_firebase_token(id_token)
+            decoded_token = settings.verify_firebase_token(id_token)
             if not decoded_token:
                 return JsonResponse({'error': 'Invalid token'}, status=401)
             
@@ -35,7 +36,7 @@ class FirebaseLoginView(View):
                 }, status=400)
             
             # Get or create user
-            user, created = CustomUser.objects.get_or_create(
+            user, created = FirebaseAuthUser.objects.get_or_create(
                 firebase_uid=firebase_uid,
                 defaults={
                     'email': email,
