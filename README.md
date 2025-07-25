@@ -121,6 +121,17 @@ This health check endpoint can be useful for monitoring the status of the backen
 nohup ./crawling.sh > crawling.log 2>&1 &
 ```
 
+## DB backup command
+In dev_db container, execute command below to create backup sql file.
+```
+pg_dump -U postgres -d django_project_db -b -v -f /home/backup_db_[yyyymmdd]_[hhmm].sql
+```
+In local terminal, outside the docker container, execute command below to copy the backup file from the container to local directory.
+```
+sudo docker cp dev_db:/home/backup_db_[날짜]_[시간].sql /home/kucode/backup/DB/
+```
+
+
 ## 기여 가이드라인
 **이 프로젝트에 기여를 하고자 한다면 
 [기여 가이드라인](.github/CONTRIBUTING.md) 을 읽어보시기를 바랍니다.**
