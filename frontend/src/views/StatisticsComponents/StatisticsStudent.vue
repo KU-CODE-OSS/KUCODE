@@ -60,11 +60,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
+                      <th>개설학기</th>
                       <th>학수번호</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
+                        <td :title="item.yearandsemester">{{ item.yearandsemester }}</td>
                         <td :title="item.course_id">{{ item.course_id}}</td>
                         <td :title="item.students">{{ item.students }}</td>
                       </tr>
@@ -77,11 +79,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
+                      <th>개설학기</th>
                       <th>학수번호</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
+                        <td :title="item.yearandsemester">{{ item.yearandsemester }}</td>
                         <td :title="item.course_id">{{ item.course_id }}</td>
                         <td :title="item.students">{{ item.num_repos }}</td>
                       </tr>
@@ -95,11 +99,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
+                      <th>개설학기</th>
                       <th>학수번호</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
+                        <td :title="item.yearandsemester">{{ item.yearandsemester }}</td>
                         <td :title="item.course_id">{{ item.course_id }}</td>
                         <td :title="item.commit">{{ item.commit }}</td>
                       </tr>
@@ -112,11 +118,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
+                      <th>개설학기</th>
                       <th>학수번호</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
+                        <td :title="item.yearandsemester">{{ item.yearandsemester }}</td>
                         <td :title="item.course_id">{{ item.course_id }}</td>
                         <td :title="item.issue">{{ item.issue }}</td>
                       </tr>
@@ -130,11 +138,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
+                      <th>개설학기</th>
                       <th>학수번호</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
+                        <td :title="item.yearandsemester">{{ item.yearandsemester }}</td>
                         <td :title="item.course_id">{{ item.course_id }}</td>
                         <td :title="item.pr">{{ item.pr }}</td>
                       </tr>
@@ -147,11 +157,13 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
+                      <th>개설학기</th>
                       <th>학수번호</th>
                       <th>합계</th>
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
+                        <td :title="item.yearandsemester">{{ item.yearandsemester }}</td>
                         <td :title="item.course_id">{{ item.course_id }}</td>
                         <td :title="item.issue">{{ item.issue }}</td>
                       </tr>
@@ -167,7 +179,8 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학수번호</th>
+                      <th width="120px">개설학기</th>
+                      <th width="140px">학수번호</th>
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
@@ -177,7 +190,8 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.course_id">{{ item.course_id }}</td>
+                        <td width="120px" :title="item.yearandsemester">{{ item.yearandsemester }}</td>
+                        <td width="140px" :title="item.course_id">{{ item.course_id }}</td>
                         <td width="58px" :title="item.num_repos_q1">{{ item.num_repos_q1 }}</td>
                         <td width="58px" :title="item.num_repos_q2">{{ item.num_repos_q2 }}</td>
                         <td width="58px" :title="item.num_repos_q3">{{ item.num_repos_q3 }}</td>
@@ -194,7 +208,8 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학수번호</th>
+                      <th width="120px">개설학기</th>
+                      <th width="140px">학수번호</th>
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
@@ -204,7 +219,8 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.course_id">{{ item.course_id }}</td>
+                        <td width="120px" :title="item.yearandsemester">{{ item.yearandsemester }}</td>
+                        <td width="140px" :title="item.course_id">{{ item.course_id }}</td>
                         <td width="58px" :title="item.commit_q1">{{ item.commit_q1 }}</td>
                         <td width="58px" :title="item.commit_q2">{{ item.commit_q2 }}</td>
                         <td width="58px" :title="item.commit_q3">{{ item.commit_q3 }}</td>
@@ -222,7 +238,8 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학수번호</th>
+                      <th width="120px">개설학기</th>
+                      <th width="140px">학수번호</th>
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
@@ -232,7 +249,8 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.course_id">{{ item.course_id }}</td>
+                        <td width="120px" :title="item.yearandsemester">{{ item.yearandsemester }}</td>
+                        <td width="140px" :title="item.course_id">{{ item.course_id }}</td>
                         <td width="58px" :title="item.issue_q1">{{ item.issue_q1 }}</td>
                         <td width="58px" :title="item.issue_q2">{{ item.issue_q2 }}</td>
                         <td width="58px" :title="item.issue_q3">{{ item.issue_q3 }}</td>
@@ -249,7 +267,8 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학수번호</th>
+                      <th width="120px">개설학기</th>
+                      <th width="140px">학수번호</th>
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
@@ -259,7 +278,8 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.course_id">{{ item.course_id }}</td>
+                        <td width="120px" :title="item.yearandsemester">{{ item.yearandsemester }}</td>
+                        <td width="140px" :title="item.course_id">{{ item.course_id }}</td>
                         <td width="58px" :title="item.pr_q1">{{ item.pr_q1 }}</td>
                         <td width="58px" :title="item.pr_q2">{{ item.pr_q2 }}</td>
                         <td width="58px" :title="item.pr_q3">{{ item.pr_q3 }}</td>
@@ -277,7 +297,8 @@
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
-                      <th width="203px">학수번호</th>
+                      <th width="120px">개설학기</th>
+                      <th width="140px">학수번호</th>
                       <th width="58px">25%</th>
                       <th width="58px">50%</th>
                       <th width="58px">75%</th>
@@ -287,7 +308,8 @@
                     </thead>
                     <tbody class="table-body-wrapper">
                       <tr v-for="(item, index) in posts" :key="item[0]">
-                        <td width="203px" :title="item.course_id">{{ item.course_id }}</td>
+                        <td width="120px" :title="item.yearandsemester">{{ item.yearandsemester }}</td>
+                        <td width="140px" :title="item.course_id">{{ item.course_id }}</td>
                         <td width="58px" :title="item.star_q1">{{ item.star_q1 }}</td>
                         <td width="58px" :title="item.star_q2">{{ item.star_q2 }}</td>
                         <td width="58px" :title="item.star_q3">{{ item.star_q3 }}</td>
@@ -299,6 +321,29 @@
                   </table>
                 </div>
               </div>
+              <div class="sub-table-right"> <!-- 여기 수정하면 됨 -->
+          <div class="title">학기별 학생 활동</div>
+          <div class="sub-table">
+          <table>
+          <thead class="table-header-wrapper">
+          <th width="120px">개설학기</th>
+          <th width="100px">총 학생</th>
+          <th width="100px">평균 레포</th>
+          <th width="100px">평균 커밋</th>
+          <th width="100px">평균 기여</th>
+          </thead>
+          <tbody class="table-body-wrapper">
+          <tr v-for="(item, index) in totalStatsPosts" :key="index">
+          <td width="120px" :title="item.yearandsemester">{{ item.yearandsemester }}</td>
+          <td width="100px" :title="item.total_student_counts_in_semester">{{ item.total_student_counts_in_semester }}</td>
+          <td width="100px" :title="item.avg_repository_count">{{ Number(item.avg_repository_count).toFixed(2) }}</td>
+          <td width="100px" :title="item.avg_commits">{{ Number(item.avg_commits).toFixed(2) }}</td>
+          <td width="100px" :title="item.avg_contributors">{{ Number(item.avg_contributors).toFixed(2) }}</td>
+          </tr>
+          </tbody>
+          </table>
+          </div>
+          </div>
             </div>
           </transition>
         </div>
@@ -422,7 +467,7 @@ import * as XLSX from 'xlsx';
 
 export default {
   name: 'StatisticsStudent',
-  props: ["course"],
+  props: ["course", "totalStats"],
   components: {
     StudentGroupBarCharts,
     StudentGroupBoxCharts,
@@ -435,6 +480,7 @@ export default {
       selectedFile: null,
       pannelLoading: false,
       posts: [],
+      totalStatsPosts: [],
       currentPage: 1,
       postsPerPage: 10,
       header: [['개설학기', '9%'],
@@ -581,10 +627,14 @@ export default {
   },
   mounted() {
     this.posts = this.course;
+    this.totalStatsPosts = this.totalStats || [];
   },
   watch: {
     course(to, from) {
       this.posts = this.course;
+    },
+    totalStats(to, from) {
+      this.totalStatsPosts = to || [];
     },
   },
 };
