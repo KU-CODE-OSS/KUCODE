@@ -399,7 +399,7 @@
       <div class="title">
         {{ titles }}
       </div>
-      <StatisticsStudent v-show="$route.path === '/statistics/students'" :course="studentFilteredPosts">
+      <StatisticsStudent v-show="$route.path === '/statistics/students'" :course="studentFilteredPosts" :totalStats="totalStatsFilteredBySemester">
       </StatisticsStudent>
       <StatisticsCourse v-show="$route.path === '/statistics/course'" :course="courseFilteredPosts"></StatisticsCourse>
       <StatisticsDepartment v-show="$route.path === '/statistics/department'" :course="departmentFilteredPosts">
@@ -443,6 +443,10 @@ export default {
       selectedSemesterItemsforStudent: [],
       selectedCourseNameItemsforStudent: [],
       selectedCourseIDItemsforStudents: [],
+      
+      // 전체 통계 (semester별) data
+      totalStatsBySemester: [],
+      totalStatsFilteredBySemester: [],
 
       // 과목별 data
       coursePosts: [],
@@ -505,8 +509,8 @@ export default {
       // 전체통계
       if (this.studentPosts.length === 0) {
         getCourseReadMinMaxAvg().then(res => {
-          this.studentPosts = res.data
-          this.studentPosts = this.coursePreprocessingTableData(this.studentPosts)
+          // 기존 group_stats 처리
+          this.studentPosts = this.coursePreprocessingTableData(res.data)
           this.studentFilteredPosts = this.studentPosts
           this.studentFiltering(this.studentPosts)
           this.studentFilteredPostsforYear = this.studentPosts
@@ -514,14 +518,19 @@ export default {
           this.studentFilteredPostsforCourseName = this.studentPosts
           this.studentFilteredPostsforCourseID = this.studentPosts
           this.studentPosts = this.yearSort(this.studentPosts)
+          
+          // 새로운 total_stats_by_semester 처리
+          if (res.data.total_stats_by_semester) {
+            this.totalStatsBySemester = this.totalStatsPreprocessingTableData(res.data.total_stats_by_semester)
+            this.totalStatsFilteredBySemester = this.totalStatsBySemester
+          }
         })
       }
 
       // 과목통계
       if (this.coursePosts.length === 0) {
         getCourseReadMinMaxAvg().then(res => {
-          this.coursePosts = res.data
-          this.coursePosts = this.coursePreprocessingTableData(this.coursePosts)
+          this.coursePosts = this.coursePreprocessingTableData(res.data)
           this.courseFilteredPosts = []
           this.courseFiltering(this.coursePosts)
           this.courseFilteredPostsforCourseName = this.coursePosts
@@ -542,6 +551,7 @@ export default {
         })
       }
     },
+
 
     // 공용
     yearbtnclick() {
@@ -671,8 +681,41 @@ export default {
         return li;
     },
 
-
-
+    // 전체 통계 (semester별) 전처리 
+    totalStatsPreprocessingTableData(totalStatsArray) {
+        var li = []
+        totalStatsArray.forEach(semesterStat => {
+            var parsedData = new Object()
+            
+            // year 값 체크
+            if (semesterStat.year === '' || !semesterStat.year) {
+                parsedData.year = '-1';
+            } else {
+                parsedData.year = semesterStat.year;
+            }
+            parsedData.semester = semesterStat.semester;
+            parsedData.yearandsemester = semesterStat.year + '-' + semesterStat.semester;
+            
+            // 평균 정보
+            parsedData.avg_repository_count = semesterStat.avg_repository_count || 0;
+            parsedData.avg_commits = semesterStat.avg_commits || 0;
+            parsedData.avg_stars = semesterStat.avg_stars || 0;
+            parsedData.avg_contributors = semesterStat.avg_contributors || 0;
+            
+            // 전체 정보
+            parsedData.total_courses_in_semester = semesterStat.total_courses_in_semester || 0;
+            parsedData.total_student_counts_in_semester = semesterStat.total_student_counts_in_semester || 0;
+            parsedData.total_repository_counts_in_semester = semesterStat.total_repository_counts_in_semester || 0;
+            parsedData.total_commits_in_semester = semesterStat.total_commits_in_semester || 0;
+            parsedData.total_stars_in_semester = semesterStat.total_stars_in_semester || 0;
+            parsedData.total_contributors_in_semester = semesterStat.total_contributors_in_semester || 0;
+            
+            li.push(parsedData);
+        });
+        console.log("totalStatsPreprocessingTableData", li);
+        
+        return li;
+    },
 
     // 학과용 전처리
     departmentPreprocessingTableData(datalist) {
@@ -916,6 +959,9 @@ export default {
         this.studentFilteredPostsforYear = this.studentPosts.filter(item => this.selectedYearItemsforStudent.includes(item.year));
       }
       this.studentFilteredPosts = this.combineFilterDataforStudent()
+      
+      // totalStatsBySemester 필터링
+      this.filterTotalStatsByYearAndSemester()
     },
     semesterFilterEventChangeforStudent(item, event) {
       if (this.selectedSemesterItemsforStudent.length === 0) {
@@ -924,6 +970,9 @@ export default {
         this.studentFilteredPostsforSemester = this.studentPosts.filter(item => this.selectedSemesterItemsforStudent.includes(item.semester));
       }
       this.studentFilteredPosts = this.combineFilterDataforStudent()
+      
+      // totalStatsBySemester 필터링
+      this.filterTotalStatsByYearAndSemester()
     },
     courseNameFilterEventChangeforStudent(item, event) {
       if (this.selectedCourseNameItemsforStudent.length === 0) {
@@ -955,6 +1004,26 @@ export default {
       this.studentFilteredPostsforCourseName = this.studentPosts
       this.studentFilteredPostsforCourseID = this.studentPosts
       this.studentFilteredPosts = this.studentPosts
+      
+      // totalStatsBySemester 리셋
+      this.totalStatsFilteredBySemester = this.totalStatsBySemester
+    },
+
+    // totalStatsBySemester 필터링 함수
+    filterTotalStatsByYearAndSemester() {
+      let filtered = this.totalStatsBySemester;
+      
+      // 연도 필터링
+      if (this.selectedYearItemsforStudent.length > 0) {
+        filtered = filtered.filter(item => this.selectedYearItemsforStudent.includes(item.year));
+      }
+      
+      // 학기 필터링  
+      if (this.selectedSemesterItemsforStudent.length > 0) {
+        filtered = filtered.filter(item => this.selectedSemesterItemsforStudent.includes(item.semester));
+      }
+      
+      this.totalStatsFilteredBySemester = filtered;
     },
 
     //////////////////
