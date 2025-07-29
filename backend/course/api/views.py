@@ -580,7 +580,16 @@ def course_read_min_max_avg(request):
         # 그룹별 통계 계산 및 데이터 결합
         merged_stats = []
 
-        all_commits = []  # 전체 commit 숫자를 저장할 배열
+        # total_stat을 저장할 딕셔너리, (year, semester)를 키로 사용
+        # 각 학기별 전체 통계를 저장합니다.
+        total_stats_by_semester = defaultdict(lambda: {
+            "total_student_count_sum": 0,
+            "total_repository_count_sum": 0,
+            "total_commits_sum": 0,
+            "total_stars_sum": 0,
+            "total_contributors_sum": 0,
+            "course_count_in_semester": 0 # 해당 학기의 총 강좌 수
+        })
 
         for (course_id, year, semester), course_items in course_grouped_data.items():
             
@@ -670,9 +679,55 @@ def course_read_min_max_avg(request):
 
             merged_stats.append(course_stat)
 
+            # total_stat 집계
+            semester_key = (year, semester)
+            total_stats_by_semester[semester_key]["total_student_count_sum"] += course_info["student_count"]
+            total_stats_by_semester[semester_key]["total_repository_count_sum"] += course_info["repository_count"]
+            total_stats_by_semester[semester_key]["total_commits_sum"] += course_info["total_commits"]
+            total_stats_by_semester[semester_key]["total_stars_sum"] += course_info["total_stars"]
+            total_stats_by_semester[semester_key]["total_contributors_sum"] += course_info["contributor_count"]
+            total_stats_by_semester[semester_key]["course_count_in_semester"] += 1
+
+        # total_stat 최종 계산 및 포맷팅
+        final_total_stats = []
+        for (year, semester), stats_sums in total_stats_by_semester.items():
+            num_courses = stats_sums["course_count_in_semester"]
+            num_students = stats_sums["total_student_count_sum"]
+            if num_courses > 0:
+                final_total_stats.append({
+                    "year": year,
+                    "semester": semester,
+                    "avg_repository_count": round(stats_sums["total_repository_count_sum"] / num_students, 2),
+                    "avg_commits": round(stats_sums["total_commits_sum"] / num_students, 2),
+                    "avg_stars": round(stats_sums["total_stars_sum"] / num_students, 2),
+                    "avg_contributors": round(stats_sums["total_contributors_sum"] / num_students, 2),
+                    "total_courses_in_semester": num_courses,
+                    "total_student_counts_in_semester": num_students,
+                    "total_repository_counts_in_semester": stats_sums["total_repository_count_sum"],
+                    "total_commits_in_semester": stats_sums["total_commits_sum"],
+                    "total_stars_in_semester": stats_sums["total_stars_sum"],
+                    "total_contributors_in_semester": stats_sums["total_contributors_sum"]
+                })
+            else:
+                final_total_stats.append({ # 코스가 없을 경우 0으로 처리
+                    "year": year,
+                    "semester": semester,
+                    "avg_repository_count": 0,
+                    "avg_commits": 0,
+                    "avg_stars": 0,
+                    "avg_contributors": 0,
+                    "total_courses_in_semester": 0,
+                    "total_student_counts_in_semester": 0,
+                    "total_repository_counts_in_semester": 0,
+                    "total_commits_in_semester": 0,
+                    "total_stars_in_semester": 0,
+                    "total_contributors_in_semester": 0
+                })
+
         # 최종 결과 반환
         return JsonResponse({
-            "group_stats": merged_stats
+            "group_stats": merged_stats,
+            "total_stats_by_semester": final_total_stats
         }, safe=False)
 
     except Exception as e:
