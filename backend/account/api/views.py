@@ -174,8 +174,18 @@ def student_excel_import(request):
 
             
             # Check if the student already exists
+            # if Student.objects.filter(id=row[0]).exists():
+            #     print(f"Student with id {row[0]} already exists")
+            # github id가 null인 채로 DB에 학생 정보가 저장되는 경우가 있어서 아래 코드로 수정
+
+            # github id가 None 혹은 ''인데 학생정보가 db에 있는 경우 github id를 업데이트
             if Student.objects.filter(id=row[0]).exists():
                 print(f"Student with id {row[0]} already exists")
+                student = Student.objects.get(id=row[0])
+                if not student.github_id and row[2]:
+                    student.github_id = row[2]
+                    student.save()
+                    print(f"Student with id {row[0]} github_id has been updated!")
             
             else:
                 # print student details for debugging
