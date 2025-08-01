@@ -27,10 +27,13 @@ class HealthCheckAPIView(APIView):
 # ========================================
 # ------------Repo--------------#
 def sync_repo_db(request):
+    # Exception handling block for the entire process
     try:
+        # 1. Fetch all student information from the database.
         students = Student.objects.all()
         students_list = [{'id': student.id, 'github_id': student.github_id} for student in students]
 
+        # 2. Initialize counters and lists to track synchronization results.
         total_student_count = len(students_list)
         student_count = 0
 
@@ -42,12 +45,14 @@ def sync_repo_db(request):
         failure_repo_count = 0
         failure_repo_details = []
 
+        # 3. Start the synchronization process for each student.
         for student in students_list:
             student_count += 1
             print(f'\n{"="*10} [{student_count}/{total_student_count}] Processing GitHub user: {student["github_id"]} {"="*10}')
             id = student['id']
             github_id = student['github_id']
             
+            # 4. Fetch the latest repository list for the student from the FastAPI endpoint.
             response = requests.get(f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/user/repos", params={'github_id': github_id})
             if response.status_code != 200:
                 message = f"Failed to fetch repositories for GitHub user {github_id}"
@@ -57,6 +62,7 @@ def sync_repo_db(request):
                 continue
             
             data = response.json()
+            # Handle error if the API response format is not a list
             if not isinstance(data, list):
                 message = f"Invalid response format for repositories of GitHub user {github_id}"
                 print(f"[ERROR] {message}")
@@ -68,26 +74,32 @@ def sync_repo_db(request):
             repo_list = [{'id': repo['id'], 'name': repo['name']} for repo in data]
 
             
-            # Compare with the list of repositories stored in the current DB
+            # 5. Compare the list of repositories stored in the DB with the list from the API to find repositories to delete.
+            # List of repository IDs currently in the database
             repos_in_db = Repository.objects.filter(owner_github_id=github_id).values_list('id', flat=True)
-            repos_in_db_sorted = sorted(repos_in_db)  # Sort the DB repository IDs in ascending order
+            repos_in_db_sorted = sorted(repos_in_db) 
             print("-"*5 + f"\nDB: {repos_in_db_sorted}")
 
-            repo_ids_in_list = sorted([str(repo['id']) for repo in repo_list])  # Sort the list of IDs in ascending order
+            # List of the latest repository IDs from FastAPI
+            repo_ids_in_list = sorted([str(repo['id']) for repo in repo_list])
             print("-"*5 + f"\nFASTAPI: {repo_ids_in_list}")
 
+            # Repositories that are in the DB but not in the FastAPI list (targets for deletion)
             missing_in_fastapi = set(repos_in_db) - set(repo_ids_in_list)
 
-            if missing_in_fastapi:  # Check if the set is not empty
+            if missing_in_fastapi:
                 print("-"*5 + f"\n Need to Remove: {missing_in_fastapi}\n"+"-"*5)
             else:
                 print("-"*5 + f"\n No repositories need to be removed.\n"+"-"*5)
 
+            # 6. Iterate through repositories that need to be deleted and call the delete function.
             for repo_id in repos_in_db:
                 if repo_id not in repo_ids_in_list:
+                    # Deletes the repository along with all linked child data (commits, issues, etc.)
                     remove_repository(github_id, Repository(id=repo_id))
                     print(f" Repository {repo_id} removed for GitHub ID: {github_id}\n"+"-"*5)
 
+            # 7. Process each repository's information received from the API.
             repo_count = 0
             for repo in repo_list:
                 repo_name = repo['name']
@@ -95,6 +107,7 @@ def sync_repo_db(request):
                 repo_count += 1
                 print(f"  [{repo_count}/{total_repo_count}] Processing repository: {repo_name} (ID: {repo_id})")
                 
+                # 7-1. Fetch detailed data for the individual repository.
                 repo_response = requests.get(f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos", params={'github_id': github_id, 'repo_id': repo_id})
                 if repo_response.status_code != 200:
                     message = f"Failed to fetch data for repo {repo_id} of GitHub user {github_id}"
@@ -106,6 +119,7 @@ def sync_repo_db(request):
                 repo_data = repo_response.json()
                 try:
                     print(f"  {github_id}/{repo_name}: {repo_data}")
+                    # 7-2. Use `update_or_create` to create or update repository information in the database.
                     repository_record, created = Repository.objects.update_or_create(
                         owner_github_id=github_id,
                         id=repo_id,
@@ -142,14 +156,17 @@ def sync_repo_db(request):
                     success_repo_count += 1
 
                 except Exception as e:
+                    # Log an error if one occurs while processing a repository
                     message = f"Error processing repository {repo_name} (ID: {repo_id}) for GitHub user {github_id}: {str(e)}"
                     print(f"[ERROR] {message}")
                     failure_repo_count += 1
                     failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
 
-            # account_student -> star_count 
+            # 8. Calculate the total star count for all of the student's repositories and update the student's record.
+            # Calculate the sum of `star_count` for all repositories of the student.
             total_star_count = Repository.objects.filter(owner_github_id=github_id).aggregate(total_star_count=Sum('star_count'))['total_star_count'] or 0
             student_record = Student.objects.get(id=id)
+            # Update the `starred_count` field of the Student model.
             student_record.starred_count = total_star_count
             student_record.save()
 
@@ -157,6 +174,7 @@ def sync_repo_db(request):
             success_student_count += 1
             print(f'{"-"*5} Processed GitHub user: {github_id} {"-"*5}')
 
+        # 9. Return a summary of the operation in JSON format.
         return JsonResponse({
             "status": "OK",
             "message": "Repositories updated successfully",
@@ -169,78 +187,49 @@ def sync_repo_db(request):
         })
 
     except Exception as e:
+        # Handle unexpected errors during the entire process
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # ---------------------------------------------
 
 # ------------DELETE--------------#
 def remove_repository(github_id, repository):
+
+    # 1. First, check if linked to a Course_project
+    if Course_project.objects.filter(repo=repository.id).exists():
+        print(f"  [Skipped] Repo ID {repository.id} ('{repository.name}') is part of a Course_project and will not be deleted.")
+        return {
+            "status": "Skipped",
+            "message": f"Repository '{repository.name}' is part of a course project and was not deleted."
+        }
+
+    # Deletion logic proceeds only if not linked to a Course_project
     try:
-        # Related Course_project deletion
-        try:
-            course_project = Course_project.objects.get(repo=repository.id)
-            course_project.delete()
-            print(f"  Deleted associated course project for repo ID: {repository.id}")
-        except Course_project.DoesNotExist:
-            print(f"  Already been deleted or does not exist: {repository.id}")
+        # 2. Delete all related child data (more concisely)
+        deleted_contributors, _ = Repo_contributor.objects.filter(repo=repository.id).delete()
+        print(f"  Deleted {deleted_contributors} contributor(s) for repo ID: {repository.id}")
 
-        # Related repositories contributor, issue, PR, and commit deletion
-        # Contributor deletion
-        try:
-            contributors = Repo_contributor.objects.filter(repo=repository.id)
-            if contributors.exists():
-                contributors.delete()
-                print(f"  Deleted all contributors for repo ID: {repository.id}")
-            else:
-                print(f"  Already been deleted or does not exist: {repository.id}")
-        except Exception as e:
-            print(f"  Error deleting contributors for repo ID: {repository.id}: {str(e)}")
+        deleted_issues, _ = Repo_issue.objects.filter(repo=repository.id).delete()
+        print(f"  Deleted {deleted_issues} issue(s) for repo ID: {repository.id}")
 
-        # Issue deletion
-        try:
-            issues = Repo_issue.objects.filter(repo=repository.id)
-            if issues.exists():
-                issues.delete()
-                print(f"  Deleted all issues for repo ID: {repository.id}")
-            else:
-                print(f"  Already been deleted or does not exist: {repository.id}")
-        except Exception as e:
-            print(f"  Error deleting issues for repo ID: {repository.id}: {str(e)}")
+        deleted_prs, _ = Repo_pr.objects.filter(repo=repository.id).delete()
+        print(f"  Deleted {deleted_prs} pull request(s) for repo ID: {repository.id}")
 
-        # PR deletion
-        try:
-            prs = Repo_pr.objects.filter(repo=repository.id)
-            if prs.exists():
-                prs.delete()
-                print(f"  Deleted all pull requests for repo ID: {repository.id}")
-            else:
-                print(f"  Already been deleted or does not exist: {repository.id}")
-        except Exception as e:
-            print(f"  Error deleting pull requests for repo ID: {repository.id}: {str(e)}")
+        deleted_commits, _ = Repo_commit.objects.filter(repo=repository.id).delete()
+        print(f"  Deleted {deleted_commits} commit(s) for repo ID: {repository.id}")
 
-        # Commit deletion
-        try:
-            commits = Repo_commit.objects.filter(repo=repository.id)
-            if commits.exists():
-                commits.delete()
-                print(f"  Deleted all commits for repo ID: {repository.id}")
-            else:
-                print(f"  Already been deleted or does not exist: {repository.id}")
-        except Exception as e:
-            print(f"  Error deleting commits for repo ID: {repository.id}: {str(e)}")
-
-        # Repository deletion
+        # 3. Finally, delete the Repository object itself
         try:
             repository_obj = Repository.objects.get(owner_github_id=github_id, id=repository.id)
-            repo_name = repository_obj.name  # Access the name attribute safely
+            repo_name = repository_obj.name
             repository_obj.delete()
-            print(f"  The repo {repo_name} has been deleted successfully for GitHub user {github_id}")
+            print(f"  [Success] The repo '{repo_name}' (ID: {repository.id}) has been deleted successfully for GitHub user {github_id}")
             return {"status": "OK", "message": "The repo has been deleted successfully"}
         except Repository.DoesNotExist:
-            print(f"  Repo with ID '{repository.id}' does not exist for GitHub user {github_id}")
+            print(f"  [Error] Repo with ID '{repository.id}' does not exist for GitHub user {github_id}")
             return {"status": "Error", "message": f"Repo with ID '{repository.id}' does not exist"}
 
     except Exception as e:
-        print(f"  Error deleting repo with ID '{repository.id}' for GitHub user {github_id}: {str(e)}")
+        print(f"  [Fatal Error] An unexpected error occurred while deleting repo ID '{repository.id}' for user {github_id}: {str(e)}")
         return {"status": "Error", "message": str(e)}
 
 # ---------------------------------------------
@@ -248,231 +237,243 @@ def remove_repository(github_id, repository):
 # ------------REPO READ--------------#
 def repo_read_db(request):
     try:
+        # 1. Fetch all Repository objects and initialize the data list.
         repo_list = Repository.objects.all()
-        data =[]
+        data = []
+
+        # 2. Iterate through each repository to compile its detailed information.
         for r in repo_list:
             
-            student = Student.objects.get(github_id = r.owner_github_id)
+            # 2a. Fetch related data: owner, PR count, and contributors.
+            student = Student.objects.get(github_id=r.owner_github_id)
             pr_count = Repo_pr.objects.filter(repo=r).count()
             contributors_list = r.contributors.split(",")
             contributors_count = len(contributors_list)
 
-            if all(value.strip() == '' for value in contributors_list): # contributors 없을 시
-                contributors_count = 0  
+            # 2b. Process the list of contributors.
+            if all(value.strip() == '' for value in contributors_list):
+                # Handle cases where the contributors string is empty.
+                contributors_count = 0
                 contributors_total_info = []
-
-            else :
+            else:
+                # If contributors exist, look up details for each one.
                 contributors_total_info = []
-                
-                for specific_contributor in contributors_list :
+                for specific_contributor in contributors_list:
                     contributor_student_info = []
                     specific_contributor_trim = str(specific_contributor).strip()
                     try:
-                        contributor_student = Student.objects.get(github_id = specific_contributor_trim)
-                        contributor_student_info.append(contributor_student.name) 
-                        contributor_student_info.append(contributor_student.department)
-                        contributor_student_info.append(contributor_student.id)   
-                        contributor_student_info.append(contributor_student.github_id)                
+                        # Find the contributor in the Student table.
+                        contributor_student = Student.objects.get(github_id=specific_contributor_trim)
+                        contributor_student_info.extend([
+                            contributor_student.name,
+                            contributor_student.department,
+                            contributor_student.id,
+                            contributor_student.github_id
+                        ])
                     except ObjectDoesNotExist:
-                        contributor_student_info.append('-')   
-                        contributor_student_info.append('-') 
-                        contributor_student_info.append('-')
-                        contributor_student_info.append(specific_contributor_trim)  
-
+                        # If the contributor is not found, use placeholders.
+                        contributor_student_info.extend(['-', '-', '-', specific_contributor_trim])
+                    
                     contributors_total_info.append(contributor_student_info)
                 
-                # Separate contributors with '-' from those without
-                contributors_without_dash = [info for info in contributors_total_info if '-' not in info[0]]  # Sort by name (index 0)
+                # 2c. Sort the processed contributors list.
+                # Separate registered users (found in DB) from unregistered ones.
+                contributors_without_dash = [info for info in contributors_total_info if '-' not in info[0]]
                 contributors_with_dash = [info for info in contributors_total_info if '-' in info[0]]
 
-                # Sort contributors_without_dash by name (ascending order)
+                # Sort the registered contributors by name (ascending).
                 contributors_without_dash.sort(key=lambda x: x[0])
 
-                # Concatenate sorted lists, placing contributors with '-' at the end
-                contributors_total_info = contributors_without_dash 
+                # NOTE: This line overwrites the list, effectively discarding unregistered contributors
+                # (contributors_with_dash) from the final output for this repository.
+                contributors_total_info = contributors_without_dash
             
+            # 2d. Assemble the final dictionary for the repository.
             repo_info = {
-            'id': r.id,
-            'name': r.name,
-            'url': r.url,
-            'student_id': student.id,
-            'owner_github_id': r.owner_github_id,
-            'created_at': r.created_at,
-            'updated_at': r.updated_at,
-            'fork_count': r.fork_count,
-            'star_count': r.star_count,
-            'commit_count': r.commit_count,
-            'total_issue_count': int(r.open_issue_count) + int(r.closed_issue_count),
-            "pr_count":pr_count,
-            'language': r.language,
-            'contributors': contributors_count,
-            'contributors_list': contributors_total_info,
-            'license': r.license,
-            'has_readme': r.has_readme,
-            'description': r.description,
-            'release_version': r.release_version
+                'id': r.id,
+                'name': r.name,
+                'url': r.url,
+                'student_id': student.id,
+                'owner_github_id': r.owner_github_id,
+                'created_at': r.created_at,
+                'updated_at': r.updated_at,
+                'fork_count': r.fork_count,
+                'star_count': r.star_count,
+                'commit_count': r.commit_count,
+                'total_issue_count': int(r.open_issue_count) + int(r.closed_issue_count),
+                "pr_count": pr_count,
+                'language': r.language,
+                'contributors': contributors_count,
+                'contributors_list': contributors_total_info,
+                'license': r.license,
+                'has_readme': r.has_readme,
+                'description': r.description,
+                'release_version': r.release_version
             }
             
             data.append(repo_info)
-   
+    
+        # 3. Return the complete list as a JSON response.
         return JsonResponse(data, safe=False)
-     
+    
+    # Global exception handler for the entire process.
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # ---------------------------------------------
 
 # ------------CONTRIBUTOR--------------#
 def sync_repo_contributor_db(request):
+    # 1. Initialization
+    # Initialize counters and lists to track the outcome of the sync process.
+    success_repo_count = 0
+    failure_repo_count = 0
+    failure_repo_details = []
+
     try:
-        # Fetch all repository names and associated GitHub IDs
+        # 2. Fetch all repositories from the database.
         repositories = Repository.objects.all()
         repo_list = [{'id': repo.id, 'name': repo.name, 'github_id': repo.owner_github_id} for repo in repositories]
-        repo_ids = [repo['id'] for repo in repo_list]
-
         total_repo_count = len(repo_list)
-        repo_count = 0
-        success_repo_count = 0
-        failure_repo_count = 0
-        failure_repo_details = []
 
-        # Track processed repository IDs to identify deletions later
-        processed_repo_ids = set()
-
-        # Process each repository
-        for repo in repo_list:
-            repo_count += 1
-            print(f'\n{"="*10} [{repo_count}/{total_repo_count}] Processing repo: {repo["name"]} (GitHub ID: {repo["github_id"]}) {"="*10}')
-            
+        # 3. Iterate through each repository to sync its contributors.
+        for i, repo in enumerate(repo_list, 1):
             repo_id = repo['id']
             repo_name = repo['name']
             github_id = repo['github_id']
-            processed_repo_ids.add(repo_id)
+            print(f'\n{"="*10} [{i}/{total_repo_count}] Syncing contributors for repo: {repo_name} {"="*10}')
+            
+            # Use a try-except block for each repo to prevent one failure from stopping the entire process.
+            try:
+                # 3a. Fetch contributor data for the repository from the API.
+                response = requests.get(
+                    f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/contributor",
+                    params={'github_id': github_id, 'repo_name': repo_name}
+                )
+                response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
+                contributor_data = response.json()
 
-            # Fetch contributor data for the repository
-            response = requests.get(f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/contributor", params={'github_id': github_id, 'repo_name': repo_name})
-            contributor_data = response.json()
+                if not isinstance(contributor_data, list):
+                    raise ValueError("Invalid response format: API did not return a list.")
 
-            if not isinstance(contributor_data, list):
-                message = f"[ERROR] Invalid response format or empty repository: {repo_name} (GitHub ID: {github_id})"
-                print(message)
-                failure_repo_count += 1
-                failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
-                continue
+                # 3b. Clear existing contributors for this repo to ensure a true synchronization.
+                # This step is crucial for removing contributors who are no longer part of the project.
+                deleted_count, _ = Repo_contributor.objects.filter(repo_id=repo_id).delete()
+                if deleted_count > 0:
+                    print(f"  Cleared {deleted_count} old contributor record(s) for repo {repo_name}.")
 
-            total_contributor_count = len(contributor_data)
-            contributor_count = 0
-
-            # Process each contributor
-            for contributor in contributor_data:
-                contributor_count += 1
-                print(f'  [{contributor_count}/{total_contributor_count}] Processing contributor: {contributor.get("login")}')
-                
-                try:
-                    repo_contributor, created = Repo_contributor.objects.update_or_create(
-                        owner_github_id=github_id,
+                # 3c. Process and save each contributor from the API response.
+                for contributor in contributor_data:
+                    # `update_or_create` finds a record using the unique keys (repo_id, contributor_id).
+                    # If it exists, it's updated with `defaults`. If not, it's created.
+                    _, created = Repo_contributor.objects.update_or_create(
                         repo_id=repo_id,
                         contributor_id=contributor.get('login'),
                         defaults={
-                            'contributor_id': contributor.get('login'),
+                            'owner_github_id': github_id,
                             'contribution_count': contributor.get('contributions'),
                             'repo_url': contributor.get('repo_url')
                         }
                     )
-                    
-                    action = "Created" if created else "Updated"
-                    print(f"  [SUCCESS] {action} repo contributor for repo {repo_name} (GitHub ID: {github_id})")
+                
+                print(f'  [SUCCESS] Synced {len(contributor_data)} contributor(s) for repo: {repo_name}.')
+                success_repo_count += 1
 
-                except Exception as e:
-                    message = f"[ERROR] Error processing contributor for {repo_name} (GitHub ID: {github_id}): {str(e)}"
-                    print(message)
-                    failure_repo_count += 1
-                    failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
-                    continue
+            except Exception as e:
+                # Log the error for the specific repository and continue with the next one.
+                message = f"Failed to process repo {repo_name} (ID: {repo_id}): {str(e)}"
+                print(f"  [ERROR] {message}")
+                failure_repo_count += 1
+                failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
+                continue
 
-            success_repo_count += 1
-            print(f'\n{"-"*5} Processed contributors for repository: {repo_name} (GitHub ID: {github_id}) {"-"*5}')
-
-
+        # 4. Return a summary of the entire synchronization process.
         return JsonResponse({
             "status": "OK",
-            "message": "Contributor update completed successfully",
+            "message": "Contributor synchronization completed.",
             "success_repo_count": success_repo_count,
             "failure_repo_count": failure_repo_count,
             "failure_repo_details": failure_repo_details
         })
 
     except Exception as e:
+        # Handle fatal errors that prevent the script from starting or running properly.
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # ---------------------------------------------
 
 # ------------contributor READ--------------#
 def repo_contributor_read_db(request):
     try:
-        contributors = Repo_contributor.objects.all()
-        contributor_list = [{'id': contributor.id, 'repo_id': contributor.repo_id, 'repo_url': contributor.repo_url, 'owner_github_id': contributor.owner_github_id, 'contributor_id': contributor.contributor_id, 'contributor_count': contributor.contributor_count} for contributor in contributors]
+        # 1. Fetch all contributor data directly as a list of dictionaries.
+        # Using .values() is more efficient than fetching full objects and converting them manually,
+        # as it lets the database do the work.
+        contributor_list = list(Repo_contributor.objects.values(
+            'id',
+            'repo_id',
+            'repo_url',
+            'owner_github_id',
+            'contributor_id',
+            'contribution_count' # Corrected field name for consistency
+        ))
+        
+        # 2. Return the list of contributors as a JSON response.
         return JsonResponse(contributor_list, safe=False)
+    
     except Exception as e:
+        # Handle any potential errors during the database query.
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # ---------------------------------------------
 
 # ------------ISSUE--------------#
 def sync_repo_issue_db(request):
+    # 1. Initialization
+    # Initialize counters and lists to track the outcome of the sync process.
+    success_repo_count = 0
+    failure_repo_count = 0
+    failure_repo_details = []
+
     try:
-        # Fetch all repositories
+        # 2. Fetch all repositories from the database.
         repositories = Repository.objects.all()
-        repo_list = [{'id': repo.id, 'name': repo.name, 'github_id': repo.owner_github_id, 'created': repo.created_at} for repo in repositories]
-        repo_ids = [repo['id'] for repo in repo_list]
-
+        repo_list = [{'id': repo.id, 'name': repo.name, 'github_id': repo.owner_github_id} for repo in repositories]
         total_repo_count = len(repo_list)
-        repo_count = 0  
-        success_repo_count = 0
-        failure_repo_count = 0
-        failure_repo_details = []
 
-        # Track processed repository IDs
-        processed_repo_ids = set()
-        
-        for repo in repo_list:
-            repo_count += 1
-            print(f'\n{"="*10} [{repo_count}/{total_repo_count}] Processing issues for repo: {repo["name"]} (GitHub ID: {repo["github_id"]}) {"="*10}')
-            
-            processed_repo_ids.add(repo['id'])
+        # 3. Iterate through each repository to sync its issues.
+        for i, repo in enumerate(repo_list, 1):
             repo_id = repo['id']
-            github_id = repo['github_id']
             repo_name = repo['name']
+            github_id = repo['github_id']
+            print(f'\n{"="*10} [{i}/{total_repo_count}] Syncing issues for repo: {repo_name} {"="*10}')
 
-            # Get the latest update time for open or closed issues
-            open_issue = Repo_issue.objects.filter(repo_id=repo_id, state='open').order_by('last_update').first()
-            closed_issue = Repo_issue.objects.filter(repo_id=repo_id, state='closed').order_by('-last_update').first()
+            # Use a try-except block for each repo to prevent one failure from stopping the entire process.
+            try:
+                # 3a. Find the last update timestamp to fetch only new or updated issues.
+                # This makes the API call more efficient by reducing the amount of data fetched.
+                latest_issue = Repo_issue.objects.filter(repo_id=repo_id).order_by('-last_update').first()
+                since = latest_issue.last_update if latest_issue else "2008-01-01T00:00:00Z"
 
-            if open_issue:
-                since = open_issue.last_update
-            elif closed_issue:
-                since = closed_issue.last_update
-            else:
-                since = "2008-02-08T00:00:00Z"
+                # 3b. Fetch issue data from the API.
+                response = requests.get(
+                    f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/issues",
+                    params={'github_id': github_id, 'repo_name': repo_name, 'since': since}
+                )
+                response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
+                issue_data_list = response.json()
 
-            # Fetch issues from the API
-            response = requests.get(f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/issues", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
-            data = response.json()
+                if not isinstance(issue_data_list, list):
+                    raise ValueError("Invalid response format: API did not return a list.")
 
-            if not isinstance(data, list):
-                message = f"[ERROR] Invalid response format or empty repository: {repo_name} (GitHub ID: {github_id})"
-                print(message)
-                failure_repo_count += 1
-                failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
-                continue
-
-            total_issue_count = len(data)
-            issue_count = 0
-
-            # Process each issue
-            for issue_data in data:
-                issue_count += 1
-                print(f'  [{issue_count}/{total_issue_count}] Processing issue: {issue_data.get("title")}')
+                if not issue_data_list:
+                    print(f"  No new issues to update for repo: {repo_name}.")
+                    success_repo_count += 1
+                    continue
                 
-                try:
-                    repo_issue, created = Repo_issue.objects.update_or_create(
+                print(f"  Found {len(issue_data_list)} new/updated issue(s) to process.")
+
+                # 3c. Process and save each issue from the API response.
+                for issue_data in issue_data_list:
+                    # `update_or_create` finds a record by its primary key ('id').
+                    # If it exists, it's updated with `defaults`. If not, it's created.
+                    _, created = Repo_issue.objects.update_or_create(
                         id=issue_data.get('id'),
                         defaults={
                             'repo_id': repo_id,
@@ -484,101 +485,108 @@ def sync_repo_issue_db(request):
                             'last_update': issue_data.get('last_update')
                         }
                     )
-                    
-                    action = "Created" if created else "Updated"
-                    print(f"  [SUCCESS] {action} issue for repo {repo_name} (GitHub ID: {github_id}): {issue_data.get('id')}")
 
-                except Exception as e:
-                    message = f"[ERROR] Error processing issue for {repo_name} (GitHub ID: {github_id}): {str(e)}"
-                    print(message)
-                    failure_repo_count += 1
-                    failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
-                    continue
+                success_repo_count += 1
+                print(f'  [SUCCESS] Finished processing issues for repo: {repo_name}.')
 
-            success_repo_count += 1
-            print(f'\n{"-"*5} Processed issues for repository: {repo_name} (GitHub ID: {github_id}) {"-"*5}')
+            except Exception as e:
+                # Log the error for the specific repository and continue with the next one.
+                message = f"Failed to process repo {repo_name} (ID: {repo_id}): {str(e)}"
+                print(f"  [ERROR] {message}")
+                failure_repo_count += 1
+                failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
+                continue
 
-
+        # 4. Return a summary of the entire synchronization process.
         return JsonResponse({
             "status": "OK",
-            "message": "Repo issues updated successfully",
+            "message": "Repo issues synchronization completed.",
             "success_repo_count": success_repo_count,
             "failure_repo_count": failure_repo_count,
             "failure_repo_details": failure_repo_details
         })
 
     except Exception as e:
+        # Handle fatal errors that prevent the script from starting or running properly.
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # ---------------------------------------------
 
 # ------------ISSUE READ--------------#
 def repo_issue_read_db(request):
     try:
-        issues = Repo_issue.objects.all()
-        issue_list = [{'id': issue.id, 'repo_id': issue.repo_id, 'repo_url': issue.repo_url, 'owner_github_id': issue.owner_github_id, 'state': issue.state, 'title': issue.title, 'publisher_github_id': issue.publisher_github_id, 'last_update': issue.last_update} for issue in issues]
+        # 1. Fetch all issue data directly as a list of dictionaries.
+        # Using .values() is more efficient than fetching full model instances
+        # and converting them in Python, as it performs the conversion at the database level.
+        issue_list = list(Repo_issue.objects.values(
+            'id',
+            'repo_id',
+            'repo_url',
+            'owner_github_id',
+            'state',
+            'title',
+            'publisher_github_id',
+            'last_update'
+        ))
+        
+        # 2. Return the list of issues as a JSON response.
         return JsonResponse(issue_list, safe=False)
+    
     except Exception as e:
+        # Handle any potential errors during the database query.
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # -----------------------------------------------------
 
 # ------------PR--------------#
 def sync_repo_pr_db(request):
+    # 1. Initialization
+    # Initialize counters and lists to track the outcome of the sync process.
+    success_repo_count = 0
+    failure_repo_count = 0
+    failure_repo_details = []
+
     try:
-        # Fetch all repositories
+        # 2. Fetch all repositories from the database.
         repositories = Repository.objects.all()
-        repo_list = [{'id': repo.id, 'name': repo.name, 'github_id': repo.owner_github_id, 'created': repo.created_at} for repo in repositories]
-        repo_ids = [repo['id'] for repo in repo_list]
-
+        repo_list = [{'id': repo.id, 'name': repo.name, 'github_id': repo.owner_github_id} for repo in repositories]
         total_repo_count = len(repo_list)
-        repo_count = 0
-        success_repo_count = 0
-        failure_repo_count = 0
-        failure_repo_details = []
-        print("1")
-        # Track processed repository IDs to identify deletions later
-        processed_repo_ids = set()
 
-        for repo in repo_list:
-            repo_count += 1
-            print(f'\n{"="*10} [{repo_count}/{total_repo_count}] Processing PRs for repo: {repo["name"]} (GitHub ID: {repo["github_id"]}) {"="*10}')
-            
-            processed_repo_ids.add(repo['id'])
+        # 3. Iterate through each repository to sync its pull requests (PRs).
+        for i, repo in enumerate(repo_list, 1):
             repo_id = repo['id']
-            github_id = repo['github_id']
             repo_name = repo['name']
+            github_id = repo['github_id']
+            print(f'\n{"="*10} [{i}/{total_repo_count}] Syncing PRs for repo: {repo_name} {"="*10}')
 
-            # Get the most recent 'open' or 'closed' PR
-            open_pr = Repo_pr.objects.filter(repo_id=repo_id, state='open').order_by('last_update').first()
-            closed_pr = Repo_pr.objects.filter(repo_id=repo_id, state='closed').order_by('-last_update').first()
+            # Use a try-except block for each repo to prevent one failure from stopping the entire process.
+            try:
+                # 3a. Find the last update timestamp to fetch only new or updated PRs.
+                # This makes the API call more efficient.
+                latest_pr = Repo_pr.objects.filter(repo_id=repo_id).order_by('-last_update').first()
+                since = latest_pr.last_update if latest_pr else "2008-01-01T00:00:00Z"
 
-            if open_pr:
-                since = open_pr.last_update
-            elif closed_pr:
-                since = closed_pr.last_update
-            else:
-                since = "2008-02-08T00:00:00Z"
+                # 3b. Fetch pull request data from the API.
+                response = requests.get(
+                    f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/pulls",
+                    params={'github_id': github_id, 'repo_name': repo_name, 'since': since}
+                )
+                response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
+                pr_data_list = response.json()
 
-            # Fetch PR data from the API
-            response = requests.get(f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/pulls", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
-            data = response.json()
+                if not isinstance(pr_data_list, list):
+                    raise ValueError("Invalid response format: API did not return a list.")
 
-            if not isinstance(data, list):
-                message = f"[ERROR] Invalid response format or empty repository: {repo_name} (GitHub ID: {github_id})"
-                print(message)
-                failure_repo_count += 1
-                failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
-                continue
-
-            total_pr_count = len(data)
-            pr_count = 0
-
-            # Process each PR
-            for pr_data in data:
-                pr_count += 1
-                print(f'  [{pr_count}/{total_pr_count}] Processing PR: {pr_data.get("title")}')
+                if not pr_data_list:
+                    print(f"  No new PRs to update for repo: {repo_name}.")
+                    success_repo_count += 1
+                    continue
                 
-                try:
-                    pr, created = Repo_pr.objects.update_or_create(
+                print(f"  Found {len(pr_data_list)} new/updated PR(s) to process.")
+
+                # 3c. Process and save each PR from the API response.
+                for pr_data in pr_data_list:
+                    # `update_or_create` finds a record by its primary key ('id').
+                    # If it exists, it's updated. If not, it's created.
+                    _, created = Repo_pr.objects.update_or_create(
                         id=pr_data.get('id'),
                         defaults={
                             'repo_id': repo_id,
@@ -591,155 +599,191 @@ def sync_repo_pr_db(request):
                             'last_update': pr_data.get('last_update')
                         }
                     )
-                    
-                    action = "Created" if created else "Updated"
-                    print(f"  [SUCCESS] {action} PR for repo {repo_name} (GitHub ID: {github_id}): {pr_data.get('id')}")
 
-                except Exception as e:
-                    message = f"[ERROR] Error processing PR for {repo_name} (GitHub ID: {github_id}): {str(e)}"
-                    print(message)
-                    failure_repo_count += 1
-                    failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
-                    continue
+                success_repo_count += 1
+                print(f'  [SUCCESS] Finished processing PRs for repo: {repo_name}.')
 
-            success_repo_count += 1
-            print(f'\n{"-"*5} Processed PRs for repository: {repo_name} (GitHub ID: {github_id}) {"-"*5}')
+            except Exception as e:
+                # Log the error for the specific repository and continue with the next one.
+                message = f"Failed to process repo {repo_name} (ID: {repo_id}): {str(e)}"
+                print(f"  [ERROR] {message}")
+                failure_repo_count += 1
+                failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
+                continue
 
+        # 4. Return a summary of the entire synchronization process.
         return JsonResponse({
             "status": "OK",
-            "message": "Repo PRs updated successfully",
+            "message": "Repo PRs synchronization completed.",
             "success_repo_count": success_repo_count,
             "failure_repo_count": failure_repo_count,
             "failure_repo_details": failure_repo_details
         })
 
     except Exception as e:
+        # Handle fatal errors that prevent the script from starting or running properly.
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # ---------------------------------------------
 
 # ------------PR READ--------------#
 def repo_pr_read_db(request):
     try:
-        prs = Repo_pr.objects.all()
-        pr_list = [{'id': pr.id, 'repo_id': pr.repo_id, 'repo_url': pr.repo_url, 'owner_github_id': pr.owner_github_id, 'title': pr.title, 'requester_id': pr.requester_id, 'published_date': pr.published_date, 'state': pr.state, 'last_update': pr.last_update} for pr in prs]
+        # 1. Fetch all pull request data directly as a list of dictionaries.
+        # Using .values() is more efficient than fetching full model instances
+        # because it performs the data selection at the database level.
+        pr_list = list(Repo_pr.objects.values(
+            'id',
+            'repo_id',
+            'repo_url',
+            'owner_github_id',
+            'title',
+            'requester_id',
+            'published_date',
+            'state',
+            'last_update'
+        ))
+        
+        # 2. Return the list of pull requests as a JSON response.
         return JsonResponse(pr_list, safe=False)
+    
     except Exception as e:
+        # Handle any potential errors during the database query.
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # -----------------------------------------------------
 
 # ------------COMMIT--------------#
 def sync_repo_commit_db(request):
+    # 1. Initialization
+    # Initialize counters and lists to track the outcome of the sync process.
+    success_repo_count = 0
+    failure_repo_count = 0
+    failure_repo_details = []
+
     try:
-        # Fetch all repositories
+        # 2. Fetch all repositories from the database.
         repositories = Repository.objects.all()
-        repo_list = [{'id': repo.id, 'name': repo.name, 'github_id': repo.owner_github_id, 'created': repo.created_at} for repo in repositories]
-        repo_ids = [repo['id'] for repo in repo_list]
-
+        repo_list = [{'id': repo.id, 'name': repo.name, 'github_id': repo.owner_github_id} for repo in repositories]
         total_repo_count = len(repo_list)
-        repo_count = 0
 
-        success_repo_count = 0
-        failure_repo_count = 0
-        failure_repo_details = []
-
-        # Track processed repository IDs to identify deletions later
-        processed_repo_ids = set()
-
-        for repo in repo_list:
-            repo_count += 1
-            print(f'\n{"="*10} [{repo_count}/{total_repo_count}] Processing commits for repo: {repo["name"]} (GitHub ID: {repo["github_id"]}) {"="*10}')
-            
-            processed_repo_ids.add(repo['id'])
+        # 3. Iterate through each repository to sync its commits.
+        for i, repo in enumerate(repo_list, 1):
             repo_id = repo['id']
-            github_id = repo['github_id']
             repo_name = repo['name']
+            github_id = repo['github_id']
+            print(f'\n{"="*10} [{i}/{total_repo_count}] Syncing commits for repo: {repo_name} {"="*10}')
 
-            # Get the latest commit
-            latest_commit = Repo_commit.objects.filter(repo_id=repo_id).order_by('-last_update').first()
-            since = latest_commit.last_update if latest_commit else "2008-02-08T00:00:00Z"
+            # Use a try-except block for each repo to prevent one failure from stopping the entire process.
+            try:
+                # 3a. Find the last update timestamp to fetch only new commits.
+                latest_commit = Repo_commit.objects.filter(repo_id=repo_id).order_by('-last_update').first()
+                since = latest_commit.last_update if latest_commit else "2008-01-01T00:00:00Z"
 
-            # Fetch commits from the API
-            response = requests.get(f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/commit", params={'github_id': github_id, 'repo_name': repo_name, 'since': since})
-            data = response.json()
+                # 3b. Fetch commit data from the API.
+                response = requests.get(
+                    f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/commit",
+                    params={'github_id': github_id, 'repo_name': repo_name, 'since': since}
+                )
+                response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
+                commit_data_list = response.json()
 
-            if not isinstance(data, list):
-                message = f"[ERROR] Invalid response format or empty repository: {repo_name} (GitHub ID: {github_id})"
-                print(message)
-                failure_repo_count += 1
-                failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
-                continue
+                if not isinstance(commit_data_list, list):
+                    raise ValueError("Invalid response format: API did not return a list.")
 
-            total_commit_count = len(data)
-            commit_count = 0
-
-            # Process each commit
-            for commit_data in data:
-                commit_count += 1
-                print(f'  [{commit_count}/{total_commit_count}] Processing commit: {commit_data.get("sha")}')
+                if not commit_data_list:
+                    print(f"  No new commits to update for repo: {repo_name}.")
+                    success_repo_count += 1
+                    continue
                 
-                try:
-                    commit, created = Repo_commit.objects.update_or_create(
+                print(f"  Found {len(commit_data_list)} new/updated commit(s) to process.")
+
+                # 3c. Process and save each commit from the API response.
+                for commit_data in commit_data_list:
+                    # `update_or_create` finds a record by its unique key ('sha').
+                    # If it exists, it's updated. If not, it's created.
+                    _, created = Repo_commit.objects.update_or_create(
                         sha=commit_data.get('sha'),
                         defaults={
                             'repo_id': repo_id,
-                            'repo_url': commit_data.get('repo_url'),
+                            'repo_url': commit_data.get('repository_url'),
                             'owner_github_id': commit_data.get('contributed_github_id'),
-                            'author_github_id': commit_data.get(''),
+                            'author_github_id': commit_data.get('author_github_id'),
                             'added_lines': commit_data.get('added_lines'),
                             'deleted_lines': commit_data.get('deleted_lines'),
                             'last_update': commit_data.get('last_update')
                         }
                     )
 
-                    action = "Created" if created else "Updated"
-                    print(f"  [SUCCESS] {action} commit for repo {repo_name} (GitHub ID: {github_id}): {commit_data.get('sha')}")
+                success_repo_count += 1
+                print(f'  [SUCCESS] Finished processing commits for repo: {repo_name}.')
 
-                except Exception as e:
-                    message = f"[ERROR] Error processing commit for {repo_name} (GitHub ID: {github_id}): {str(e)}"
-                    print(message)
-                    failure_repo_count += 1
-                    failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
-                    continue
+            except Exception as e:
+                # Log the error for the specific repository and continue with the next one.
+                message = f"Failed to process repo {repo_name} (ID: {repo_id}): {str(e)}"
+                print(f"  [ERROR] {message}")
+                failure_repo_count += 1
+                failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
+                continue
 
-            success_repo_count += 1
-            print(f'\n{"-"*5} Processed commits for repository: {repo_name} (GitHub ID: {github_id}) {"-"*5}')
-
+        # 4. Return a summary of the entire synchronization process.
         return JsonResponse({
             "status": "OK",
-            "message": "Repo commits updated successfully",
+            "message": "Repo commits synchronization completed.",
             "success_repo_count": success_repo_count,
             "failure_repo_count": failure_repo_count,
             "failure_repo_details": failure_repo_details
         })
 
     except Exception as e:
+        # Handle fatal errors that prevent the script from starting or running properly.
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # -----------------------------------------------------
 
 # ------------COMMIT READ--------------#
 def repo_commit_read_db(request):
-    try: 
-        commits = Repo_commit.objects.all()
-        commit_list = [{'sha': commit.sha, 'repo_id': commit.repo_id, 'repo_url': commit.repo_url, 'owner_github_id': commit.owner_github_id, 'committer_github_id': commit.committer_github_id, 'added_lines': commit.added_lines, 'deleted_lines': commit.deleted_lines, 'last_update': commit.last_update} for commit in commits]
+    try:
+        # 1. Fetch all commit data directly as a list of dictionaries.
+        # Using .values() is more efficient than fetching full model instances
+        # and converting them in Python, as it performs the conversion at the database level.
+        commit_list = list(Repo_commit.objects.values(
+            'sha',
+            'repo_id',
+            'repo_url',
+            'owner_github_id',
+            'author_github_id', # Corrected field name for consistency
+            'added_lines',
+            'deleted_lines',
+            'last_update'
+        ))
+        
+        # 2. Return the list of commits as a JSON response.
         return JsonResponse(commit_list, safe=False)
+    
     except Exception as e:
+        # Handle any potential errors during the database query.
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # -----------------------------------------------------
 
-# ========================================
-# Backend Function
-# ========================================
 # ------------Course_reated REPO READ--------------#
+from django.db.models import Count
+
 def repo_course_read_db(request):
     try:
-        course_projects = Course_project.objects.all().values_list('repo')
-        repo_list = Repository.objects.filter(id__in=course_projects)
-        data =[]
+        # 1. Get the IDs of all repositories that are linked to a course project.
+        course_project_repo_ids = Course_project.objects.values_list('repo_id', flat=True)
+
+        # 2. Fetch the repository data, annotating each with its pull request count.
+        # This is highly efficient as it avoids making a separate DB query for each repo (N+1 problem).
+        # The Count('repo_pr') calculates the number of related pull requests in the database.
+        repo_list = Repository.objects.filter(id__in=course_project_repo_ids).annotate(
+            pr_count=Count('repo_pr')
+        )
+
+        # 3. Format the data for the JSON response.
+        data = []
         for r in repo_list:
-            print(r)
-            pr = Repo_pr.objects.filter(repo=r).count()
-            contributors_list = r.contributors.split(",")
-            contributors_count = len(contributors_list)
+            # Calculate contributor count from the comma-separated string.
+            contributors_count = len(r.contributors.split(",")) if r.contributors else 0
+            
             repo_info = {
                 'id': r.id,
                 'name': r.name,
@@ -751,7 +795,7 @@ def repo_course_read_db(request):
                 'star_count': r.star_count,
                 'commit_count': r.commit_count,
                 'total_issue_count': int(r.open_issue_count) + int(r.closed_issue_count),
-                "pr_count":pr,
+                'pr_count': r.pr_count,  # This value comes directly from the annotated query.
                 'language': r.language,
                 'contributors': contributors_count,
                 'license': r.license,
@@ -760,8 +804,12 @@ def repo_course_read_db(request):
                 'release_version': r.release_version
             }
             data.append(repo_info)
+            
+        # 4. Return the complete list as a JSON response.
         return JsonResponse(data, safe=False)
+    
     except Exception as e:
+        # Handle any potential errors during the process.
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # ----------------------------------------------------- 
 
