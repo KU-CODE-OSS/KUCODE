@@ -35,21 +35,21 @@ class HealthCheckAPIView(APIView):
 # ========================================
 # Backend Function
 # ========================================
-# ------------Main--------------#
+# ------------Account--------------#
 def sync_student_db(request):
     try:
-        # Fetch all students
+        # 1. Fetch all student records from the database.
         students = Student.objects.all()
         student_list = [{'id': student.id, 'github_id': student.github_id} for student in students]
         
+        # Initialize counters and lists to track the outcome of the sync process.
         total_student_count = len(student_list)
         student_count = 0
-        
         success_count = 0
         failure_count = 0
         failure_details = []
 
-        # Process each student
+        # 2. Process each student record individually.
         for student in student_list:
             student_count += 1
             print("-"*20)
@@ -58,8 +58,10 @@ def sync_student_db(request):
             id = student['id']
             github_id = student['github_id']
             
-            # Fetch GitHub user data
+            # 2a. Fetch the latest GitHub user data from the API.
             response = requests.get(f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/user", params={'github_id': github_id})
+            
+            # Handle cases where the GitHub user is not found (404 error).
             if response.status_code == 404:
                 message = f"[ERROR] GitHub user {github_id} not found"
                 print(message)
@@ -71,7 +73,8 @@ def sync_student_db(request):
             
             try:
                 print(f"Received data for GitHub ID {github_id}: {data}")
-                # Update or create student record
+                # 2b. Update an existing student record or create a new one.
+                # It finds a match using a case-insensitive lookup on the GitHub ID.
                 student_record, created = Student.objects.update_or_create(
                     github_id__iexact=github_id,
                     defaults={
@@ -89,11 +92,13 @@ def sync_student_db(request):
                 success_count += 1
 
             except Exception as e:
+                # Handle errors that occur during the database operation for a single student.
                 message = f"[ERROR] Error processing student: ID {id}, GitHub ID {github_id} - {str(e)}"
                 print(message)
                 failure_count += 1
                 failure_details.append({"id": id, "github_id": github_id, "message": message})
 
+        # 3. Return a summary of the entire synchronization process.
         return JsonResponse({
             "status": "OK", 
             "message": "Student records processed successfully", 
@@ -102,6 +107,7 @@ def sync_student_db(request):
             "failure_details": failure_details
         })
     
+    # Handle fatal errors that prevent the script from running at all.
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # ---------------------------------------------
