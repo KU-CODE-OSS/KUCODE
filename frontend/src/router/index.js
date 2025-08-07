@@ -112,7 +112,7 @@ const routes = [
     path: '/eprofile',
     name: 'EProfile',
     component: EProfile,
-    beforeEnter: guestGuard,
+    //beforeEnter: guestGuard,
   }
 ];
 

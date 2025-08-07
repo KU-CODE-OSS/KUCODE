@@ -218,40 +218,8 @@
             <h3>활동 시간대</h3>
           </div>
           
-          <!-- Heatmap -->
-          <div class="heatmap">
-            <div class="heatmap-y-labels">
-              <span>월</span>
-              <span>화</span>
-              <span>수</span>
-              <span>목</span>
-              <span>금</span>
-              <span>토</span>
-              <span>일</span>
-            </div>
-            <div class="heatmap-content">
-              <!-- Heatmap grid would be generated here -->
-              <div class="heatmap-grid">
-                <!-- This would be dynamically generated -->
-                <div class="heatmap-placeholder">Activity heatmap grid</div>
-              </div>
-            </div>
-            <div class="heatmap-x-labels">
-              <span v-for="hour in 24" :key="hour">{{ hour - 1 }}</span>
-            </div>
-          </div>
-          
-          <!-- Heatmap Legend -->
-          <div class="heatmap-legend">
-            <span>Less</span>
-            <div class="legend-squares">
-              <div class="legend-square level-0"></div>
-              <div class="legend-square level-1"></div>
-              <div class="legend-square level-2"></div>
-              <div class="legend-square level-3"></div>
-            </div>
-            <span>More</span>
-          </div>
+          <!-- 히트맵 컴포넌트 -->
+          <EProfileHeatmap :heatmapData="heatmapData" />
         </div>
       </section>
 
@@ -327,8 +295,13 @@
 </template>
 
 <script>
+import EProfileHeatmap from './EProfileComponents/EProfileHeatmap.vue'
+
 export default {
   name: 'EPortfolioDashboard',
+  components: {
+    EProfileHeatmap
+  },
   data() {
     return {
       user: {
@@ -346,6 +319,51 @@ export default {
         issues: { created: 45, closed: 20 },
         pullRequests: 120,
         openSourceContributions: 0
+      },
+      // 히트맵 데이터
+      heatmapData: {
+        Mon: {
+          "0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0,
+          "10": 20, "11": 20, "12": 20, "13": 20, "14": 20,
+          "15": 5, "16": 5, "17": 5,
+          "18": 0, "19": 0, "20": 0, "21": 0, "22": 0, "23": 0
+        },
+        Tue: {
+          "0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0,
+          "10": 20, "11": 20, "12": 20, "13": 20, "14": 20,
+          "15": 5, "16": 5, "17": 5,
+          "18": 0, "19": 0, "20": 0, "21": 0, "22": 0, "23": 0
+        },
+        Wed: {
+          "0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0,
+          "10": 20, "11": 20, "12": 20, "13": 20, "14": 20,
+          "15": 5, "16": 5, "17": 5,
+          "18": 0, "19": 0, "20": 0, "21": 0, "22": 0, "23": 0
+        },
+        Thu: {
+          "0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0,
+          "10": 20, "11": 20, "12": 20, "13": 20, "14": 20,
+          "15": 5, "16": 5, "17": 5,
+          "18": 0, "19": 0, "20": 0, "21": 0, "22": 0, "23": 0
+        },
+        Fri: {
+          "0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0,
+          "10": 20, "11": 20, "12": 20, "13": 20, "14": 20,
+          "15": 5, "16": 5, "17": 5,
+          "18": 0, "19": 0, "20": 0, "21": 0, "22": 0, "23": 0
+        },
+        Sat: {
+          "0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0,
+          "10": 20, "11": 20, "12": 20, "13": 20, "14": 20,
+          "15": 5, "16": 5, "17": 5,
+          "18": 0, "19": 0, "20": 0, "21": 0, "22": 0, "23": 0
+        },
+        Sun: {
+          "0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0,
+          "10": 20, "11": 20, "12": 20, "13": 20, "14": 20,
+          "15": 5, "16": 5, "17": 5,
+          "18": 0, "19": 0, "20": 0, "21": 0, "22": 0, "23": 0
+        }
       }
     }
   },
