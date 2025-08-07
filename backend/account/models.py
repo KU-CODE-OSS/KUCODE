@@ -10,6 +10,7 @@ class User(AbstractUser):
     github_id = models.CharField(max_length=255,default='null')
     name = models.CharField(max_length=255,default='null')
 
+    
 class Student(models.Model):
     id = models.CharField(max_length=50, primary_key=True)
     name = models.CharField(max_length=100)

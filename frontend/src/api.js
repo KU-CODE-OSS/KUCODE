@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const ip_for_develop = 'http://61.72.142.8:10004/api'
+const ip_for_develop = process.env.VUE_APP_API_URL;
+
 // Axios 인스턴스 생성
 const api = axios.create({
   baseURL: process.env.VUE_APP_API_URL,
@@ -19,11 +20,20 @@ function handleError(error) {
 }
 
 export function getHealthCheck() {
-    return ajax('/account/healthcheck', 'get');
+  return ajax('/account/healthcheck', 'get');
 }
 
 export function getCourseInfo() {
   return ajax(ip_for_develop + '/account/student_read_course_info', 'get')
+}
+
+export function getCourseReadMinMaxAvg() {
+  return ajax(ip_for_develop + '/course/course_read_min_max_avg', 'get')
+}
+
+
+export function getCourseReadDB() {
+  return ajax(ip_for_develop + '/course/course_read_db', 'get')
 }
 
 export function getCourseTotalInfo() {

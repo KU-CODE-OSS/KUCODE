@@ -11,8 +11,7 @@ urlpatterns = [
     # path("student_update_db", views.student_update_db, name="student_update_db"),
     path("student_delete_db", views.student_delete_db, name="student_delete_db"),
 
-    # test
-    path("sync_student_db_test", views.sync_student_db_test, name="sync_student_db_test"),
+    # excel
     path("student_excel_import", views.student_excel_import, name="student_excel_import"),
 
     # read for ALL students 
@@ -39,7 +38,18 @@ urlpatterns = [
     path("none_githubid_list",views.none_githubid_list, name ="none_githubid_list"),
 
     # Students without githubids but only for attending students
-    path("none_githubid_list_only_attending",views.none_githubid_list_only_attending, name ="none_githubid_list_only_attending")
+    path("none_githubid_list_only_attending",views.none_githubid_list_only_attending, name ="none_githubid_list_only_attending"),
 
+    # Counting num of contributors and contributions per student
+    path("count_contributors_per_student",views.count_contributors_per_student, name ="count_contributors_per_student"),
+
+    #update foreign students
+    path("update_foreign_students",views.update_foreign_students, name ="update_foreign_students"),
+
+    # test
+    path("sync_student_db_test/<int:student_id>/", views.sync_student_db_test, name="sync_student_db_test"),
+
+    # 학생관점 과목 수강 엑셀 리스트
+    path("student_course_read_excel", views.student_course_read_excel, name="student_course_read_excel"),
 
 ]   

@@ -27,7 +27,13 @@ urlpatterns = [
  # Course validation 
    path("course_validation", views.course_validation, name = "course_validation"),
    path("course_reg_validation", views.course_reg_validation, name = "course_reg_validation"),
-   path("course_reg_look", views.course_reg_look, name ="course_reg_look")
+   path("course_reg_look", views.course_reg_look, name ="course_reg_look"),
+ 
+ # Courses with min,max,avg
+   path("course_read_min_max_avg", views.course_read_min_max_avg, name="course_read_min_max_avg"),
 
+ # Course 관련 excel export
+   path("course_read_db_total_excel", views.course_read_db_total_excel, name="course_read_db_total_excel"),
+   path("course_student_db_excel",views.course_student_db_excel, name = "course_student_db_excel")
 
 ]

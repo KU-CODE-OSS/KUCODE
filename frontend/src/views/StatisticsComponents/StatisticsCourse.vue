@@ -10,26 +10,31 @@
       <div class="menu">
         <router-link v-bind:to="'/statistics/department'" class="default-router plan-text" append>학과별</router-link>
       </div>
-      <div class="toggle-box" @click.self.prevent="toggle">
-        <div class="wrapper">
-          <input type="checkbox" id="switchcourse" v-model="showTable">
-          <label for="switchcourse" class="switch_label">
-            <span class="onf_btn"></span>
-            <div class="toggle_img">
-                <div class="img1">
-                    <svg class="toggle-image-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g id="Huge-icon">
-                            <path id="Vector" d="M10 6H16M10 14H16M10 10H22M10 18H22M3 10H5C5.55228 10 6 9.55228 6 9V7C6 6.44772 5.55228 6 5 6H3C2.44772 6 2 6.44772 2 7V9C2 9.55228 2.44772 10 3 10ZM3 18H5C5.55228 18 6 17.5523 6 17V15C6 14.4477 5.55228 14 5 14H3C2.44772 14 2 14.4477 2 15V17C2 17.5523 2.44772 18 3 18Z"  stroke-width="1.5" stroke-linecap="round"/>
-                        </g>
-                    </svg>
-                </div>
-                <div class="img2">
-                    <svg class="toggle-image-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-                        <path d="M8 14L9.08225 12.1963C9.72077 11.132 11.2247 11.0309 12 12C12.7753 12.9691 14.2792 12.8679 14.9178 11.8037L16 10M12 18V22M4 6H20C21.1046 6 22 5.10457 22 4C22 2.89543 21.1046 2 20 2H4C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6ZM3 6H21V16C21 17.1046 20.1046 18 19 18H5C3.89543 18 3 17.1046 3 16V6Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-            </div>
-          </label>
+      <div class="export-and-toggle">
+        <button class="export-button" @click="exportToExcel">
+          내보내기
+        </button>      
+        <div class="toggle-box" @click.self.prevent="toggle">
+          <div class="wrapper">
+            <input type="checkbox" id="switchcourse" v-model="showTable">
+            <label for="switchcourse" class="switch_label">
+              <span class="onf_btn"></span>
+              <div class="toggle_img">
+                  <div class="img1">
+                      <svg class="toggle-image-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <g id="Huge-icon">
+                              <path id="Vector" d="M10 6H16M10 14H16M10 10H22M10 18H22M3 10H5C5.55228 10 6 9.55228 6 9V7C6 6.44772 5.55228 6 5 6H3C2.44772 6 2 6.44772 2 7V9C2 9.55228 2.44772 10 3 10ZM3 18H5C5.55228 18 6 17.5523 6 17V15C6 14.4477 5.55228 14 5 14H3C2.44772 14 2 14.4477 2 15V17C2 17.5523 2.44772 18 3 18Z"  stroke-width="1.5" stroke-linecap="round"/>
+                          </g>
+                      </svg>
+                  </div>
+                  <div class="img2">
+                      <svg class="toggle-image-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                          <path d="M8 14L9.08225 12.1963C9.72077 11.132 11.2247 11.0309 12 12C12.7753 12.9691 14.2792 12.8679 14.9178 11.8037L16 10M12 18V22M4 6H20C21.1046 6 22 5.10457 22 4C22 2.89543 21.1046 2 20 2H4C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6ZM3 6H21V16C21 17.1046 20.1046 18 19 18H5C3.89543 18 3 17.1046 3 16V6Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                  </div>
+              </div>
+            </label>
+          </div>
         </div>
       </div>
     </div>
@@ -49,7 +54,7 @@
                   </thead>
                   <tbody class="table-body-wrapper">
                     <tr v-for="(item, index) in posts" :key="item[0]">
-                      <td :title="item.course_id">{{ item.course_id_for_stats }}</td>
+                      <td :title="item.course_id">{{ item.course_id }}</td>
                       <td :title="item.students">{{item.students}}</td>
                     </tr>
                   </tbody>
@@ -68,10 +73,10 @@
                   </thead>
                   <tbody class="table-body-wrapper">
                     <tr v-for="(item, index) in posts" :key="item[0]">
-                      <td :title="item.students">{{item.num_repos_stats.sum}}</td>
-                      <td :title="item.students">{{item.num_repos_stats.min}}</td>
-                      <td :title="item.students">{{item.num_repos_stats.max}}</td>
-                      <td :title="item.students">{{item.num_repos_stats.mean}}</td>
+                      <td :title="item.students">{{item.num_repos}}</td>
+                      <td :title="item.students">{{item.num_repos_min}}</td>
+                      <td :title="item.students">{{item.num_repos_max}}</td>
+                      <td :title="item.students">{{item.num_repos_mean}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -90,10 +95,10 @@
                   </thead>
                   <tbody class="table-body-wrapper">
                     <tr v-for="(item, index) in posts" :key="item[0]">
-                      <td :title="item.students">{{item.commit_stats.sum}}</td>
-                      <td :title="item.students">{{item.commit_stats.min}}</td>
-                      <td :title="item.students">{{item.commit_stats.max}}</td>
-                      <td :title="item.students">{{item.commit_stats.mean}}</td>
+                      <td :title="item.students">{{item.commit}}</td>
+                      <td :title="item.students">{{item.commit_min}}</td>
+                      <td :title="item.students">{{item.commit_max}}</td>
+                      <td :title="item.students">{{item.commit_mean}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -111,10 +116,10 @@
                   </thead>
                   <tbody class="table-body-wrapper">
                     <tr v-for="(item, index) in posts" :key="item[0]">
-                      <td :title="item.students">{{item.issue_stats.sum}}</td>
-                      <td :title="item.students">{{item.issue_stats.min}}</td>
-                      <td :title="item.students">{{item.issue_stats.max}}</td>
-                      <td :title="item.students">{{item.issue_stats.mean}}</td>
+                      <td :title="item.students">{{item.issue}}</td>
+                      <td :title="item.students">{{item.issue_min}}</td>
+                      <td :title="item.students">{{item.issue_max}}</td>
+                      <td :title="item.students">{{item.issue_mean}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -133,10 +138,10 @@
                   </thead>
                   <tbody class="table-body-wrapper">
                     <tr v-for="(item, index) in posts" :key="item[0]">
-                      <td :title="item.students">{{item.pr_stats.sum}}</td>
-                      <td :title="item.students">{{item.pr_stats.min}}</td>
-                      <td :title="item.students">{{item.pr_stats.max}}</td>
-                      <td :title="item.students">{{item.pr_stats.mean}}</td>
+                      <td :title="item.students">{{item.pr}}</td>
+                      <td :title="item.students">{{item.pr_min}}</td>
+                      <td :title="item.students">{{item.pr_max}}</td>
+                      <td :title="item.students">{{item.pr_mean}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -154,10 +159,10 @@
                   </thead>
                   <tbody class="table-body-wrapper">
                     <tr v-for="(item, index) in posts" :key="item[0]">
-                      <td :title="item.students">{{item.stars_stats.sum}}</td>
-                      <td :title="item.students">{{item.stars_stats.min}}</td>
-                      <td :title="item.students">{{item.stars_stats.max}}</td>
-                      <td :title="item.students">{{item.stars_stats.mean}}</td>
+                      <td :title="item.students">{{item.star}}</td>
+                      <td :title="item.students">{{item.star_min}}</td>
+                      <td :title="item.students">{{item.star_max}}</td>
+                      <td :title="item.students">{{item.star_mean}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -254,14 +259,16 @@
 </template>
 
 <script>
-import CourseGroupLineCharts from '@/views/StatisticsCharts/Courses/CourseGroupLineCharts.vue'
-import CourseGroupStudentBarCharts from '@/views/StatisticsCharts/Courses/CourseGroupStudentBarCharts.vue'
+import CourseGroupLineCharts from '@/views/StatisticsCharts/Courses/CourseGroupLineCharts.vue';
+import CourseGroupStudentBarCharts from '@/views/StatisticsCharts/Courses/CourseGroupStudentBarCharts.vue';
+import * as XLSX from 'xlsx';
+
 export default {
   name: 'StatisticsCourse',
   props: ["course"],
   components: {
     CourseGroupLineCharts,
-    CourseGroupStudentBarCharts
+    CourseGroupStudentBarCharts,
   },
   data() {
     return {
@@ -293,12 +300,12 @@ export default {
       selectedFileName: '',
       subToggleButton: false,
       title: '',
-      course_id: ''
+      course_id: '',
     };
   },
   computed: {
     totalPages() {
-      return Math.ceil(this.posts.length / this.postsPerPage)
+      return Math.ceil(this.posts.length / this.postsPerPage);
     },
   },
   methods: {
@@ -306,47 +313,77 @@ export default {
       this.showTable = !this.showTable;
     },
     tablewidth(length) {
-      return length
+      return length;
     },
     allStudentToggleButton() {
-      this.subToggleButton = false
+      this.subToggleButton = false;
       this.$router.replace({ path: this.$route.path, query: { type: 'all' } });
     },
     eachStudentToggleButton() {
-      this.subToggleButton = true
+      this.subToggleButton = true;
       this.$router.replace({ path: this.$route.path, query: { type: 'each' } });
     },
     renamedTitle() {
-      console.log(this.posts)
-      if(this.posts.length === 0) {
-        this.title = '과목을 선택하세요.'
-      }
-      else if(this.posts[0].course_name === '기타') {
-        this.title = '기타'
+      if (this.posts.length === 0) {
+        this.title = '과목을 선택하세요.';
+      } else if (this.posts[0].course_name === '기타') {
+        this.title = '기타';
       } else {
-        this.title = this.posts[0].course_name + ' (' + this.posts[0].course_id + ')'
+        this.title = `${this.posts[0].course_name} (${this.posts[0].course_id})`;
       }
+    },
+    exportToExcel() {
+      const dataToExport = this.getExportData();
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+      const excelBuffer = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' });
+      const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+
+      const url = window.URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `course_data.xlsx`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    },
+    getExportData() {
+      return this.posts.map(item => {
+        const rowData = { '학수번호': item.course_id };
+
+        if (!this.showTable) {
+          rowData['과목명'] = item.course_name;
+          rowData['활동 학생 수'] = item.students;
+          rowData['Repos 합계'] = item.num_repos_stats ? item.num_repos_stats.sum : 0;
+          rowData['Commits 합계'] = item.commit_stats ? item.commit_stats.sum : 0;
+          rowData['Issues 합계'] = item.issue_stats ? item.issue_stats.sum : 0;
+          rowData['PRs 합계'] = item.pr_stats ? item.pr_stats.sum : 0;
+          rowData['Stars 합계'] = item.stars_stats ? item.stars_stats.sum : 0;
+        } else {
+          rowData['Repos 평균'] = item.num_repos_stats ? item.num_repos_stats.mean : 0;
+          rowData['Commits 평균'] = item.commit_stats ? item.commit_stats.mean : 0;
+          rowData['Issues 평균'] = item.issue_stats ? item.issue_stats.mean : 0;
+          rowData['PRs 평균'] = item.pr_stats ? item.pr_stats.mean : 0;
+          rowData['Stars 평균'] = item.stars_stats ? item.stars_stats.mean : 0;
+        }
+
+        return rowData;
+      });
     },
   },
   mounted() {
-    this.posts = this.course
-    this.renamedTitle()
+    this.posts = this.course;
+    this.renamedTitle();
   },
   watch: {
     course(to, from) {
-      const vm = this
-      this.posts = vm.course
-      console.log(JSON.stringify(this.posts))
-      this.renamedTitle()
-      console.log('fsefsf', this.posts)
-      if(this.posts.length === 0) {
-        this.course_id = ''  
-      } else {
-        this.course_id = this.posts[0].course_id
-      }
+      this.posts = this.course;
+      this.renamedTitle();
+      this.course_id = this.posts.length ? this.posts[0].course_id : '';
     },
-  }
+  },
 };
+
 </script>
 
 <style scoped>
@@ -583,6 +620,28 @@ export default {
           }
         }
       }
+    }
+  }
+
+  .export-and-toggle {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+
+    .export-button {
+      margin-right: 10px;
+      padding: 8px 16px;
+      background-color: #CB385C;
+      color: #FFF;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .export-button:hover {
+      background-color: #a82e4a;
     }
   }
 

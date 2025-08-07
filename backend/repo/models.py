@@ -8,6 +8,7 @@ class Repository(models.Model):
     owner_github_id = models.CharField(max_length=100,null=True)
     created_at = models.CharField(max_length=100,null=True)
     updated_at = models.CharField(max_length=100,null=True)
+    forked = models.BooleanField(null=True)
     fork_count = models.IntegerField(null=True)
     star_count = models.IntegerField(null=True)
     commit_count = models.IntegerField(null=True)
@@ -15,6 +16,11 @@ class Repository(models.Model):
     closed_issue_count = models.IntegerField(null=True)
     open_pr_count = models.IntegerField(null=True)
     closed_pr_count = models.IntegerField(null=True)
+    contributed_commit_count = models.IntegerField(null=True)
+    contributed_open_issue_count = models.IntegerField(null=True)
+    contributed_closed_issue_count = models.IntegerField(null=True)
+    contributed_open_pr_count = models.IntegerField(null=True)
+    contributed_closed_pr_count = models.IntegerField(null=True)
     language = models.CharField(max_length=500,null=True)
     contributors = models.CharField(max_length=5000,null=True)
     license = models.CharField(max_length=500,null=True)
@@ -75,7 +81,7 @@ class Repo_commit(models.Model):
     repo = models.ForeignKey(Repository, on_delete=models.CASCADE, db_column='repo_id')  # Repository 고유 ID, ForeignKey
     repo_url = models.CharField(max_length=255)  # Repository URL
     owner_github_id = models.CharField(max_length=255)  # Repository 소유자 Github ID
-    committer_github_id = models.CharField(max_length=255,null=True)  # 커밋 발행자 Github ID
+    author_github_id = models.CharField(max_length=255,null=True)  # 커밋 발행자 Github ID
     added_lines = models.IntegerField()  # 추가된 줄
     deleted_lines = models.IntegerField()  # 제거된 줄
     last_update = models.CharField(max_length=255,null=True)  # Commit 마지막 업데이트 일자

@@ -101,6 +101,7 @@
           <tbody>
             <tr v-for="item in posts" class="table-row">
               <!-- {{item}} -->
+              {{ logItem(item) }}
               <td>{{item.yearandsemester}}</td>
               <td>{{item.course_name}}</td>
               <td>{{item.course_id}}</td>
@@ -157,7 +158,7 @@ import {getCourseInfo, postCourseUpload} from '@/api.js'
 import * as XLSX from 'xlsx';
 export default {
   name: 'StatisticsTotal',
-  props: ["postss"],
+  props: ["posts"],
   data() {
     return {
       showOverlay: false,
@@ -264,7 +265,6 @@ export default {
     selectFile(e) {
       this.selectedFile = e.target.files[0];
       this.selectedFileName = this.selectedFile.name
-      console.log(this.selectedFile)
     },
     toggle() {
       this.showTable = !this.showTable;
@@ -354,7 +354,6 @@ export default {
       const reader = new FileReader();
       
       reader.onload = async (e) => {
-        console.log(e)
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -390,7 +389,6 @@ export default {
         postCourseUpload(formData).then(response => {
           this.closeImportDialog()
         }).catch(e => {
-          console.error('Error Uploading file:', error);
           this.pannelLoading = false
         })
       };

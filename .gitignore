@@ -170,3 +170,9 @@ frontend/node_modules
 
 #vscode
 *vscode
+
+#crawling
+*crawling.sh*
+
+#backup file
+*.bak
