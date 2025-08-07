@@ -17,6 +17,7 @@ from repo.models import Repository, Repo_contributor, Repo_issue,Repo_pr, Repo_c
 from account.models import Student
 from course.models import Course, Course_project, Course_registration
 import requests
+import json
 
 class HealthCheckAPIView(APIView):
     def get(self, request):
@@ -1206,3 +1207,167 @@ def sync_repo_commit_db_test(request, student_id):
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # -----------------------------------------------------
+
+#-----------------------------------------------READ DB per ACCOUNT-----------------------------------------------#
+# ------------REPO READ per ACCOUNT--------------#
+@csrf_exempt
+def repo_account_read_db(request):
+    try:
+        if request.method != 'POST':
+            return JsonResponse({"status": "Error", "message": "Only POST method is allowed"}, status=405)
+
+        try:
+            body_unicode = request.body.decode('utf-8')
+            body_data = json.loads(body_unicode)
+            github_id = body_data.get('github_id')
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return JsonResponse({"status": "Error", "message": "Invalid JSON format or character encoding"}, status=400)
+        
+        if not github_id:
+            return JsonResponse({"status": "Error", "message": "github_id is required in the request body"}, status=400)
+
+        repo_list = Repository.objects.filter(owner_github_id=github_id)
+        
+        if not repo_list:
+            return JsonResponse({"status": "Error", "message": f"No repositories found for github_id: {github_id}"}, status=404)
+
+        repo_ids = [r.id for r in repo_list]
+        today = datetime.now()
+        one_year_ago = today - timedelta(days=365)
+
+        # 지난 1년간의 커밋 기록을 한 번만 조회
+        all_commits = Repo_commit.objects.filter(
+            repo_id__in=repo_ids,
+            last_update__gte=one_year_ago
+        )
+        
+        monthly_commit_counts = {}
+        monthly_added_lines = {}
+        monthly_deleted_lines = {}
+        monthly_total_changed_lines = {}
+        
+        # 히트맵 데이터 초기화
+        days_of_week = {0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun'}
+        heatmap_data = {day: {str(hour): 0 for hour in range(24)} for day in days_of_week.values()}
+        
+        # 조회된 커밋 데이터셋을 한 번만 순회하며 모든 통계 데이터를 동시에 집계
+        for commit in all_commits:
+            try:
+                commit_datetime = datetime.strptime(commit.last_update, '%Y-%m-%dT%H:%M:%SZ')
+            except (ValueError, TypeError):
+                continue
+            
+            # 월별 데이터 집계
+            month_key = commit_datetime.strftime('%Y-%m')
+            added = commit.added_lines if commit.added_lines is not None else 0
+            deleted = commit.deleted_lines if commit.deleted_lines is not None else 0
+
+            monthly_commit_counts[month_key] = monthly_commit_counts.get(month_key, 0) + 1
+            monthly_added_lines[month_key] = monthly_added_lines.get(month_key, 0) + added
+            monthly_deleted_lines[month_key] = monthly_deleted_lines.get(month_key, 0) + deleted
+            monthly_total_changed_lines[month_key] = monthly_total_changed_lines.get(month_key, 0) + added + deleted
+            
+            # 히트맵 데이터 집계
+            weekday_index = commit_datetime.weekday() # 0 = 월요일
+            hour = commit_datetime.hour
+            day_name = days_of_week[weekday_index]
+            
+            heatmap_data[day_name][str(hour)] += 1
+
+        # 데이터 정렬
+        sorted_commit_counts = sorted(monthly_commit_counts.items())
+        sorted_added_lines = sorted(monthly_added_lines.items())
+        sorted_deleted_lines = sorted(monthly_deleted_lines.items())
+        sorted_total_changed_lines = sorted(monthly_total_changed_lines.items())
+
+        data =[]
+        for r in repo_list:
+            try:
+                student = Student.objects.get(github_id=r.owner_github_id)
+            except ObjectDoesNotExist:
+                student = None
+        
+            try:
+                course = Course.objects.get(course_repo_name=r.name)
+                category = course.name 
+            except ObjectDoesNotExist:
+                category = "-"
+            
+            pr_count = Repo_pr.objects.filter(repo=r).count()
+            contributors_list = r.contributors.split(",")
+            contributors_count = len(contributors_list)
+
+            if all(value.strip() == '' for value in contributors_list): # contributors 없을 시
+                contributors_count = 0  
+                contributors_total_info = []
+
+            else :
+                contributors_total_info = []
+                
+                for specific_contributor in contributors_list :
+                    contributor_student_info = []
+                    specific_contributor_trim = str(specific_contributor).strip()
+                    try:
+                        contributor_student = Student.objects.get(github_id = specific_contributor_trim)
+                        contributor_student_info.append(contributor_student.name) 
+                        contributor_student_info.append(contributor_student.department)
+                        contributor_student_info.append(contributor_student.id)   
+                        contributor_student_info.append(contributor_student.github_id)                
+                    except ObjectDoesNotExist:
+                        contributor_student_info.append('-')   
+                        contributor_student_info.append('-') 
+                        contributor_student_info.append('-')
+                        contributor_student_info.append(specific_contributor_trim)  
+
+                    contributors_total_info.append(contributor_student_info)
+                
+                # Separate contributors with '-' from those without
+                contributors_without_dash = [info for info in contributors_total_info if '-' not in info[0]]  # Sort by name (index 0)
+                contributors_with_dash = [info for info in contributors_total_info if '-' in info[0]]
+
+                # Sort contributors_without_dash by name (ascending order)
+                contributors_without_dash.sort(key=lambda x: x[0])
+
+                # Concatenate sorted lists, placing contributors with '-' at the end
+                contributors_total_info = contributors_without_dash 
+            
+            repo_info = {
+            'id': r.id,
+            'name': r.name,
+            'category' : category,
+            'url': r.url,
+            'student_id': student.id if student else None,
+            'owner_github_id': r.owner_github_id,
+            'created_at': r.created_at,
+            'updated_at': r.updated_at,
+            'fork_count': r.fork_count,
+            'star_count': r.star_count,
+            'commit_count': r.commit_count,
+            'total_issue_count': int(r.open_issue_count) + int(r.closed_issue_count),
+            "pr_count":pr_count,
+            'language': r.language,
+            'contributors': contributors_count,
+            'contributors_list': contributors_total_info,
+            'license': r.license,
+            'has_readme': r.has_readme,
+            'description': r.description,
+            'release_version': r.release_version
+            }
+            
+            data.append(repo_info)
+    
+        response_data = {
+            'repositories': data,
+            'monthly_commits': {
+                'total_count': sorted_commit_counts,
+                'added_lines': sorted_added_lines,
+                'deleted_lines': sorted_deleted_lines,
+                'total_changed_lines': sorted_total_changed_lines
+            },
+            'heatmap': heatmap_data,
+        }
+
+        return JsonResponse(response_data, safe=False)
+     
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
