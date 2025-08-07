@@ -6,6 +6,7 @@ import Statistics from '@/views/Statistics.vue';
 import Login from '@/views/Login.vue';
 import Register from '@/views/Register.vue';
 import EmailVerification from '@/views/EmailVerification.vue';
+import EProfile from '@/views/EProfile.vue';
 import { authGuard, guestGuard } from './guards'
 
 const StatisticsCourse = () => import('@/views/StatisticsComponents/StatisticsCourse.vue');
@@ -106,6 +107,12 @@ const routes = [
     path: '/qna',
     name: 'QnA',
     component: QnA
+  },
+  {
+    path: '/eprofile',
+    name: 'EProfile',
+    component: EProfile,
+    //beforeEnter: guestGuard,
   }
 ];
 
