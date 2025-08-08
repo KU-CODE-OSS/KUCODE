@@ -32,66 +32,66 @@
         <!-- Tech Stack Section -->
         <div class="tech-stack-card">
           <h3 class="section-title">나의 기술 스택</h3>
+          
+          <!-- Horizontal Layout Container -->
           <div class="tech-stack-content">
-            <!-- Tech Stack Chart -->
-            <div class="tech-chart">
-              <div class="chart-container">
-                <div class="chart-circle">
-                  <span class="chart-label">Python</span>
+            <!-- Left Section: Main Languages -->
+            <div class="main-languages-section">
+              <h4 class="tech-column-title">주요 사용 언어</h4>
+              
+              <!-- Chart and Legend Container -->
+              <div class="chart-and-legend">
+                <div class="chart-container">
+                  <!-- Chart.js Donut Chart -->
+                  <canvas ref="techStackChart" width="120" height="120"></canvas>
                 </div>
-              </div>
-              <div class="chart-legend">
-                <div class="legend-item">
-                  <div class="legend-color primary"></div>
-                  <span>Python</span>
-                </div>
-                <div class="legend-item">
-                  <div class="legend-color secondary"></div>
-                  <span>C++</span>
-                </div>
-                <div class="legend-item">
-                  <div class="legend-color tertiary"></div>
-                  <span>기타</span>
+                <div class="chart-legend">
+                  <div 
+                    v-for="(lang, index) in techStackData" 
+                    :key="lang.name"
+                    class="legend-item"
+                  >
+                    <div 
+                      class="legend-color" 
+                      :style="{ background: lang.color }"
+                    ></div>
+                    <span>{{ lang.name }} ({{ lang.percentage }}%)</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Tech Lists -->
-            <div class="tech-lists">
-              <div class="tech-column">
-                <h4 class="tech-column-title">주요 사용 언어</h4>
-                <div class="tech-tags">
-                  <div class="tech-tag">
-                    <i class="icon-react"></i>
-                    <span>Python</span>
-                    <i class="icon-arrow-down"></i>
-                  </div>
-                  <div class="tech-tag">
-                    <i class="icon-python"></i>
-                    <span>Python</span>
-                    <i class="icon-arrow-down"></i>
-                  </div>
-                  <div class="tech-tag">
-                    <i class="icon-kotlin"></i>
-                    <span>Kotlin</span>
-                    <i class="icon-arrow-down"></i>
-                  </div>
-                </div>
-              </div>
+            <!-- Vertical Divider -->
+            <div class="vertical-divider"></div>
 
-              <div class="tech-column">
-                <h4 class="tech-column-title">주요 기술 스택</h4>
-                <div class="tech-tags">
-                  <div class="tech-tag">
-                    <i class="icon-js"></i>
-                    <span>JS</span>
-                    <i class="icon-arrow-down"></i>
-                  </div>
-                  <div class="tech-tag">
-                    <i class="icon-django"></i>
-                    <span>Django</span>
-                    <i class="icon-arrow-down"></i>
-                  </div>
+            <!-- Right Section: Tech Stack -->
+            <div class="tech-stack-section">
+              <h4 class="tech-column-title">주요 기술 스택</h4>
+              <div class="tech-tags">
+                <div class="tech-tag">
+                  <i class="icon-react"></i>
+                  <span>Python</span>
+                  <i class="icon-arrow-down"></i>
+                </div>
+                <div class="tech-tag">
+                  <i class="icon-python"></i>
+                  <span>Python</span>
+                  <i class="icon-arrow-down"></i>
+                </div>
+                <div class="tech-tag">
+                  <i class="icon-kotlin"></i>
+                  <span>Kotlin</span>
+                  <i class="icon-arrow-down"></i>
+                </div>
+                <div class="tech-tag">
+                  <i class="icon-js"></i>
+                  <span>JS</span>
+                  <i class="icon-arrow-down"></i>
+                </div>
+                <div class="tech-tag">
+                  <i class="icon-django"></i>
+                  <span>Django</span>
+                  <i class="icon-arrow-down"></i>
                 </div>
               </div>
             </div>
@@ -295,7 +295,11 @@
 </template>
 
 <script>
+import { Chart, registerables } from 'chart.js'
 import EProfileHeatmap from './EProfileComponents/EProfileHeatmap.vue'
+
+// Register Chart.js components
+Chart.register(...registerables)
 
 export default {
   name: 'EPortfolioDashboard',
@@ -320,6 +324,27 @@ export default {
         pullRequests: 120,
         openSourceContributions: 0
       },
+      // Tech Stack Chart Data
+      techStackData: [
+        {
+          name: 'Python',
+          value: 45,
+          color: '#FF176A',
+          percentage: 45
+        },
+        {
+          name: 'C++',
+          value: 30,
+          color: '#FF84A3',
+          percentage: 30
+        },
+        {
+          name: '기타',
+          value: 25,
+          color: '#FFD1DC',
+          percentage: 25
+        }
+      ],
       // 히트맵 데이터
       heatmapData: {
         Mon: {
@@ -364,10 +389,80 @@ export default {
           "15": 5, "16": 5, "17": 5,
           "18": 0, "19": 0, "20": 0, "21": 0, "22": 0, "23": 0
         }
-      }
+      },
+      techStackChart: null
+    }
+  },
+  mounted() {
+    this.createTechStackChart()
+  },
+  beforeUnmount() {
+    if (this.techStackChart) {
+      this.techStackChart.destroy()
     }
   },
   methods: {
+    createTechStackChart() {
+      const ctx = this.$refs.techStackChart.getContext('2d')
+      
+      this.techStackChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: this.techStackData.map(item => item.name),
+          datasets: [{
+            data: this.techStackData.map(item => item.value),
+            backgroundColor: this.techStackData.map(item => item.color),
+            borderWidth: 0,
+            cutout: '60%' // Creates the donut hole
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false // We'll use our custom legend
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || ''
+                  const value = context.parsed
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0)
+                  const percentage = Math.round((value / total) * 100)
+                  return `${label}: ${percentage}%`
+                }
+              }
+            }
+          },
+          animation: {
+            animateRotate: true,
+            duration: 1000
+          },
+          interaction: {
+            intersect: false
+          }
+        }
+      })
+    },
+    updateTechStackData(newData) {
+      // Method to update chart data dynamically
+      const total = newData.reduce((sum, item) => sum + item.value, 0)
+      
+      // Calculate percentages
+      this.techStackData = newData.map(item => ({
+        ...item,
+        percentage: Math.round((item.value / total) * 100)
+      }))
+      
+      // Update chart
+      if (this.techStackChart) {
+        this.techStackChart.data.labels = this.techStackData.map(item => item.name)
+        this.techStackChart.data.datasets[0].data = this.techStackData.map(item => item.value)
+        this.techStackChart.data.datasets[0].backgroundColor = this.techStackData.map(item => item.color)
+        this.techStackChart.update()
+      }
+    },
     editProfile() {
       // Handle profile editing
       console.log('Edit profile clicked');
@@ -435,12 +530,19 @@ export default {
   margin-bottom: 40px;
 }
 
-.profile-card,
-.tech-stack-card {
+.profile-card{
   background: #FAFBFD;
   border: 1px solid #E8EDF8;
   border-radius: 20px;
   padding: 30px;
+  height: 280px;
+}
+
+.tech-stack-card {
+  background: #FAFBFD;
+  border: 1px solid #E8EDF8;
+  border-radius: 20px;
+  padding: 30px 50px;
   height: 280px;
 }
 
@@ -488,48 +590,49 @@ export default {
 }
 
 /* Tech Stack */
-/* .tech-stack-card{
-    width: 848px;
-    height: 280px;
-    display: block;
-} */
+.tech-stack-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
 .section-title {
   font-size: 18px;
   font-weight: 600;
   color: #262626;
-  margin: 0 0 20px 0;
+  margin: 0px;
 }
 
 .tech-stack-content {
-  display: block flex;
-  gap: 50px;
+  display: flex;
   align-items: flex-start;
+  gap: 50px;
+  height: 100%;
 }
 
-.tech-chart {
+.main-languages-section {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 20px;
+  flex: 1;
+}
+
+.chart-and-legend {
+  display: flex;
+  align-items: center;
+  gap: 25px;
 }
 
 .chart-container {
   position: relative;
   width: 120px;
   height: 120px;
+  flex-shrink: 0;
 }
 
-.chart-circle {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #FF176A 0%, #FFA9BF  50%, #FFDCE5 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #FF176A;
-  font-weight: 500;
+.chart-container canvas {
+  width: 120px !important;
+  height: 120px !important;
 }
 
 .chart-legend {
@@ -550,16 +653,21 @@ export default {
   width: 13px;
   height: 13px;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.legend-color.primary { background: #FF176A; }
-.legend-color.secondary { background: #FF84A3; }
-.legend-color.tertiary { background: #FFD1DC; }
+.vertical-divider {
+  width: 1px;
+  height: 180px;
+  background: #E8EDF8;
+  align-self: stretch;
+  margin: 0px 0px 0px;
+}
 
-.tech-lists {
+.tech-stack-section {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 20px;
   flex: 1;
 }
 
@@ -567,13 +675,14 @@ export default {
   font-size: 16px;
   font-weight: 600;
   color: #616161;
-  margin: 0 0 20px 0;
+  margin: 0;
 }
 
 .tech-tags {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px 7px;
+  align-items: start;
 }
 
 .tech-tag {
@@ -585,7 +694,8 @@ export default {
   justify-content: space-between;
   font-size: 14px;
   color: #616161;
-  max-width: 192px;
+  width: 192px;
+  height: 30px;
 }
 
 /* Skills Section */
@@ -764,82 +874,6 @@ export default {
   height: 304px;
 }
 
-.heatmap {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto 1fr auto;
-  gap: 10px;
-  margin: 30px 0;
-}
-
-.heatmap-y-labels {
-  grid-column: 1;
-  grid-row: 2;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  font-size: 12px;
-  color: #262626;
-}
-
-.heatmap-content {
-  grid-column: 2;
-  grid-row: 2;
-  background: #FFFFFF;
-  border: 1px solid #F9D2D6;
-  border-radius: 11px;
-  padding: 11px;
-  min-height: 155px;
-}
-
-.heatmap-placeholder {
-  width: 100%;
-  height: 100%;
-  background: #f8f9fa;
-  border: 2px dashed #dee2e6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6c757d;
-  border-radius: 8px;
-}
-
-.heatmap-x-labels {
-  grid-column: 2;
-  grid-row: 3;
-  display: grid;
-  grid-template-columns: repeat(24, 1fr);
-  gap: 5px;
-  font-size: 12px;
-  color: #262626;
-  text-align: center;
-}
-
-.heatmap-legend {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  font-size: 13px;
-  color: #616161;
-}
-
-.legend-squares {
-  display: flex;
-  gap: 2px;
-}
-
-.legend-square {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-}
-
-.level-0 { background: rgba(89, 115, 147, 0.04); }
-.level-1 { background: #FFD1DC; }
-.level-2 { background: #FF84A3; }
-.level-3 { background: #FF176A; }
-
 /* Projects Section */
 .projects-section {
   margin-bottom: 40px;
@@ -976,11 +1010,6 @@ export default {
   
   .skills-stats {
     grid-template-columns: 1fr;
-  }
-  
-  .heatmap-x-labels {
-    grid-template-columns: repeat(12, 1fr);
-    font-size: 10px;
   }
 }
 </style>
