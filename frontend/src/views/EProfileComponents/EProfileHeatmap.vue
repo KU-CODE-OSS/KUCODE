@@ -1,49 +1,57 @@
 <template>
   <div>
-    <!-- Heatmap -->
-    <div class="heatmap">
-      <div class="heatmap-y-labels">
-        <span>월</span>
-        <span>화</span>
-        <span>수</span>
-        <span>목</span>
-        <span>금</span>
-        <span>토</span>
-        <span>일</span>
+    <!-- 히트맵 데이터가 있을 때만 표시 -->
+    <div v-if="hasHeatmapData">
+      <!-- Heatmap Legend (상단 우측에 배치) -->
+      <div class="heatmap-legend-top">
+        <span>Less</span>
+        <div class="legend-squares">
+          <div class="legend-square level-0"></div>
+          <div class="legend-square level-1"></div>
+          <div class="legend-square level-2"></div>
+          <div class="legend-square level-3"></div>
+        </div>
+        <span>More</span>
       </div>
-      <div class="heatmap-content">
-        <!-- 실제 히트맵 그리드 생성 -->
-        <div class="heatmap-grid">
-          <div 
-            v-for="(dayData, dayIndex) in weekDays" 
-            :key="dayIndex"
-            class="heatmap-row"
-          >
+      
+      <!-- Heatmap -->
+      <div class="heatmap">
+        <div class="heatmap-y-labels">
+          <span>월</span>
+          <span>화</span>
+          <span>수</span>
+          <span>목</span>
+          <span>금</span>
+          <span>토</span>
+          <span>일</span>
+        </div>
+        <div class="heatmap-content">
+          <!-- 실제 히트맵 그리드 생성 -->
+          <div class="heatmap-grid">
             <div 
-              v-for="hour in 24" 
-              :key="hour"
-              :class="getHeatmapCellClass(dayData, hour)"
-              class="heatmap-cell"
-              :title="`${dayData.day} ${hour-1}시: ${getActivityCount(dayData, hour)}개`"
-            ></div>
+              v-for="(dayData, dayIndex) in weekDays" 
+              :key="dayIndex"
+              class="heatmap-row"
+            >
+              <div 
+                v-for="hour in 24" 
+                :key="hour"
+                :class="getHeatmapCellClass(dayData, hour)"
+                class="heatmap-cell"
+                :title="`${dayData.day} ${hour-1}시: ${getActivityCount(dayData, hour)}개`"
+              ></div>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="heatmap-x-labels">
-        <span v-for="hour in 24" :key="hour">{{ hour - 1 }}</span>
+        <div class="heatmap-x-labels">
+          <span v-for="hour in 24" :key="hour">{{ hour - 1 }}</span>
+        </div>
       </div>
     </div>
     
-    <!-- Heatmap Legend -->
-    <div class="heatmap-legend">
-      <span>Less</span>
-      <div class="legend-squares">
-        <div class="legend-square level-0"></div>
-        <div class="legend-square level-1"></div>
-        <div class="legend-square level-2"></div>
-        <div class="legend-square level-3"></div>
-      </div>
-      <span>More</span>
+    <!-- 데이터가 없을 때 표시할 메시지 -->
+    <div v-else class="no-data-message">
+      <p>활동 데이터가 없습니다.</p>
     </div>
   </div>
 </template>
@@ -54,45 +62,29 @@ export default {
   props: {
     heatmapData: {
       type: Object,
-      default: () => ({
-        Mon: 0,
-        Tue: 0,
-        Wed: 0,
-        Thu: 0,
-        Fri: 0,
-        Sat: 0,
-        Sun: 0
-      })
+      default: () => ({})
     }
   },
-  data() {
-    return {
-      weekDays: [
-        { day: 'Mon', hours: this.generateHourData() },
-        { day: 'Tue', hours: this.generateHourData() },
-        { day: 'Wed', hours: this.generateHourData() },
-        { day: 'Thu', hours: this.generateHourData() },
-        { day: 'Fri', hours: this.generateHourData() },
-        { day: 'Sat', hours: this.generateHourData() },
-        { day: 'Sun', hours: this.generateHourData() }
+  computed: {
+    hasHeatmapData() {
+      // heatmapData가 비어있지 않고 실제 데이터가 있는지 확인
+      return this.heatmapData && Object.keys(this.heatmapData).length > 0
+    },
+    weekDays() {
+      if (!this.hasHeatmapData) return []
+      
+      return [
+        { day: 'Mon', hours: this.heatmapData.Mon || {} },
+        { day: 'Tue', hours: this.heatmapData.Tue || {} },
+        { day: 'Wed', hours: this.heatmapData.Wed || {} },
+        { day: 'Thu', hours: this.heatmapData.Thu || {} },
+        { day: 'Fri', hours: this.heatmapData.Fri || {} },
+        { day: 'Sat', hours: this.heatmapData.Sat || {} },
+        { day: 'Sun', hours: this.heatmapData.Sun || {} }
       ]
     }
   },
   methods: {
-    generateHourData() {
-      const hours = {}
-      for (let hour = 0; hour < 24; hour++) {
-        // 10시-15시: 20개, 15시-18시: 5개, 나머지: 0개
-        if (hour >= 10 && hour < 15) {
-          hours[hour] = 20
-        } else if (hour >= 15 && hour < 18) {
-          hours[hour] = 5
-        } else {
-          hours[hour] = 0
-        }
-      }
-      return hours
-    },
     getActivityCount(dayData, hour) {
       return dayData.hours[hour - 1] || 0
     },
@@ -111,12 +103,25 @@ export default {
 </script>
 
 <style scoped>
+.heatmap-legend-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 13px;
+  color: #616161;
+  margin-bottom: 15px;
+  margin-top: -30px;
+  padding-right: 10px;
+}
+
 .heatmap {
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: auto 1fr auto;
   gap: 10px;
-  margin: 30px 0;
+  margin-bottom: 30px;
+  margin-top: -2px;
 }
 
 .heatmap-y-labels {
@@ -175,14 +180,7 @@ export default {
   text-align: center;
 }
 
-.heatmap-legend {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  font-size: 13px;
-  color: #616161;
-}
+/* 기존 하단 범례 스타일 제거 (더 이상 사용하지 않음) */
 
 .legend-squares {
   display: flex;
@@ -199,4 +197,11 @@ export default {
 .level-1 { background: #FFD1DC; }
 .level-2 { background: #FF84A3; }
 .level-3 { background: #FF176A; }
+
+.no-data-message {
+  text-align: center;
+  padding: 40px;
+  color: #616161;
+  font-size: 16px;
+}
 </style> 

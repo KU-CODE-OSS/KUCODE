@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const ip_for_develop = process.env.VUE_APP_API_URL;
-
+//const ip_for_develop = process.env.VUE_APP_API_URL;
+const ip_for_develop = 'http://163.152.30.185:8000/api';
 // Axios 인스턴스 생성
 const api = axios.create({
   baseURL: process.env.VUE_APP_API_URL,
@@ -50,6 +50,21 @@ export function postCourseUpload(formData) {
 
 export function getRepoInfo() {
   return ajax(ip_for_develop + '/repo/repo_read_db', 'get')
+}
+
+// 히트맵 API 함수 (POST 방식)
+export function getEProfileHeatmap(githubId) {
+  // 전송할 데이터를 JSON 객체로 만듭니다.
+  const data = {
+    github_id: githubId
+  };
+
+  // ajax 함수 호출 시 'data' 인자로 JSON 객체를 전달합니다.
+  // 'Content-Type': 'application/json' 헤더를 추가해야 백엔드에서 JSON으로 인식합니다.
+  return ajax(ip_for_develop + '/repo/repo_account_read_db', 'post', { 
+    data: data, 
+    headers: { 'Content-Type': 'application/json' } 
+  });
 }
 
 // ajax 함수
