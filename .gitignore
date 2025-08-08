@@ -175,4 +175,4 @@ frontend/node_modules
 *crawling.sh*
 
 #backup file
-*.bak
+*.bak.DS_Store
