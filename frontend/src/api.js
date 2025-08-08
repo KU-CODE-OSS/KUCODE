@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-//const ip_for_develop = process.env.VUE_APP_API_URL;
-const ip_for_develop = 'http://163.152.30.185:8000/api';
-// Axios 인스턴스 생성
+const ip_for_develop = process.env.VUE_APP_API_URL;
+// // Axios 인스턴스 생성
 const api = axios.create({
   baseURL: process.env.VUE_APP_API_URL,
   xsrfHeaderName: 'X-CSRFToken',
