@@ -300,6 +300,7 @@
 import { Chart, registerables } from 'chart.js'
 import EProfileHeatmap from './EProfileComponents/EProfileHeatmap.vue'
 import { getEProfileHeatmap } from '@/api.js'
+import { processActivityData, processAddedLinesData, estimateCommitLines } from './EProfileComponents/chartUtils/chartUtils.js'
 
 // Register Chart.js components
 Chart.register(...registerables)
@@ -577,10 +578,16 @@ export default {
               }
             },
             y: {
-              min: 0,
-              max: 400,
+              beginAtZero: true,
+              // Let Chart.js automatically calculate min, max, and stepSize
               ticks: {
-                stepSize: 10,
+                callback: function(value) {
+                  // Format large numbers (e.g., 25000 -> 25K)
+                  if (value >= 1000) {
+                    return (value / 1000) + 'K'
+                  }
+                  return value
+                },
                 color: '#262626',
                 font: {
                   size: 12,
@@ -692,9 +699,9 @@ export default {
       // this.activityChart.data.datasets[1].data = [...currentData.commits]
       // this.activityChart.data.datasets[2].data = [...currentData.stars]
       
-      this.activityChart.data.labels = [...currentData.labels]
-      this.activityChart.data.datasets[0].data = [...currentData.commits]
-      this.activityChart.data.datasets[1].data = [...currentData.commitLines]
+      // this.activityChart.data.labels = [...currentData.labels]
+      // this.activityChart.data.datasets[0].data = [...currentData.commits]
+      // this.activityChart.data.datasets[1].data = [...currentData.commitLines]
       
       // Force a complete re-render
       // this.activityChart.update()
@@ -713,48 +720,68 @@ export default {
     },
     async loadActivityChart() {
       try {
-        // TODO: 실제 로그인된 사용자의 GitHub 아이디를 가져오는 로직으로 변경 필요
         const githubId = "dlwls423" // 임시 테스트용 GitHub 아이디
+        
+        // Initialize with empty data
         this.activityData = {
           monthly: {
-            labels: ['5월', '6월', '7월', '8월', '10월', '11월'],
+            labels: [],
             commits: [],
             commitLines: []
           },
           weekly: {
-            labels: ['1주차', '2주차', '3주차', '4주차', '5주차', '6주차'],
+            labels: [],
             commits: [],
             commitLines: []
           }
         }
         
         const response = await getEProfileHeatmap(githubId)
-        this.activityData = {
-          monthly: {
-            labels: ['5월', '6월', '7월', '8월', '10월', '11월'],
-            commits: [100, 15, 3, 37, 28, 15],
-            commitLines: [57, 120, 30, 338, 210, 150]
-          },
-          weekly: {
-            labels: ['1주차', '2주차', '3주차', '4주차', '5주차', '6주차'],
-            commits: [],
-            commitLines: []
+        console.log(response)
+
+        // Process the API response data using utility function
+        if (response.data && response.data.monthly_commits) {
+          let monthlyData = { labels: [], values: [] }
+          let addedLinesData = { labels: [], values: [] }
+          
+          // Process commits data
+          if (response.data.monthly_commits.total_count) {
+            monthlyData = processActivityData(response.data.monthly_commits.total_count)
+          }
+          
+          // Process added lines data
+          if (response.data.monthly_commits.added_lines) {
+            addedLinesData = processAddedLinesData(response.data.monthly_commits.added_lines)
+          }
+          
+          this.activityData.monthly = {
+            labels: monthlyData.labels,
+            commits: monthlyData.values,
+            commitLines: addedLinesData.values // Use actual added lines data
           }
         }
+        
+        // For now, keep weekly as empty or use sample data
+        this.activityData.weekly = {
+          labels: ['1주차', '2주차', '3주차', '4주차', '5주차', '6주차'],
+          commits: [8, 12, 15, 18, 14, 10],
+          commitLines: [68, 102, 128, 153, 119, 85]
+        }
+        
         console.log('활동 추이 로드 완료:', this.activityData)
       } catch (error) {
-        console.error('히트맵 데이터 로드 실패:', error)
-        // 에러 시 기본 데이터 설정 (선택사항)
+        console.error('활동 차트 데이터 로드 실패:', error)
+        // 에러 시 기본 데이터 설정
         this.activityData = {
           monthly: {
             labels: ['5월', '6월', '7월', '8월', '10월', '11월'],
             commits: [10, 15, 3, 37, 28, 15],
-            commitLines: [57, 120, 30, 338, 210, 150]
+            commitLines: [85, 128, 26, 315, 238, 128]
           },
           weekly: {
             labels: ['1주차', '2주차', '3주차', '4주차', '5주차', '6주차'],
-            commits: [],
-            commitLines: []
+            commits: [8, 12, 15, 18, 14, 10],
+            commitLines: [68, 102, 128, 153, 119, 85]
           }
         }
       }
