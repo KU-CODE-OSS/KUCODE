@@ -31,6 +31,7 @@ class Repository(models.Model):
     release_version = models.CharField(max_length=100,null=True)
     etc = models.CharField(max_length=100,null=True)
     crawled_date = models.CharField(max_length=100,null=True)
+    summary = models.TextField(null=True) 
 
     def __str__(self):
         return self.name
