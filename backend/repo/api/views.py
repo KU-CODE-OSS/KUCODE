@@ -1319,15 +1319,26 @@ def repo_account_read_db(request):
         one_year_ago = today - timedelta(days=365)
 
         # 지난 1년간의 커밋 기록을 한 번만 조회
-        all_commits = Repo_commit.objects.filter(
-            repo_id__in=repo_ids,
-            last_update__gte=one_year_ago
-        )
+        all_commits = Repo_commit.objects.filter(repo_id__in=repo_ids)
         
+        # 모든 기간 커밋 통계 계산
+        commit_total_data = all_commits.aggregate(
+            added_lines=Sum('added_lines'),
+            deleted_lines=Sum('deleted_lines'),
+            total_commits=Count('id')
+        )
+        total_stats = {
+            'total_commits': commit_total_data.get('total_commits', 0) or 0,
+            'added_lines': commit_total_data.get('added_lines', 0) or 0,
+            'deleted_lines': commit_total_data.get('deleted_lines', 0) or 0,
+            'total_changed_lines': (commit_total_data.get('added_lines', 0) or 0) + (commit_total_data.get('deleted_lines', 0) or 0),
+        }
+
+
         monthly_commit_counts = {}
         monthly_added_lines = {}
         monthly_deleted_lines = {}
-        monthly_total_changed_lines = {}
+        monthly_changed_lines = {}
         
         # 히트맵 데이터 초기화
         days_of_week = {0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun'}
@@ -1340,28 +1351,48 @@ def repo_account_read_db(request):
             except (ValueError, TypeError):
                 continue
             
-            # 월별 데이터 집계
-            month_key = commit_datetime.strftime('%Y-%m')
-            added = commit.added_lines if commit.added_lines is not None else 0
-            deleted = commit.deleted_lines if commit.deleted_lines is not None else 0
+            # 1년치 데이터만 월별/히트맵 집계에 사용
+            if commit_datetime >= one_year_ago:
+                # 월별 데이터 집계
+                month_key = commit_datetime.strftime('%Y-%m')
+                added = commit.added_lines if commit.added_lines is not None else 0
+                deleted = commit.deleted_lines if commit.deleted_lines is not None else 0
 
-            monthly_commit_counts[month_key] = monthly_commit_counts.get(month_key, 0) + 1
-            monthly_added_lines[month_key] = monthly_added_lines.get(month_key, 0) + added
-            monthly_deleted_lines[month_key] = monthly_deleted_lines.get(month_key, 0) + deleted
-            monthly_total_changed_lines[month_key] = monthly_total_changed_lines.get(month_key, 0) + added + deleted
+                monthly_commit_counts[month_key] = monthly_commit_counts.get(month_key, 0) + 1
+                monthly_added_lines[month_key] = monthly_added_lines.get(month_key, 0) + added
+                monthly_deleted_lines[month_key] = monthly_deleted_lines.get(month_key, 0) + deleted
+                monthly_changed_lines[month_key] = monthly_changed_lines.get(month_key, 0) + added + deleted
             
-            # 히트맵 데이터 집계
-            weekday_index = commit_datetime.weekday() # 0 = 월요일
-            hour = commit_datetime.hour
-            day_name = days_of_week[weekday_index]
-            
-            heatmap_data[day_name][str(hour)] += 1
+                # 히트맵 데이터 집계
+                weekday_index = commit_datetime.weekday() # 0 = 월요일
+                hour = commit_datetime.hour
+                day_name = days_of_week[weekday_index]
+                
+                heatmap_data[day_name][str(hour)] += 1
 
         # 데이터 정렬
         sorted_commit_counts = sorted(monthly_commit_counts.items())
         sorted_added_lines = sorted(monthly_added_lines.items())
         sorted_deleted_lines = sorted(monthly_deleted_lines.items())
-        sorted_total_changed_lines = sorted(monthly_total_changed_lines.items())
+        sorted_changed_lines = sorted(monthly_changed_lines.items())
+
+        # 이슈, PR 등 리포지토리 관련 통계는 기존과 동일하게 repo_list를 순회하며 계산
+        total_open_issue_count = sum(repo.open_issue_count for repo in repo_list)
+        total_closed_issue_count = sum(repo.closed_issue_count for repo in repo_list)
+        total_open_pr_count = sum(repo.open_pr_count for repo in repo_list)
+        total_closed_pr_count = sum(repo.closed_pr_count for repo in repo_list)
+        total_star_count = sum(repo.star_count for repo in repo_list)
+        total_fork_count = sum(repo.fork_count for repo in repo_list)
+
+        total_stats.update({
+            'total_open_issues': total_open_issue_count,
+            'total_closed_issues': total_closed_issue_count,
+            'total_open_prs': total_open_pr_count,
+            'total_closed_prs': total_closed_pr_count,
+            'total_stars': total_star_count,
+            'total_forks': total_fork_count,
+        })
+
 
         data =[]
         for r in repo_list:
@@ -1432,7 +1463,7 @@ def repo_account_read_db(request):
             "pr_count":pr_count,
             'language': r.language,
             'language_percentages': top_5_language_percentages,
-            'contributors': contributors_count,
+            'contributors_count': contributors_count,
             'contributors_list': contributors_total_info,
             'license': r.license,
             'has_readme': r.has_readme,
@@ -1445,11 +1476,12 @@ def repo_account_read_db(request):
         response_data = {
             'repositories': data,
             'total_language_percentage': top_5_total_language_percentages,
+            'total_stats': total_stats,
             'monthly_commits': {
                 'total_count': sorted_commit_counts,
                 'added_lines': sorted_added_lines,
                 'deleted_lines': sorted_deleted_lines,
-                'total_changed_lines': sorted_total_changed_lines
+                'changed_lines': sorted_changed_lines
             },
             'heatmap': heatmap_data,
         }
