@@ -143,6 +143,7 @@ def sync_repo_db(request):
                             'contributed_open_pr_count': repo_data.get('contributed_open_pr_count'),
                             'contributed_closed_pr_count': repo_data.get('contributed_closed_pr_count'),
                             'language': ', '.join(repo_data.get('language', [])) if isinstance(repo_data.get('language'), list) else 'None',
+                            'language_bytes': repo_data.get('language_bytes', {}),
                             'contributors': ', '.join(repo_data.get('contributors', [])) if isinstance(repo_data.get('contributors'), list) else 'None',
                             'license': repo_data.get('license'),
                             'has_readme': repo_data.get('has_readme'),
