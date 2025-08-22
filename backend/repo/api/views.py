@@ -118,6 +118,25 @@ def sync_repo_db(request):
                     continue
 
                 repo_data = repo_response.json()
+
+                language_percentage = {}
+                try:
+                    language_bytes = repo_data.get('language_bytes', {})
+                    if language_bytes:
+                        total_bytes = sum(language_bytes.values())
+
+                        for language, bytes in language_bytes.items():
+                            percentage = (bytes / total_bytes) * 100
+                            # 소수점 1자리
+                            language_percentage[language] = round(percentage, 1)
+
+                except Exception as e:
+                    # Log an error if one occurs while processing a repository
+                    message = f"Error processing repository {repo_name} (ID: {repo_id}) for GitHub user {github_id}: {str(e)}"
+                    print(f"[ERROR] {message}")
+                    failure_repo_count += 1
+                    failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
+
                 try:
                     print(f"  {github_id}/{repo_name}: {repo_data}")
                     # 7-2. Use `update_or_create` to create or update repository information in the database.
@@ -144,6 +163,7 @@ def sync_repo_db(request):
                             'contributed_closed_pr_count': repo_data.get('contributed_closed_pr_count'),
                             'language': ', '.join(repo_data.get('language', [])) if isinstance(repo_data.get('language'), list) else 'None',
                             'language_bytes': repo_data.get('language_bytes', {}),
+                            'language_percentage': language_percentage,
                             'contributors': ', '.join(repo_data.get('contributors', [])) if isinstance(repo_data.get('contributors'), list) else 'None',
                             'license': repo_data.get('license'),
                             'has_readme': repo_data.get('has_readme'),
