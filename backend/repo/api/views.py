@@ -1296,14 +1296,20 @@ def repo_account_read_db(request):
         if not github_id:
             return JsonResponse({"status": "Error", "message": "github_id is required in the request body"}, status=400)
 
-        # github_id로 Repository, Student 객체 조회
-        repo_list = Repository.objects.filter(owner_github_id=github_id)
-        student = Student.objects.get(github_id=github_id)
-        
-        sorted_total_language_percentages = sorted(student.total_language_percentage.items(), key=itemgetter(1), reverse=True)
-        top_5_total_language_percentages = dict(sorted_total_language_percentages[:5])
-        other_total_languages_percentage = sum(value for key, value in sorted_total_language_percentages[5:])
-        top_5_total_language_percentages['others'] = round(other_total_languages_percentage, 1)
+        try:
+            # github_id로 Repository, Student 객체 조회
+            repo_list = Repository.objects.filter(owner_github_id=github_id)
+            student = Student.objects.get(github_id=github_id)
+            if isinstance(student.total_language_percentage, dict) and student.total_language_percentage:
+                sorted_total_language_percentages = sorted(student.total_language_percentage.items(), key=itemgetter(1), reverse=True)
+                top_5_total_language_percentages = dict(sorted_total_language_percentages[:5])
+                other_total_languages_percentage = sum(value for key, value in sorted_total_language_percentages[5:])
+                top_5_total_language_percentages['others'] = round(other_total_languages_percentage, 1)
+            else: 
+                top_5_total_language_percentages = []
+           
+        except:
+            return JsonResponse({"status": "Error", "message": "line 1300-1307"}, status=500)
         
         if not repo_list:
             return JsonResponse({"status": "Error", "message": f"No repositories found for github_id: {github_id}"}, status=404)
@@ -1403,7 +1409,7 @@ def repo_account_read_db(request):
 
                 # Concatenate sorted lists, placing contributors with '-' at the end
                 contributors_total_info = contributors_without_dash 
-            
+
             repo_language_percentages = r.language_percentage or {}
             sorted_repo_language_percentages = sorted(repo_language_percentages.items(), key=itemgetter(1), reverse=True)
             top_5_language_percentages = dict(sorted_repo_language_percentages[:5])
