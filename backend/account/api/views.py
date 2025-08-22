@@ -71,6 +71,24 @@ def sync_student_db(request):
 
             data = response.json()
             
+            total_language_bytes = {}
+            # Read repo_repository language_bytes
+            repos = Repository.objects.filter(owner_github_id=github_id)
+            for repo in repos:
+                language_bytes = repo.language_bytes
+                for language, bytes in language_bytes.items():
+                    total_language_bytes[language] = total_language_bytes.get(language, 0) + bytes
+            
+            total_bytes = sum(total_language_bytes.values())
+            if total_bytes > 0:     
+                language_percentages = {
+                    language: round((bytes / total_bytes) * 100, 1)
+                    for language, bytes in total_language_bytes.items()
+                }
+            else:
+                language_percentages = {}
+
+            
             try:
                 print(f"Received data for GitHub ID {github_id}: {data}")
                 # 2b. Update an existing student record or create a new one.
@@ -82,7 +100,8 @@ def sync_student_db(request):
                         'following_count': data.get('Following_CNT'),
                         'public_repo_count': data.get('Public_repos_CNT'),
                         'github_profile_create_at': data.get('Github_profile_Create_Date'),
-                        'github_profile_update_at': data.get('Github_profile_Update_Date')
+                        'github_profile_update_at': data.get('Github_profile_Update_Date'),
+                        'total_language_percentage': language_percentages,
                     }
                 )
 
