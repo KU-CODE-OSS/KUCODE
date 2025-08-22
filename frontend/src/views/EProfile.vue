@@ -20,7 +20,7 @@
                   <i class="icon-location"></i>
                   <div class="detail-content">
                     <span>고려대학교</span>
-                    <span>컴퓨터공학과</span>
+                    <span>컴퓨터학과</span>
                   </div>
                 </div>
                 <div class="detail-item">
@@ -939,7 +939,11 @@ export default {
 .profile-picture-placeholder {
   width: 94px;
   height: 94px;
-  background: #E2E7F0;
+  /* background-color: #E2E7F0; */
+  background-image: url('@/assets/emblem_school_transparent.gif') ;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 70%;
   border-radius: 10px;
   flex-shrink: 0;
 }
@@ -1525,6 +1529,7 @@ export default {
 /* Icons - You'll need to replace these with actual icon implementations */
 .icon-location,
 .icon-mail,
+.icon-message,
 .icon-file,
 .icon-activity,
 .icon-archive,
@@ -1539,6 +1544,41 @@ export default {
   height: 18px;
   background: #949494;
   border-radius: 2px;
+}
+
+.icon-location {
+  width: 18px;
+  height: 18px;
+  background: url('@/assets/icons/icon_person.svg') no-repeat center;
+  background-size: contain;
+}
+
+.icon-mail {
+  width: 18px;
+  height: 18px;
+  background: url('@/assets/icons/icon_mail.svg') no-repeat center;
+  background-size: contain;
+}
+
+.icon-message {
+  width: 20px;
+  height: 20px;
+  background: url('@/assets/icons/icon_message.svg') no-repeat center;
+  background-size: contain;
+}
+
+.icon-archive {
+  width: 18px;
+  height: 18px;
+  background: url('@/assets/icons/icon_archive.svg') no-repeat center;
+  background-size: contain;
+}
+
+.icon-activity {
+  width: 18px;
+  height: 18px;
+  background: url('@/assets/icons/icon_linechart.svg') no-repeat center;
+  background-size: contain;
 }
 
 /* Dropdown Icons */
@@ -1627,13 +1667,6 @@ export default {
   margin-top: 5px;
   font-size: 12px;
   color: #949494;
-}
-
-.icon-message {
-  width: 20px;
-  height: 20px;
-  background: #949494;
-  border-radius: 2px;
 }
 
 /* Responsive Design */
