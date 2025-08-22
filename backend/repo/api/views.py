@@ -16,7 +16,6 @@ from django.db.models import Sum
 from repo.models import Repository, Repo_contributor, Repo_issue,Repo_pr, Repo_commit
 from account.models import Student
 from course.models import Course, Course_project, Course_registration
-from operator import itemgetter
 import requests
 import json
 
@@ -1296,14 +1295,7 @@ def repo_account_read_db(request):
         if not github_id:
             return JsonResponse({"status": "Error", "message": "github_id is required in the request body"}, status=400)
 
-        # github_id로 Repository, Student 객체 조회
         repo_list = Repository.objects.filter(owner_github_id=github_id)
-        student = Student.objects.get(github_id=github_id)
-        
-        sorted_total_language_percentages = sorted(student.total_language_percentage.items(), key=itemgetter(1), reverse=True)
-        top_5_total_language_percentages = dict(sorted_total_language_percentages[:5])
-        other_total_languages_percentage = sum(value for key, value in sorted_total_language_percentages[5:])
-        top_5_total_language_percentages['others'] = round(other_total_languages_percentage, 1)
         
         if not repo_list:
             return JsonResponse({"status": "Error", "message": f"No repositories found for github_id: {github_id}"}, status=404)
@@ -1359,7 +1351,11 @@ def repo_account_read_db(request):
 
         data =[]
         for r in repo_list:
-            
+            try:
+                student = Student.objects.get(github_id=r.owner_github_id)
+            except ObjectDoesNotExist:
+                student = None
+        
             try:
                 course = Course.objects.get(course_repo_name=r.name)
                 category = course.name 
@@ -1404,12 +1400,6 @@ def repo_account_read_db(request):
                 # Concatenate sorted lists, placing contributors with '-' at the end
                 contributors_total_info = contributors_without_dash 
             
-            repo_language_percentages = r.language_percentage or {}
-            sorted_repo_language_percentages = sorted(repo_language_percentages.items(), key=itemgetter(1), reverse=True)
-            top_5_language_percentages = dict(sorted_repo_language_percentages[:5])
-            other_languages_percentage = sum(value for key, value in sorted_repo_language_percentages[5:])
-            top_5_language_percentages['others'] = round(other_languages_percentage, 1)
-
             repo_info = {
             'id': r.id,
             'name': r.name,
@@ -1425,7 +1415,6 @@ def repo_account_read_db(request):
             'total_issue_count': int(r.open_issue_count) + int(r.closed_issue_count),
             "pr_count":pr_count,
             'language': r.language,
-            'language_percentages': top_5_language_percentages,
             'contributors': contributors_count,
             'contributors_list': contributors_total_info,
             'license': r.license,
@@ -1438,7 +1427,6 @@ def repo_account_read_db(request):
     
         response_data = {
             'repositories': data,
-            'total_language_percentage': top_5_total_language_percentages,
             'monthly_commits': {
                 'total_count': sorted_commit_counts,
                 'added_lines': sorted_added_lines,
