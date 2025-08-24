@@ -160,7 +160,7 @@
                 <i class="icon-activity"></i>
                 <h3>활동 추이</h3>
               </div>
-              <div class="chart-toggle">
+              <!-- <div class="chart-toggle">
                 <span 
                   :class="{ 'toggle-active': activityViewMode === 'monthly', 'toggle-inactive': activityViewMode !== 'monthly' }"
                   @click="switchActivityViewMode('monthly')"
@@ -173,7 +173,7 @@
                 >
                   주간
                 </span>
-              </div>
+              </div> -->
             </div>
             <p class="chart-description">최근 대규모의 커밋량 변동이 많았습니다</p>
             
@@ -181,16 +181,16 @@
             <div class="chart-legend-horizontal">
               <div class="legend-item">
                 <div class="legend-dot" style="background: #C16179;"></div>
-                <span>Repos</span>
+                <span>커밋 발생 수</span>
               </div>
               <div class="legend-item">
                 <div class="legend-dot" style="background: #FF176A;"></div>
-                <span>Commit</span>
+                <span>활동량</span>
               </div>
-              <div class="legend-item">
+              <!-- <div class="legend-item">
                 <div class="legend-dot" style="background: #FF90AB;"></div>
                 <span>Stars</span>
-              </div>
+              </div> -->
             </div>
 
             <!-- Activity Line Chart -->
@@ -359,7 +359,7 @@ export default {
       // Sample activity data - replace with actual API data
       activityData: {
         monthly: {
-          labels: ['5월', '6월', '7월', '8월', '10월', '11월'],
+          labels: [],
           commits: [],
           commitLines: []
         },
@@ -685,29 +685,47 @@ export default {
       }
     },
     switchActivityViewMode(mode) {
+      if (this.activityViewMode === mode) return; // ignore duplicate clicks
       this.activityViewMode = mode
       this.updateActivityChart()
     },
     updateActivityChart() {
-      if (!this.activityChart) return
-      
-      const currentData = this.activityData[this.activityViewMode]
-      
-      // Clear and rebuild the datasets completely
-      // this.activityChart.data.labels = [...currentData.labels]
-      // this.activityChart.data.datasets[0].data = [...currentData.repos]
-      // this.activityChart.data.datasets[1].data = [...currentData.commits]
-      // this.activityChart.data.datasets[2].data = [...currentData.stars]
-      
-      // this.activityChart.data.labels = [...currentData.labels]
-      // this.activityChart.data.datasets[0].data = [...currentData.commits]
-      // this.activityChart.data.datasets[1].data = [...currentData.commitLines]
-      
-      // Force a complete re-render
-      // this.activityChart.update()
-      
-      this.activityChart.destroy()
-      this.createActivityChart()
+      if (!this.activityChart) {
+        // If chart doesn't exist yet, just create it
+        this.createActivityChart()
+        return
+      }
+
+      // If a rebuild is already running, queue one more and bail
+      if (this._rebuilding) {
+        this._rebuildQueued = true
+        return
+      }
+
+      this._rebuilding = true
+      try {
+        // 1) Tear down cleanly
+        this.activityChart.destroy()
+        this.activityChart = null
+
+        // 2) Let Vue/DOM settle so the canvas is valid again
+        this.$nextTick(() => {
+          // 3) Rebuild for the current mode
+          this.createActivityChart()
+
+          this._rebuilding = false
+
+          // 4) If clicks piled up during rebuild, do exactly one more
+          if (this._rebuildQueued) {
+            this._rebuildQueued = false
+            // run on next microtask to avoid immediate re-entrancy
+            Promise.resolve().then(() => this.updateActivityChart())
+          }
+        })
+      } catch (e) {
+        this._rebuilding = false
+        console.error(e)
+      }
     },
     
     editProfile() {
@@ -1339,7 +1357,7 @@ export default {
   margin: 0;
 }
 
-/* UPDATED: Enhanced chart toggle styling */
+/* UPDATED: Enhanced chart toggle styling
 .chart-toggle {
   background: #FFEEF0;
   border-radius: 40px;
@@ -1381,7 +1399,7 @@ export default {
   font-size: 16px;
   color: #616161;
   margin: 0 0 24px 0;
-}
+} */
 
 /* UPDATED: Enhanced legend positioning */
 .chart-legend-horizontal {
