@@ -101,7 +101,7 @@
                     <div 
                       class="tech-dropdown"
                       :class="{ 'dropdown-open': dropdown.isOpen }"
-                      @click="toggleDropdown(index)"
+                      @click.stop="toggleDropdown(index)"
                     >
                       <div class="dropdown-selected">
                         <i :class="getIconClass(dropdown.selected)"></i>
@@ -131,7 +131,7 @@
             <div class="skills-stats">
               <div class="stat-item">
                 <h4>추가 / 삭제 커밋 라인 수</h4>
-                <p>1200 / 500</p>
+                <p>16054 / 10234</p>
               </div>
               <div class="stat-item">
                 <h4>이슈 생성 / 닫은 수</h4>
@@ -143,7 +143,7 @@
               </div>
               <div class="stat-item">
                 <h4>오픈 소스 프로젝트</h4>
-                <p>30개</p>
+                <p>0개</p>
               </div>
             </div>
           </div>
@@ -248,46 +248,53 @@
             <span>기여학생</span>
           </div>
           
-          <div class="table-row">
-            <div class="category-tag autonomous">자율</div>
-            <span>tensorflow</span>
-            <span>181023</span>
-            <span>컴퓨터학과</span>
-            <span>1517192</span>
-            <span>23550</span>
-            <span>38455</span>
-            <span>7657</span>
-            <span>C++</span>
-            <span>3474</span>
-            <span><i class="icon-link"></i></span>
+          <!-- Replace the static table rows with dynamic data -->
+          <div class="table-row" v-for="repo in repositoriesData" :key="repo.id">
+            <div 
+              class="category-tag" 
+              :class="{ 
+                'autonomous': repo.category === '자율', 
+                'course': repo.category !== '자율' 
+              }"
+            >
+              {{ repo.category || 'N/A' }}
+            </div>
+            <span>{{ repo.name || 'N/A' }}</span>
+            <span>{{ repo.star_count?.toLocaleString() || '0' }}</span>
+            <span>{{ repo.fork_count?.toLocaleString() || '0' }}</span>
+            <span>{{ repo.commit_count?.toLocaleString() || '0' }}</span>
+            <span>{{ repo.pr_count?.toLocaleString() || '0' }}</span>
+            <span>{{ repo.total_issue_count?.toLocaleString() || '0' }}</span>
+            <span>{{ repo.contributors_count?.toLocaleString() || '0' }}</span>
+            <span>{{ repo.language || 'N/A' }}</span>
+            <span>{{ repo.contributors_count?.toLocaleString() || '0' }}</span>
+            <span>
+              <a v-if="repo.url" :href="repo.url" target="_blank" rel="noopener noreferrer">
+                <i class="icon-link"></i>
+              </a>
+              <span v-else>-</span>
+            </span>
           </div>
-          
-          <div class="table-row">
-            <div class="category-tag course">컴퓨터프로..</div>
-            <span>tensorflow</span>
-            <span>181023</span>
-            <span>컴퓨터학과</span>
-            <span>1517192</span>
-            <span>23550</span>
-            <span>38455</span>
-            <span>7657</span>
-            <span>C++</span>
-            <span>3474</span>
-            <span><i class="icon-link"></i></span>
+
+          <!-- Loading state -->
+          <div v-if="repositoriesLoading" class="table-row">
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #616161;">
+              프로젝트 데이터를 불러오는 중...
+            </div>
           </div>
-          
-          <div class="table-row">
-            <div class="category-tag course">알고리즘</div>
-            <span>tensorflow</span>
-            <span>181023</span>
-            <span>컴퓨터학과</span>
-            <span>1517192</span>
-            <span>23550</span>
-            <span>38455</span>
-            <span>7657</span>
-            <span>C++</span>
-            <span>3474</span>
-            <span><i class="icon-link"></i></span>
+
+          <!-- Error state -->
+          <div v-if="repositoriesError && !repositoriesLoading" class="table-row">
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #CB385C;">
+              프로젝트 데이터를 불러오는데 실패했습니다.
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div v-if="!repositoriesLoading && !repositoriesError && repositoriesData.length === 0" class="table-row">
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #616161;">
+              등록된 프로젝트가 없습니다.
+            </div>
           </div>
         </div>
       </section>
@@ -388,36 +395,47 @@ export default {
         labels: ['1인', '2인', '3인', '4인', '5인 이상'],
         data: [15, 7, 3, 4, 1] // Percentages that add up to 80 (max scale)
       },
+      allTechOptions: ['Python', 'JavaScript', 'TypeScript', 'Java', 'C++', 'C#', 'Go', 'Rust', 
+      'Swift', 'Kotlin', 'React', 'Vue.js', 'Angular', 'Svelte', 'Django', 
+      'Flask', 'Express.js', 'Spring Boot', 'PostgreSQL', 'MySQL', 'MongoDB', 
+      'Redis', 'Docker', 'Kubernetes', 'AWS', 'Google Cloud', 'Azure'],
       techStackDropdowns: [
         {
           selected: 'Python',
           isOpen: false,
-          options: ['Python', 'JavaScript', 'Java', 'C++', 'C#', 'Go', 'Rust', 'Swift', 'Kotlin', 'TypeScript']
+          options: []
         },
         {
-          selected: 'React',
+          selected: 'JavaScript',
           isOpen: false,
-          options: ['React', 'Vue.js', 'Angular', 'Svelte', 'Next.js', 'Nuxt.js', 'Express.js', 'Django', 'Flask', 'Spring Boot']
+          options: []
         },
         {
-          selected: 'Django',
+          selected: 'Go',
           isOpen: false,
-          options: ['Django', 'Flask', 'FastAPI', 'Express.js', 'Spring Boot', 'Laravel', 'Ruby on Rails', 'ASP.NET', 'Phoenix', 'Gin']
+          options: []
         },
         {
-          selected: 'PostgreSQL',
+          selected: 'Rust',
           isOpen: false,
-          options: ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'SQLite', 'Oracle', 'SQL Server', 'MariaDB', 'Cassandra', 'DynamoDB']
+          options: []
         },
         {
-          selected: 'Docker',
+          selected: 'Kubernetes',
           isOpen: false,
-          options: ['Docker', 'Kubernetes', 'AWS', 'Google Cloud', 'Azure', 'Heroku', 'Vercel', 'Netlify', 'DigitalOcean', 'Firebase']
+          options: []
         }
-      ]
+      ],
+      repositoriesData: [],
+      repositoriesLoading: false,
+      repositoriesError: null
     }
   },
   mounted() {
+    this.techStackDropdowns.forEach(dropdown => {
+      dropdown.options = this.allTechOptions
+    })
+    
     this.loadActivityChart()
     this.loadHeatmapData()
 
@@ -427,6 +445,15 @@ export default {
     }, 50)
     this.createTeamSizeChart()
 
+    // Use arrow function to maintain 'this' context
+    this.closeAllDropdowns = (event) => {
+      if (!event.target.closest('.tech-dropdown')) {
+        this.techStackDropdowns.forEach(dropdown => {
+          dropdown.isOpen = false
+        })
+      }
+    }
+    
     document.addEventListener('click', this.closeAllDropdowns)
   },
   beforeUnmount() {
@@ -877,6 +904,115 @@ export default {
       this.techStackDropdowns.forEach(dropdown => {
         dropdown.isOpen = false
       })
+    },
+
+    // Replace your existing loadHeatmapData method with this combined version
+    async loadHeatmapData() {
+      try {
+        const githubId = "dlwls423" // TODO: Replace with actual logged-in user's GitHub ID
+        const response = await getEProfileHeatmap(githubId)
+        
+        console.log('Profile data loaded:', response.data)
+        
+        // Load heatmap data
+        if (response.data && response.data.heatmap) {
+          this.heatmapData = response.data.heatmap
+          console.log('히트맵 데이터 로드 완료:', this.heatmapData)
+        }
+        
+        // Load repositories data from the same response
+        this.loadRepositoriesFromResponse(response.data)
+        
+      } catch (error) {
+        console.error('데이터 로드 실패:', error)
+        // 에러 시 기본 데이터 설정
+        this.heatmapData = {
+          Mon: {}, Tue: {}, Wed: {}, Thu: {}, Fri: {}, Sat: {}, Sun: {}
+        }
+        this.repositoriesData = []
+        this.repositoriesError = error
+      }
+    },
+
+    // Add these methods to your methods object
+    loadRepositoriesFromResponse(responseData) {
+      try {
+        this.repositoriesLoading = true
+        this.repositoriesError = null
+        
+        // Process the repositories data
+        if (responseData && responseData.repositories) {
+          // Handle case where repositories might be an array or single object
+          this.repositoriesData = Array.isArray(responseData.repositories) 
+            ? responseData.repositories 
+            : [responseData.repositories]
+        } else {
+          this.repositoriesData = []
+        }
+        
+        // Update stats if available
+        if (responseData.total_stats) {
+          this.updateStatsFromRepositories(responseData.total_stats)
+        }
+        
+        // Update tech stack data if available
+        if (responseData.total_language_percentage) {
+          this.updateTechStackFromRepositories(responseData.total_language_percentage)
+        }
+        
+        console.log('Repository data processed:', this.repositoriesData)
+        
+      } catch (error) {
+        console.error('Repository data processing failed:', error)
+        this.repositoriesError = error
+        this.repositoriesData = []
+      } finally {
+        this.repositoriesLoading = false
+      }
+    },
+
+    // Helper method to update stats from repository data
+    updateStatsFromRepositories(totalStats) {
+      if (totalStats.added_lines !== undefined && totalStats.deleted_lines !== undefined) {
+        this.stats.commitLines = {
+          added: totalStats.added_lines,
+          deleted: totalStats.deleted_lines
+        }
+      }
+      
+      if (totalStats.total_open_issues !== undefined && totalStats.total_closed_issues !== undefined) {
+        this.stats.issues = {
+          created: totalStats.total_open_issues + totalStats.total_closed_issues,
+          closed: totalStats.total_closed_issues
+        }
+      }
+      
+      if (totalStats.total_open_prs !== undefined && totalStats.total_closed_prs !== undefined) {
+        this.stats.pullRequests = totalStats.total_open_prs + totalStats.total_closed_prs
+      }
+      
+      console.log('Stats updated:', this.stats)
+    },
+
+    // Helper method to update tech stack from repository language data
+    updateTechStackFromRepositories(languagePercentages) {
+      const colors = ['#FF176A', '#FF84A3', '#FFD1DC', '#C16179', '#FF90AB']
+      let colorIndex = 0
+      
+      const newTechStackData = Object.entries(languagePercentages)
+        .sort(([,a], [,b]) => b - a) // Sort by percentage descending
+        .slice(0, 5) // Take top 5
+        .map(([language, percentage]) => ({
+          name: language,
+          value: Math.round(percentage),
+          color: colors[colorIndex++ % colors.length],
+          percentage: Math.round(percentage)
+        }))
+      
+      if (newTechStackData.length > 0) {
+        this.updateTechStackData(newTechStackData)
+        console.log('Tech stack updated:', newTechStackData)
+      }
     }
   }
 }
@@ -979,6 +1115,7 @@ export default {
   border-radius: 20px;
   padding: 30px 50px;
   height: 280px;
+  position: relative
 }
 
 /* Skills Card - MOVED AND UPDATED */
@@ -1165,7 +1302,6 @@ export default {
 
 .tech-dropdown-container {
   position: relative;
-  z-index: 1;
 }
 
 .tech-dropdown {
@@ -1179,11 +1315,14 @@ export default {
 
 .tech-dropdown.dropdown-open {
   border-radius: 10px 10px 0 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 1;
 }
 
 .dropdown-selected {
   padding: 5px 14px;
+  border-radius: 10px 10px 0 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1197,10 +1336,6 @@ export default {
   border-radius: 10px;
 }
 
-.tech-dropdown.dropdown-open .dropdown-selected {
-  border-radius: 10px 10px 0 0;
-}
-
 .dropdown-options {
   position: absolute;
   top: 100%;
@@ -1212,8 +1347,7 @@ export default {
   border-radius: 0 0 10px 10px;
   max-height: 200px;
   overflow-y: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .dropdown-option {
@@ -1241,7 +1375,7 @@ export default {
 }
 
 .icon-arrow-down.rotated {
-  transform: rotate(180deg);
+  transform: rotate(-90deg);
 }
 
 /* Dropdown scrollbar styling */
@@ -1599,6 +1733,13 @@ export default {
   background-size: contain;
 }
 
+.icon-arrow-down {
+  width: 18px;
+  height: 18px;
+  background: url('@/assets/icons/icon_dropdown.svg') no-repeat center;
+  background-size: contain;
+}
+
 /* Dropdown Icons */
 .icon-default,
 .icon-python,
@@ -1634,6 +1775,35 @@ export default {
   border-radius: 2px;
   flex-shrink: 0;
 }
+
+.icon-default { background: url('@/assets/icons/logos/default.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-python { background: url('@/assets/icons/logos/python.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-js { background: url('@/assets/icons/logos/js.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-typescript { background: url('@/assets/icons/logos/typescript.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-java { background: url('@/assets/icons/logos/java.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-cpp { background: url('@/assets/icons/logos/cpp.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-csharp { background: url('@/assets/icons/logos/csharp.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-go { background: url('@/assets/icons/logos/go.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-rust { background: url('@/assets/icons/logos/rust.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-swift { background: url('@/assets/icons/logos/swift.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-kotlin { background: url('@/assets/icons/logos/kotlin.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-react { background: url('@/assets/icons/logos/react.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-vue { background: url('@/assets/icons/logos/vue.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-angular { background: url('@/assets/icons/logos/angular.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-svelte { background: url('@/assets/icons/logos/svelte.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-django { background: url('@/assets/icons/logos/django.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-flask { background: url('@/assets/icons/logos/flask.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-express { background: url('@/assets/icons/logos/express.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-spring { background: url('@/assets/icons/logos/spring.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-postgresql { background: url('@/assets/icons/logos/postgresql.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-mysql { background: url('@/assets/icons/logos/mysql.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-mongodb { background: url('@/assets/icons/logos/mongodb.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-redis { background: url('@/assets/icons/logos/redis.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-docker { background: url('@/assets/icons/logos/docker.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-kubernetes { background: url('@/assets/icons/logos/kubernetes.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-aws { background: url('@/assets/icons/logos/aws.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-gcp { background: url('@/assets/icons/logos/gcp.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+.icon-azure { background: url('@/assets/icons/logos/azure.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
 
 /* Profile Introduction Styles - EDITABLE */
 .profile-intro {
