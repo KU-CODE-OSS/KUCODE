@@ -75,7 +75,7 @@ def sync_student_db(request):
             # Read repo_repository language_bytes
             repos = Repository.objects.filter(owner_github_id=github_id)
             for repo in repos:
-                language_bytes = repo.language_bytes
+                language_bytes = repo.language_bytes or {}
                 for language, bytes in language_bytes.items():
                     total_language_bytes[language] = total_language_bytes.get(language, 0) + bytes
             
@@ -84,6 +84,7 @@ def sync_student_db(request):
                 language_percentages = {
                     language: round((bytes / total_bytes) * 100, 1)
                     for language, bytes in total_language_bytes.items()
+                    if round((bytes / total_bytes) * 100, 1) > 0.0
                 }
             else:
                 language_percentages = {}
