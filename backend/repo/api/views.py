@@ -1393,6 +1393,7 @@ def repo_account_read_db(request):
             'total_forks': total_fork_count,
         })
 
+        total_contributors_count = {'1':0, '2':0, '3':0, '4':0, '5+':0}
 
         data =[]
         for r in repo_list:
@@ -1441,6 +1442,8 @@ def repo_account_read_db(request):
                 # Concatenate sorted lists, placing contributors with '-' at the end
                 contributors_total_info = contributors_without_dash 
 
+            total_contributors_count.update({str(contributors_count): total_contributors_count.get(str(contributors_count), 0) + 1}) if contributors_count < 5 else total_contributors_count.update({'5+': total_contributors_count.get('5+', 0) + 1})
+
             repo_language_percentages = r.language_percentage or {}
             sorted_repo_language_percentages = sorted(repo_language_percentages.items(), key=itemgetter(1), reverse=True)
             top_5_language_percentages = dict(sorted_repo_language_percentages[:5])
@@ -1476,6 +1479,7 @@ def repo_account_read_db(request):
         response_data = {
             'repositories': data,
             'total_language_percentage': top_5_total_language_percentages,
+            'total_contributors_count': total_contributors_count,
             'total_stats': total_stats,
             'monthly_commits': {
                 'total_count': sorted_commit_counts,
