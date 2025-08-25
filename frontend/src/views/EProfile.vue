@@ -250,31 +250,31 @@
           
           <!-- Replace the static table rows with dynamic data -->
           <div class="table-row" v-for="repo in repositoriesData" :key="repo.id">
-            <div 
-              class="category-tag" 
-              :class="{ 
-                'autonomous': repo.category === '자율', 
-                'course': repo.category !== '자율' 
-              }"
-            >
-              {{ repo.category || 'N/A' }}
-            </div>
-            <span>{{ repo.name || 'N/A' }}</span>
-            <span>{{ repo.star_count?.toLocaleString() || '0' }}</span>
-            <span>{{ repo.fork_count?.toLocaleString() || '0' }}</span>
-            <span>{{ repo.commit_count?.toLocaleString() || '0' }}</span>
-            <span>{{ repo.pr_count?.toLocaleString() || '0' }}</span>
-            <span>{{ repo.total_issue_count?.toLocaleString() || '0' }}</span>
-            <span>{{ repo.contributors_count?.toLocaleString() || '0' }}</span>
-            <span>{{ repo.language || 'N/A' }}</span>
-            <span>{{ repo.contributors_count?.toLocaleString() || '0' }}</span>
-            <span>
-              <a v-if="repo.url" :href="repo.url" target="_blank" rel="noopener noreferrer">
-                <i class="icon-link"></i>
-              </a>
-              <span v-else>-</span>
-            </span>
+          <div 
+            class="category-tag" 
+            :class="{ 
+              'autonomous': repo.category === '자율', 
+              'course': repo.category !== '자율' 
+            }"
+          >
+            {{ repo.category || 'N/A' }}
           </div>
+          <span>{{ repo.name || 'N/A' }}</span>
+          <span>{{ repo.star_count?.toLocaleString() || '0' }}</span>
+          <span>{{ repo.fork_count?.toLocaleString() || '0' }}</span>
+          <span>{{ repo.commit_count?.toLocaleString() || '0' }}</span>
+          <span>{{ repo.pr_count?.toLocaleString() || '0' }}</span>
+          <span>{{ repo.total_issue_count?.toLocaleString() || '0' }}</span>
+          <span>{{ repo.contributors_count?.toLocaleString() || '0' }}</span>
+          <span>{{ repo.language || 'N/A' }}</span>
+          <span>{{ repo.contributors_count?.toLocaleString() || '0' }}</span>
+          <span>
+            <a v-if="repo.url" :href="repo.url" target="_blank" rel="noopener noreferrer">
+              <i class="icon-link"></i>
+            </a>
+            <span v-else>-</span>
+          </span>
+        </div>
 
           <!-- Loading state -->
           <div v-if="repositoriesLoading" class="table-row">
@@ -431,13 +431,13 @@ export default {
       repositoriesError: null
     }
   },
-  mounted() {
+  async mounted() {
     this.techStackDropdowns.forEach(dropdown => {
       dropdown.options = this.allTechOptions
     })
     
-    this.loadActivityChart()
-    this.loadHeatmapData()
+    await this.loadActivityChart()
+    await this.loadHeatmapData()
 
     this.createTechStackChart()
     setTimeout(() => {
@@ -839,6 +839,10 @@ export default {
         const response = await getEProfileHeatmap(githubId)
         this.heatmapData = response.data.heatmap
         console.log('히트맵 데이터 로드 완료:', this.heatmapData)
+        
+        // Load repositories data from the same response
+        this.loadRepositoriesFromResponse(response.data)
+
       } catch (error) {
         console.error('히트맵 데이터 로드 실패:', error)
         // 에러 시 기본 데이터 설정 (선택사항)
@@ -904,34 +908,6 @@ export default {
       this.techStackDropdowns.forEach(dropdown => {
         dropdown.isOpen = false
       })
-    },
-
-    // Replace your existing loadHeatmapData method with this combined version
-    async loadHeatmapData() {
-      try {
-        const githubId = "dlwls423" // TODO: Replace with actual logged-in user's GitHub ID
-        const response = await getEProfileHeatmap(githubId)
-        
-        console.log('Profile data loaded:', response.data)
-        
-        // Load heatmap data
-        if (response.data && response.data.heatmap) {
-          this.heatmapData = response.data.heatmap
-          console.log('히트맵 데이터 로드 완료:', this.heatmapData)
-        }
-        
-        // Load repositories data from the same response
-        this.loadRepositoriesFromResponse(response.data)
-        
-      } catch (error) {
-        console.error('데이터 로드 실패:', error)
-        // 에러 시 기본 데이터 설정
-        this.heatmapData = {
-          Mon: {}, Tue: {}, Wed: {}, Thu: {}, Fri: {}, Sat: {}, Sun: {}
-        }
-        this.repositoriesData = []
-        this.repositoriesError = error
-      }
     },
 
     // Add these methods to your methods object
@@ -1010,7 +986,7 @@ export default {
         }))
       
       if (newTechStackData.length > 0) {
-        this.updateTechStackData(newTechStackData)
+        // this.updateTechStackData(newTechStackData)
         console.log('Tech stack updated:', newTechStackData)
       }
     }
