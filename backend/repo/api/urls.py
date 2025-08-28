@@ -33,4 +33,7 @@ urlpatterns = [
   path('sync_repo_issue_db_test/<int:student_id>/', views.sync_repo_issue_db_test, name='sync_repo_issue_db_test'),
   path('sync_repo_pr_db_test/<int:student_id>/', views.sync_repo_pr_db_test, name='sync_repo_pr_db_test'),
   path('sync_repo_commit_db_test/<int:student_id>/', views.sync_repo_commit_db_test, name='sync_repo_commit_db_test'),
-]
+  
+# read_db_per_request
+  path('repo_account_read_db', views.repo_account_read_db, name='repo_account_read_db')
+  ]

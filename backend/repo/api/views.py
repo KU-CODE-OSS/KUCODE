@@ -16,7 +16,9 @@ from django.db.models import Sum
 from repo.models import Repository, Repo_contributor, Repo_issue,Repo_pr, Repo_commit
 from account.models import Student
 from course.models import Course, Course_project, Course_registration
+from operator import itemgetter
 import requests
+import json
 
 class HealthCheckAPIView(APIView):
     def get(self, request):
@@ -117,6 +119,25 @@ def sync_repo_db(request):
                     continue
 
                 repo_data = repo_response.json()
+
+                language_percentage = {}
+                try:
+                    language_bytes = repo_data.get('language_bytes', {})
+                    if language_bytes:
+                        total_bytes = sum(language_bytes.values())
+
+                        for language, bytes in language_bytes.items():
+                            percentage = (bytes / total_bytes) * 100
+                            # 소수점 1자리
+                            language_percentage[language] = round(percentage, 1)
+
+                except Exception as e:
+                    # Log an error if one occurs while processing a repository
+                    message = f"Error processing repository {repo_name} (ID: {repo_id}) for GitHub user {github_id}: {str(e)}"
+                    print(f"[ERROR] {message}")
+                    failure_repo_count += 1
+                    failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
+
                 try:
                     print(f"  {github_id}/{repo_name}: {repo_data}")
                     # 7-2. Use `update_or_create` to create or update repository information in the database.
@@ -142,6 +163,8 @@ def sync_repo_db(request):
                             'contributed_open_pr_count': repo_data.get('contributed_open_pr_count'),
                             'contributed_closed_pr_count': repo_data.get('contributed_closed_pr_count'),
                             'language': ', '.join(repo_data.get('language', [])) if isinstance(repo_data.get('language'), list) else 'None',
+                            'language_bytes': repo_data.get('language_bytes', {}),
+                            'language_percentage': language_percentage,
                             'contributors': ', '.join(repo_data.get('contributors', [])) if isinstance(repo_data.get('contributors'), list) else 'None',
                             'license': repo_data.get('license'),
                             'has_readme': repo_data.get('has_readme'),
@@ -1254,3 +1277,220 @@ def sync_repo_commit_db_test(request, student_id):
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # -----------------------------------------------------
+
+#-----------------------------------------------READ DB per ACCOUNT-----------------------------------------------#
+# ------------REPO READ per ACCOUNT--------------#
+@csrf_exempt
+def repo_account_read_db(request):
+    try:
+        if request.method != 'POST':
+            return JsonResponse({"status": "Error", "message": "Only POST method is allowed"}, status=405)
+
+        try:
+            body_unicode = request.body.decode('utf-8')
+            body_data = json.loads(body_unicode)
+            github_id = body_data.get('github_id')
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return JsonResponse({"status": "Error", "message": "Invalid JSON format or character encoding"}, status=400)
+        
+        if not github_id:
+            return JsonResponse({"status": "Error", "message": "github_id is required in the request body"}, status=400)
+
+        try:
+            # github_id로 Repository, Student 객체 조회
+            repo_list = Repository.objects.filter(owner_github_id=github_id)
+            student = Student.objects.get(github_id=github_id)
+            if isinstance(student.total_language_percentage, dict) and student.total_language_percentage:
+                sorted_total_language_percentages = sorted(student.total_language_percentage.items(), key=itemgetter(1), reverse=True)
+                top_5_total_language_percentages = dict(sorted_total_language_percentages[:5])
+                other_total_languages_percentage = sum(value for key, value in sorted_total_language_percentages[5:])
+                top_5_total_language_percentages['others'] = round(other_total_languages_percentage, 1)
+            else: 
+                top_5_total_language_percentages = []
+           
+        except:
+            return JsonResponse({"status": "Error", "message": "line 1300-1307"}, status=500)
+        
+        if not repo_list:
+            return JsonResponse({"status": "Error", "message": f"No repositories found for github_id: {github_id}"}, status=404)
+
+        repo_ids = [r.id for r in repo_list]
+        today = datetime.now()
+        one_year_ago = today - timedelta(days=365)
+
+        # 지난 1년간의 커밋 기록을 한 번만 조회
+        all_commits = Repo_commit.objects.filter(repo_id__in=repo_ids)
+        
+        # 모든 기간 커밋 통계 계산
+        commit_total_data = all_commits.aggregate(
+            added_lines=Sum('added_lines'),
+            deleted_lines=Sum('deleted_lines'),
+            total_commits=Count('id')
+        )
+        total_stats = {
+            'total_commits': commit_total_data.get('total_commits', 0) or 0,
+            'added_lines': commit_total_data.get('added_lines', 0) or 0,
+            'deleted_lines': commit_total_data.get('deleted_lines', 0) or 0,
+            'total_changed_lines': (commit_total_data.get('added_lines', 0) or 0) + (commit_total_data.get('deleted_lines', 0) or 0),
+        }
+
+
+        monthly_commit_counts = {}
+        monthly_added_lines = {}
+        monthly_deleted_lines = {}
+        monthly_changed_lines = {}
+        
+        # 히트맵 데이터 초기화
+        days_of_week = {0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun'}
+        heatmap_data = {day: {str(hour): 0 for hour in range(24)} for day in days_of_week.values()}
+        
+        # 조회된 커밋 데이터셋을 한 번만 순회하며 모든 통계 데이터를 동시에 집계
+        for commit in all_commits:
+            try:
+                commit_datetime = datetime.strptime(commit.last_update, '%Y-%m-%dT%H:%M:%SZ')
+            except (ValueError, TypeError):
+                continue
+            
+            # 1년치 데이터만 월별/히트맵 집계에 사용
+            if commit_datetime >= one_year_ago:
+                # 월별 데이터 집계
+                month_key = commit_datetime.strftime('%Y-%m')
+                added = commit.added_lines if commit.added_lines is not None else 0
+                deleted = commit.deleted_lines if commit.deleted_lines is not None else 0
+
+                monthly_commit_counts[month_key] = monthly_commit_counts.get(month_key, 0) + 1
+                monthly_added_lines[month_key] = monthly_added_lines.get(month_key, 0) + added
+                monthly_deleted_lines[month_key] = monthly_deleted_lines.get(month_key, 0) + deleted
+                monthly_changed_lines[month_key] = monthly_changed_lines.get(month_key, 0) + added + deleted
+            
+                # 히트맵 데이터 집계
+                weekday_index = commit_datetime.weekday() # 0 = 월요일
+                hour = commit_datetime.hour
+                day_name = days_of_week[weekday_index]
+                
+                heatmap_data[day_name][str(hour)] += 1
+
+        # 데이터 정렬
+        sorted_commit_counts = sorted(monthly_commit_counts.items())
+        sorted_added_lines = sorted(monthly_added_lines.items())
+        sorted_deleted_lines = sorted(monthly_deleted_lines.items())
+        sorted_changed_lines = sorted(monthly_changed_lines.items())
+
+        # 이슈, PR 등 리포지토리 관련 통계는 기존과 동일하게 repo_list를 순회하며 계산
+        total_open_issue_count = sum(repo.open_issue_count for repo in repo_list)
+        total_closed_issue_count = sum(repo.closed_issue_count for repo in repo_list)
+        total_open_pr_count = sum(repo.open_pr_count for repo in repo_list)
+        total_closed_pr_count = sum(repo.closed_pr_count for repo in repo_list)
+        total_star_count = sum(repo.star_count for repo in repo_list)
+        total_fork_count = sum(repo.fork_count for repo in repo_list)
+
+        total_stats.update({
+            'total_open_issues': total_open_issue_count,
+            'total_closed_issues': total_closed_issue_count,
+            'total_open_prs': total_open_pr_count,
+            'total_closed_prs': total_closed_pr_count,
+            'total_stars': total_star_count,
+            'total_forks': total_fork_count,
+        })
+
+        total_contributors_count = {'1':0, '2':0, '3':0, '4':0, '5+':0}
+
+        data =[]
+        for r in repo_list:
+            
+            try:
+                course = Course.objects.get(course_repo_name=r.name)
+                category = course.name 
+            except ObjectDoesNotExist:
+                category = "-"
+            
+            pr_count = Repo_pr.objects.filter(repo=r).count()
+            contributors_list = r.contributors.split(",")
+            contributors_count = len(contributors_list)
+
+            if all(value.strip() == '' for value in contributors_list): # contributors 없을 시
+                contributors_count = 0  
+                contributors_total_info = []
+
+            else :
+                contributors_total_info = []
+                
+                for specific_contributor in contributors_list :
+                    contributor_student_info = []
+                    specific_contributor_trim = str(specific_contributor).strip()
+                    try:
+                        contributor_student = Student.objects.get(github_id = specific_contributor_trim)
+                        contributor_student_info.append(contributor_student.name) 
+                        contributor_student_info.append(contributor_student.department)
+                        contributor_student_info.append(contributor_student.id)   
+                        contributor_student_info.append(contributor_student.github_id)                
+                    except ObjectDoesNotExist:
+                        contributor_student_info.append('-')   
+                        contributor_student_info.append('-') 
+                        contributor_student_info.append('-')
+                        contributor_student_info.append(specific_contributor_trim)  
+
+                    contributors_total_info.append(contributor_student_info)
+                
+                # Separate contributors with '-' from those without
+                contributors_without_dash = [info for info in contributors_total_info if '-' not in info[0]]  # Sort by name (index 0)
+                contributors_with_dash = [info for info in contributors_total_info if '-' in info[0]]
+
+                # Sort contributors_without_dash by name (ascending order)
+                contributors_without_dash.sort(key=lambda x: x[0])
+
+                # Concatenate sorted lists, placing contributors with '-' at the end
+                contributors_total_info = contributors_without_dash 
+
+            total_contributors_count.update({str(contributors_count): total_contributors_count.get(str(contributors_count), 0) + 1}) if contributors_count < 5 else total_contributors_count.update({'5+': total_contributors_count.get('5+', 0) + 1})
+
+            repo_language_percentages = r.language_percentage or {}
+            sorted_repo_language_percentages = sorted(repo_language_percentages.items(), key=itemgetter(1), reverse=True)
+            top_5_language_percentages = dict(sorted_repo_language_percentages[:5])
+            other_languages_percentage = sum(value for key, value in sorted_repo_language_percentages[5:])
+            top_5_language_percentages['others'] = round(other_languages_percentage, 1)
+
+            repo_info = {
+            'id': r.id,
+            'name': r.name,
+            'category' : category,
+            'url': r.url,
+            'student_id': student.id if student else None,
+            'owner_github_id': r.owner_github_id,
+            'created_at': r.created_at,
+            'updated_at': r.updated_at,
+            'fork_count': r.fork_count,
+            'star_count': r.star_count,
+            'commit_count': r.commit_count,
+            'total_issue_count': int(r.open_issue_count) + int(r.closed_issue_count),
+            "pr_count":pr_count,
+            'language': r.language,
+            'language_percentages': top_5_language_percentages,
+            'contributors_count': contributors_count,
+            'contributors_list': contributors_total_info,
+            'license': r.license,
+            'has_readme': r.has_readme,
+            'description': r.description,
+            'release_version': r.release_version
+            }
+            
+            data.append(repo_info)
+    
+        response_data = {
+            'repositories': data,
+            'total_language_percentage': top_5_total_language_percentages,
+            'total_contributors_count': total_contributors_count,
+            'total_stats': total_stats,
+            'monthly_commits': {
+                'total_count': sorted_commit_counts,
+                'added_lines': sorted_added_lines,
+                'deleted_lines': sorted_deleted_lines,
+                'changed_lines': sorted_changed_lines
+            },
+            'heatmap': heatmap_data,
+        }
+
+        return JsonResponse(response_data, safe=False)
+     
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)

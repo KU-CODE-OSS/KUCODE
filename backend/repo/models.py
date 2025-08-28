@@ -22,6 +22,8 @@ class Repository(models.Model):
     contributed_open_pr_count = models.IntegerField(null=True)
     contributed_closed_pr_count = models.IntegerField(null=True)
     language = models.CharField(max_length=500,null=True)
+    language_bytes = models.JSONField(null=True)
+    language_percentage = models.JSONField(null=True)
     contributors = models.CharField(max_length=5000,null=True)
     license = models.CharField(max_length=500,null=True)
     has_readme = models.BooleanField(null=True)
@@ -29,6 +31,7 @@ class Repository(models.Model):
     release_version = models.CharField(max_length=100,null=True)
     etc = models.CharField(max_length=100,null=True)
     crawled_date = models.CharField(max_length=100,null=True)
+    summary = models.TextField(null=True) 
 
     def __str__(self):
         return self.name

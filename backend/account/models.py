@@ -27,7 +27,8 @@ class Student(models.Model):
     starred_count = models.IntegerField(null=True)
     github_profile_create_at = models.CharField(max_length=100, null=True)
     github_profile_update_at = models.CharField(max_length=100, null=True)
-    
+    total_language_percentage = models.JSONField(null=True)  # 전체 언어 비율
+
     def __str__(self):
         return self.name
     

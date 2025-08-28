@@ -27,19 +27,19 @@ const routes = [
     path: '/login',
     name: 'login',
     component: Login,
-    beforeEnter: guestGuard
+    // beforeEnter: guestGuard
   },
   {
     path: '/register',
     name: 'register',
     component: Register,
-    beforeEnter: guestGuard
+    // beforeEnter: guestGuard
   },
   {
     path: '/emailVerification',
     name: 'emailVerification',
     component: EmailVerification,
-    beforeEnter: guestGuard
+    // beforeEnter: guestGuard
   },
   {
     path: '/board',
