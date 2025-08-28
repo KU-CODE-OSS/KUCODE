@@ -343,7 +343,23 @@ def repo_read_db(request):
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # ---------------------------------------------
-
+#-------------SYNC REPO CATEGORY-------------#
+def sync_repo_category(request):
+    updated_repos = []
+    repositories = Repository.objects.all()
+    for repo in repositories:
+        try:
+            course = Course.objects.get(course_repo_name=repo.name)
+            repo.category = course.name
+            repo.is_course = True 
+        except ObjectDoesNotExist:
+            repo.is_course = False
+            if repo.category is None:
+                repo.category = "-"
+        updated_repos.append(repo)
+    Repository.objects.bulk_update(updated_repos, ['category', 'is_course'])
+    return JsonResponse({"status": "200", "message": "Repository categories synchronized successfully."})
+# ---------------------------------------------
 # ------------CONTRIBUTOR--------------#
 def sync_repo_contributor_db(request):
     # 1. Initialization
@@ -1339,7 +1355,8 @@ def repo_account_read_db(request):
         monthly_added_lines = {}
         monthly_deleted_lines = {}
         monthly_changed_lines = {}
-        
+        repo_monthly_commits = {repo.id: {} for repo in repo_list}
+
         # 히트맵 데이터 초기화
         days_of_week = {0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun'}
         heatmap_data = {day: {str(hour): 0 for hour in range(24)} for day in days_of_week.values()}
@@ -1363,6 +1380,9 @@ def repo_account_read_db(request):
                 monthly_deleted_lines[month_key] = monthly_deleted_lines.get(month_key, 0) + deleted
                 monthly_changed_lines[month_key] = monthly_changed_lines.get(month_key, 0) + added + deleted
             
+                repo_id = commit.repo.id
+                repo_monthly_commits[repo_id][month_key] = repo_monthly_commits[repo_id].get(month_key, 0) + 1
+
                 # 히트맵 데이터 집계
                 weekday_index = commit_datetime.weekday() # 0 = 월요일
                 hour = commit_datetime.hour
@@ -1397,12 +1417,6 @@ def repo_account_read_db(request):
 
         data =[]
         for r in repo_list:
-            
-            try:
-                course = Course.objects.get(course_repo_name=r.name)
-                category = course.name 
-            except ObjectDoesNotExist:
-                category = "-"
             
             pr_count = Repo_pr.objects.filter(repo=r).count()
             contributors_list = r.contributors.split(",")
@@ -1450,10 +1464,13 @@ def repo_account_read_db(request):
             other_languages_percentage = sum(value for key, value in sorted_repo_language_percentages[5:])
             top_5_language_percentages['others'] = round(other_languages_percentage, 1)
 
+            repo_monthly_commit_data = sorted(repo_monthly_commits.get(r.id, {}).items())
+
             repo_info = {
             'id': r.id,
             'name': r.name,
-            'category' : category,
+            'is_course': r.is_course,
+            'category' : r.category,
             'url': r.url,
             'student_id': student.id if student else None,
             'owner_github_id': r.owner_github_id,
@@ -1471,7 +1488,8 @@ def repo_account_read_db(request):
             'license': r.license,
             'has_readme': r.has_readme,
             'description': r.description,
-            'release_version': r.release_version
+            'release_version': r.release_version,
+            'monthly_commits': repo_monthly_commit_data
             }
             
             data.append(repo_info)
