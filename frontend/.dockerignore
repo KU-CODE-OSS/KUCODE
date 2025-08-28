@@ -7,5 +7,10 @@ README.md
 .nyc_output
 coverage
 .DS_Store
+.vscode
+.idea
+*.log
+dist
+Thumbs.db 
 *.log
 dist 
