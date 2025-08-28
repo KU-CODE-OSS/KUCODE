@@ -6,9 +6,6 @@ README.md
 .env
 .nyc_output
 coverage
-.vscode
-.idea
-*.log
-dist
 .DS_Store
-Thumbs.db 
+*.log
+dist 
