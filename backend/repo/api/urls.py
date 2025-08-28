@@ -10,6 +10,7 @@ urlpatterns = [
   path("sync_repo_db", views.sync_repo_db, name="sync_repo_db"),
   path("repo_read_db", views.repo_read_db, name="repo_read_db"),
   path("repo_course_read_db", views.repo_course_read_db, name="repo_course_read_db"),
+  path("sync_repo_category", views.sync_repo_category, name="sync_repo_category"),
 
 # repo_contributor CRUD
   path("sync_repo_contributor_db", views.sync_repo_contributor_db, name="sync_repo_contributor_db"),
