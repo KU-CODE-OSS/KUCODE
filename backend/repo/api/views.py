@@ -1418,12 +1418,6 @@ def repo_account_read_db(request):
         data =[]
         for r in repo_list:
             
-            try:
-                course = Course.objects.get(course_repo_name=r.name)
-                category = course.name 
-            except ObjectDoesNotExist:
-                category = "-"
-            
             pr_count = Repo_pr.objects.filter(repo=r).count()
             contributors_list = r.contributors.split(",")
             contributors_count = len(contributors_list)
@@ -1475,7 +1469,8 @@ def repo_account_read_db(request):
             repo_info = {
             'id': r.id,
             'name': r.name,
-            'category' : category,
+            'is_course': r.is_course,
+            'category' : r.category,
             'url': r.url,
             'student_id': student.id if student else None,
             'owner_github_id': r.owner_github_id,
