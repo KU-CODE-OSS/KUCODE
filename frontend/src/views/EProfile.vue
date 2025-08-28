@@ -823,27 +823,27 @@ export default {
           }
         }
         
-        // For now, keep weekly as empty or use sample data
+        // Weekly data will be empty for now
         this.activityData.weekly = {
-          labels: ['1주차', '2주차', '3주차', '4주차', '5주차', '6주차'],
-          commits: [8, 12, 15, 18, 14, 10],
-          commitLines: [68, 102, 128, 153, 119, 85]
+          labels: [],
+          commits: [],
+          commitLines: []
         }
         
         console.log('활동 추이 로드 완료:', this.activityData)
       } catch (error) {
         console.error('활동 차트 데이터 로드 실패:', error)
-        // 에러 시 기본 데이터 설정
+        // 에러 시 빈 데이터 설정
         this.activityData = {
           monthly: {
-            labels: ['5월', '6월', '7월', '8월', '10월', '11월'],
-            commits: [10, 15, 3, 37, 28, 15],
-            commitLines: [85, 128, 26, 315, 238, 128]
+            labels: [],
+            commits: [],
+            commitLines: []
           },
           weekly: {
-            labels: ['1주차', '2주차', '3주차', '4주차', '5주차', '6주차'],
-            commits: [8, 12, 15, 18, 14, 10],
-            commitLines: [68, 102, 128, 153, 119, 85]
+            labels: [],
+            commits: [],
+            commitLines: []
           }
         }
       }
@@ -874,74 +874,14 @@ export default {
           Mon: {}, Tue: {}, Wed: {}, Thu: {}, Fri: {}, Sat: {}, Sun: {}
         }
 
-        this.repositoriesData = [
-          {
-            id: "822988405",
-            name: "20241R0136COSE48000",
-            category: "산학캡스톤디자인",
-            url: "https://github.com/dlwls423/20241R0136COSE48000",
-            student_id: "2020320088",
-            owner_github_id: "dlwls423",
-            created_at: "2024-07-02T08:07:03Z",
-            updated_at: "2024-07-02T08:07:03Z",
-            fork_count: 0,
-            star_count: 0,
-            commit_count: 276,
-            total_issue_count: 0,
-            pr_count: 0,
-            language: "Java, CSS, JavaScript, HTML",
-            language_percentages: {
-                "others": 0
-            },
-            contributors_count: 0,
-            contributors_list: [],
-            license: null,
-            has_readme: false,
-            description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
-            release_version: null
-          }
-        ]
+        this.repositoriesData = []
 
-        this.techStackData = {
-          "Java": 70,
-          "HTML": 13.5,
-          "JavaScript": 10.9,
-          "CSS": 5.5,
-          "C": 0.1,
-          "others": 0
-        }
-
-        const total_contributors_count = {
-            "0": 1,
-            "1": 13,
-            "2": 0,
-            "3": 0,
-            "4": 4,
-            "5+": 2
-        }
-
-        this.teamSizeData = {
-          labels: ['1인', '2인', '3인', '4인', '5인 이상'],
-          data: [13, 0, 0, 4, 2]
-        }
-
-        const total_stats = {
-          "total_commits": 3555,
-          "added_lines": 509673,
-          "deleted_lines": 174331,
-          "total_changed_lines": 684004,
-          "total_open_issues": 3,
-          "total_closed_issues": 1,
-          "total_open_prs": 0,
-          "total_closed_prs": 3,
-          "total_stars": 3,
-          "total_forks": 0
-        }
-
+        this.techStackData = {}
+        this.teamSizeData = { labels: [], data: [] }
         this.stats = {
-          commitLines: {added: total_stats['added_lines'], deleted: total_stats['deleted_lines']},
-          issues: {created: total_stats['total_open_issues'], closed: total_stats['total_closed_issues']},
-          pullRequests: total_stats['total_closed_prs'],
+          commitLines: {added: 0, deleted: 0},
+          issues: {created: 0, closed: 0},
+          pullRequests: 0,
           openSourceContributions: 0
         }
       }
@@ -1202,33 +1142,7 @@ export default {
             ? responseData.repositories 
             : [responseData.repositories]
         } else {
-          this.repositoriesData = [
-            {
-              id: "822988405",
-              name: "20241R0136COSE48000",
-              category: "산학캡스톤디자인",
-              url: "https://github.com/dlwls423/20241R0136COSE48000",
-              student_id: "2020320088",
-              owner_github_id: "dlwls423",
-              created_at: "2024-07-02T08:07:03Z",
-              updated_at: "2024-07-02T08:07:03Z",
-              fork_count: 0,
-              star_count: 0,
-              commit_count: 276,
-              total_issue_count: 0,
-              pr_count: 0,
-              language: "Java, CSS, JavaScript, HTML",
-              language_percentages: {
-                  "others": 0
-              },
-              contributors_count: 0,
-              contributors_list: [],
-              license: null,
-              has_readme: false,
-              description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
-              release_version: null
-            }
-          ]
+          this.repositoriesData = []
         }
         
         console.log('Repository data processed:', this.repositoriesData)
