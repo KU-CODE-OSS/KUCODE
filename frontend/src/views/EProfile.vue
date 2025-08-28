@@ -235,19 +235,43 @@
         <!-- Projects Table -->
         <div class="projects-table">
           <div class="table-header">
-            <span>Category</span>
-            <span>Repository</span>
-            <span>Stars</span>
-            <span>Forks</span>
-            <span>Commits</span>
-            <span>PRs</span>
-            <span>Issues</span>
+            <span class="sortable-header" @click="sortByColumn('category')">
+              Category
+              <i :class="getSortIcon('category')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('name')">
+              Repository
+              <i :class="getSortIcon('name')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('star_count')">
+              Stars
+              <i :class="getSortIcon('star_count')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('fork_count')">
+              Forks
+              <i :class="getSortIcon('fork_count')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('commit_count')">
+              Commits
+              <i :class="getSortIcon('commit_count')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('pr_count')">
+              PRs
+              <i :class="getSortIcon('pr_count')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('total_issue_count')">
+              Issues
+              <i :class="getSortIcon('total_issue_count')"></i>
+            </span>
             <span>Language</span>
-            <span>Contributors</span>
+            <span class="sortable-header" @click="sortByColumn('contributors_count')">
+              Contributors
+              <i :class="getSortIcon('contributors_count')"></i>
+            </span>
           </div>
           
           <!-- Replace the static table rows with dynamic data -->
-          <div class="table-row" v-for="repo in repositoriesData" :key="repo.id">
+          <div class="table-row" v-for="repo in sortedRepositoriesData" :key="repo.id">
           <div 
             class="category-tag" 
             :class="{ 
@@ -400,7 +424,45 @@ export default {
       ],
       repositoriesData: [],
       repositoriesLoading: false,
-      repositoriesError: null
+      repositoriesError: null,
+      // Sorting state
+      sortBy: '',
+      sortDirection: 'asc' // 'asc' or 'desc'
+    }
+  },
+  computed: {
+    sortedRepositoriesData() {
+      if (!this.sortBy) {
+        return this.repositoriesData
+      }
+      
+      const sorted = [...this.repositoriesData].sort((a, b) => {
+        let aVal = a[this.sortBy]
+        let bVal = b[this.sortBy]
+        
+        // Handle different data types
+        if (this.sortBy === 'category') {
+          // Sort category: course projects first, then autonomous
+          aVal = a.is_course ? 0 : 1
+          bVal = b.is_course ? 0 : 1
+        } else if (this.sortBy === 'name') {
+          // String comparison for repository names
+          aVal = (aVal || '').toString().toLowerCase()
+          bVal = (bVal || '').toString().toLowerCase()
+        } else if (['star_count', 'fork_count', 'commit_count', 'pr_count', 'total_issue_count', 'contributors_count'].includes(this.sortBy)) {
+          // Numeric comparison
+          aVal = parseInt(aVal) || 0
+          bVal = parseInt(bVal) || 0
+        }
+        
+        if (this.sortDirection === 'asc') {
+          return aVal > bVal ? 1 : aVal < bVal ? -1 : 0
+        } else {
+          return aVal < bVal ? 1 : aVal > bVal ? -1 : 0
+        }
+      })
+      
+      return sorted
     }
   },
   async mounted() {
@@ -859,6 +921,78 @@ export default {
             has_readme: false,
             description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
             release_version: null
+          },
+
+          {
+            "id": "738312382",
+            "name": "value-together",
+            "is_course": false,
+            "category": "-",
+            "url": "https://github.com/dlwls423/value-together",
+            "student_id": "2020320088",
+            "owner_github_id": "dlwls423",
+            "created_at": "2024-01-03T00:04:04Z",
+            "updated_at": "2024-01-03T00:04:04Z",
+            "fork_count": 0,
+            "star_count": 0,
+            "commit_count": 739,
+            "total_issue_count": 0,
+            "pr_count": 0,
+            "language": "Java, Dockerfile",
+            "language_percentages": {
+                "Java": 99.9,
+                "Dockerfile": 0.1,
+                "others": 0
+            },
+            "contributors_count": 5,
+            "contributors_list": [
+                [
+                    "이예진",
+                    "컴퓨터학과",
+                    "2020320088",
+                    "dlwls423"
+                ]
+            ],
+            "license": null,
+            "has_readme": true,
+            "description": "가치 있는일을 같이 진행하자! 일정 공유 어플리케이션! ",
+            "release_version": null,
+            "monthly_commits": []
+          },
+          {
+            "id": "725163550",
+            "name": "hobby-bungae",
+            "is_course": false,
+            "category": "-",
+            "url": "https://github.com/dlwls423/hobby-bungae",
+            "student_id": "2020320088",
+            "owner_github_id": "dlwls423",
+            "created_at": "2023-11-29T15:11:21Z",
+            "updated_at": "2023-11-29T15:11:21Z",
+            "fork_count": 0,
+            "star_count": 0,
+            "commit_count": 165,
+            "total_issue_count": 0,
+            "pr_count": 0,
+            "language": "Java",
+            "language_percentages": {
+                "Java": 100,
+                "others": 0
+            },
+            "contributors_count": 4,
+            "contributors_list": [
+                [
+                    "이예진",
+                    "컴퓨터학과",
+                    "2020320088",
+                    "dlwls423"
+                ]
+            ],
+            "license": null,
+            "has_readme": true,
+            "description": "스파르타 내일배움캠프 Spring 3기 - 스프링 숙련 주차 팀 과제 : HabbyMate",
+            "release_version": null,
+            "monthly_commits": []
           }
         ]
 
@@ -1201,6 +1335,25 @@ export default {
       } finally {
         this.repositoriesLoading = false
       }
+    },
+
+    // Sorting methods
+    sortByColumn(column) {
+      if (this.sortBy === column) {
+        // Toggle sort direction if clicking the same column
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
+      } else {
+        // Set new column and default to ascending
+        this.sortBy = column
+        this.sortDirection = 'asc'
+      }
+    },
+
+    getSortIcon(column) {
+      if (this.sortBy !== column) {
+        return 'icon-sort-default'
+      }
+      return this.sortDirection === 'asc' ? 'icon-sort-up' : 'icon-sort-down'
     }
   }
 }
@@ -1884,6 +2037,32 @@ export default {
   border-bottom: 1px solid #F9D2D6;
 }
 
+/* Sortable Header Styles */
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: color 0.2s ease;
+}
+
+.sortable-header:hover {
+  color: #910024;
+}
+
+.sortable-header i {
+  width: 12px;
+  height: 12px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.sortable-header:hover i {
+  opacity: 1;
+}
+
 .table-row {
   display: grid;
   grid-template-columns: 
@@ -2083,6 +2262,33 @@ export default {
 .icon-aws { background: url('@/assets/icons/logos/aws.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
 .icon-gcp { background: url('@/assets/icons/logos/gcp.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
 .icon-azure { background: url('@/assets/icons/logos/azure.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
+
+/* Sorting Icons */
+.icon-sort-default,
+.icon-sort-up,
+.icon-sort-down {
+  width: 12px;
+  height: 12px;
+  background: #CB385C;
+  flex-shrink: 0;
+}
+
+.icon-sort-default {
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23CB385C"><path d="M7 10l5 5 5-5H7z"/></svg>') no-repeat center;
+  background-size: contain;
+  transform: rotate(0deg);
+  opacity: 0.4;
+}
+
+.icon-sort-up {
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23CB385C"><path d="M7 14l5-5 5 5H7z"/></svg>') no-repeat center;
+  background-size: contain;
+}
+
+.icon-sort-down {
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23CB385C"><path d="M7 10l5 5 5-5H7z"/></svg>') no-repeat center;
+  background-size: contain;
+}
 
 /* Profile Introduction Styles - EDITABLE */
 .profile-intro {
