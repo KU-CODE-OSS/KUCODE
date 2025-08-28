@@ -72,7 +72,7 @@
                   </div>
                   <div class="chart-legend">
                     <div 
-                      v-for="(lang, index) in techStackData" 
+                      v-for="(lang, index) in convertTechStackDataForChart()" 
                       :key="lang.name"
                       class="legend-item"
                     >
@@ -130,20 +130,20 @@
           <div class="skills-card">
             <div class="skills-stats">
               <div class="stat-item">
-                <h4>추가 / 삭제 커밋 라인 수</h4>
-                <p>16054 / 10234</p>
+                <h4><div class="section-subtitle">개발 생산성</div>(추가·삭제 라인 수)</h4>
+                <p>{{ stats.commitLines.added.toLocaleString() }} / {{ stats.commitLines.deleted.toLocaleString() }}</p>
               </div>
               <div class="stat-item">
-                <h4>이슈 생성 / 닫은 수</h4>
-                <p>45 / 20</p>
+                <h4><div class="section-subtitle">문제 해결력</div>(생성·해결 이슈)</h4>
+                <p>{{ stats.issues.created }} / {{ stats.issues.closed }}</p>
               </div>
               <div class="stat-item">
-                <h4>PR 생성 수</h4>
-                <p>120수</p>
+                <h4><div class="section-subtitle">협업 능력</div>(PR 생성)</h4>
+                <p>{{ stats.pullRequests }}개</p>
               </div>
               <div class="stat-item">
-                <h4>오픈 소스 프로젝트</h4>
-                <p>0개</p>
+                <h4><div class="section-subtitle">오픈소스 기여 역량</div>(참여 오픈소스)</h4>
+                <p>{{ stats.openSourceContributions }}개</p>
               </div>
             </div>
           </div>
@@ -181,11 +181,11 @@
             <div class="chart-legend-horizontal">
               <div class="legend-item">
                 <div class="legend-dot" style="background: #C16179;"></div>
-                <span>커밋 발생 수</span>
+                <span>커밋 횟수</span>
               </div>
               <div class="legend-item">
                 <div class="legend-dot" style="background: #FF176A;"></div>
-                <span>활동량</span>
+                <span>코드 생산량</span>
               </div>
               <!-- <div class="legend-item">
                 <div class="legend-dot" style="background: #FF90AB;"></div>
@@ -242,10 +242,8 @@
             <span>Commits</span>
             <span>PRs</span>
             <span>Issues</span>
-            <span>Watchers</span>
             <span>Language</span>
-            <span>Contribution</span>
-            <span>기여학생</span>
+            <span>Contributors</span>
           </div>
           
           <!-- Replace the static table rows with dynamic data -->
@@ -259,21 +257,14 @@
           >
             {{ repo.category || 'N/A' }}
           </div>
-          <span>{{ repo.name || 'N/A' }}</span>
+          <span :title="repo.name || 'N/A'">{{ repo.name || 'N/A' }}</span>
           <span>{{ repo.star_count?.toLocaleString() || '0' }}</span>
           <span>{{ repo.fork_count?.toLocaleString() || '0' }}</span>
           <span>{{ repo.commit_count?.toLocaleString() || '0' }}</span>
           <span>{{ repo.pr_count?.toLocaleString() || '0' }}</span>
           <span>{{ repo.total_issue_count?.toLocaleString() || '0' }}</span>
+          <span :title="repo.language || 'N/A'">{{ repo.language || 'N/A' }}</span>
           <span>{{ repo.contributors_count?.toLocaleString() || '0' }}</span>
-          <span>{{ repo.language || 'N/A' }}</span>
-          <span>{{ repo.contributors_count?.toLocaleString() || '0' }}</span>
-          <span>
-            <a v-if="repo.url" :href="repo.url" target="_blank" rel="noopener noreferrer">
-              <i class="icon-link"></i>
-            </a>
-            <span v-else>-</span>
-          </span>
         </div>
 
           <!-- Loading state -->
@@ -324,7 +315,7 @@ export default {
         university: '고려대학교',
         department: '컴퓨터공학과',
         email: 'abcde123@korea.ac.kr',
-        introduction: '간단한 자기소개 입력해주세요.'
+        introduction: ''
       },
       techStack: {
         languages: ['Python', 'C++', 'JavaScript'],
@@ -337,26 +328,7 @@ export default {
         openSourceContributions: 0
       },
       // Tech Stack Chart Data
-      techStackData: [
-        {
-          name: 'Python',
-          value: 45,
-          color: '#FF176A',
-          percentage: 45
-        },
-        {
-          name: 'C++',
-          value: 30,
-          color: '#FF84A3',
-          percentage: 30
-        },
-        {
-          name: '기타',
-          value: 25,
-          color: '#FFD1DC',
-          percentage: 25
-        }
-      ],
+      techStackData: [],
       // 히트맵 데이터
       heatmapData: {},
       techStackChart: null,
@@ -392,8 +364,8 @@ export default {
       // Add to your data() return object:
       teamSizeChart: null,
       teamSizeData: {
-        labels: ['1인', '2인', '3인', '4인', '5인 이상'],
-        data: [15, 7, 3, 4, 1] // Percentages that add up to 80 (max scale)
+        labels: [],
+        data: []
       },
       allTechOptions: ['Python', 'JavaScript', 'TypeScript', 'Java', 'C++', 'C#', 'Go', 'Rust', 
       'Swift', 'Kotlin', 'React', 'Vue.js', 'Angular', 'Svelte', 'Django', 
@@ -473,13 +445,16 @@ export default {
     createTechStackChart() {
       const ctx = this.$refs.techStackChart.getContext('2d')
       
+      // Convert object format to chart format
+      const chartData = this.convertTechStackDataForChart()
+      
       this.techStackChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: this.techStackData.map(item => item.name),
+          labels: chartData.map(item => item.name),
           datasets: [{
-            data: this.techStackData.map(item => item.value),
-            backgroundColor: this.techStackData.map(item => item.color),
+            data: chartData.map(item => item.value),
+            backgroundColor: chartData.map(item => item.color),
             borderWidth: 0,
             cutout: '60%' // Creates the donut hole
           }]
@@ -679,12 +654,12 @@ export default {
               }
             },
             y: {
-              min: 0,
-              max: 30,
+              beginAtZero: true,
+              // Let Chart.js automatically calculate min, max, and stepSize
               ticks: {
-                stepSize: 5,
-                color: '#262626',
-                font: { size: 12, family: 'Pretendard' }
+                callback: function(value) {
+                  return value
+                },
               },
               grid: { color: '#FFEAEC' },
               border: { display: false }
@@ -843,11 +818,91 @@ export default {
         // Load repositories data from the same response
         this.loadRepositoriesFromResponse(response.data)
 
+        // Load tech stack data from total_language_percentage
+        this.loadTechStackData(response.data)
+
+        // Load team size data from total_contributors_count
+        this.loadTeamSizeData(response.data)
+
+        // Load stats data from total_stats
+        this.loadStatsData(response.data)
+
       } catch (error) {
         console.error('히트맵 데이터 로드 실패:', error)
         // 에러 시 기본 데이터 설정 (선택사항)
         this.heatmapData = {
           Mon: {}, Tue: {}, Wed: {}, Thu: {}, Fri: {}, Sat: {}, Sun: {}
+        }
+
+        this.repositoriesData = [
+          {
+            id: "822988405",
+            name: "20241R0136COSE48000",
+            category: "산학캡스톤디자인",
+            url: "https://github.com/dlwls423/20241R0136COSE48000",
+            student_id: "2020320088",
+            owner_github_id: "dlwls423",
+            created_at: "2024-07-02T08:07:03Z",
+            updated_at: "2024-07-02T08:07:03Z",
+            fork_count: 0,
+            star_count: 0,
+            commit_count: 276,
+            total_issue_count: 0,
+            pr_count: 0,
+            language: "Java, CSS, JavaScript, HTML",
+            language_percentages: {
+                "others": 0
+            },
+            contributors_count: 0,
+            contributors_list: [],
+            license: null,
+            has_readme: false,
+            description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
+            release_version: null
+          }
+        ]
+
+        this.techStackData = {
+          "Java": 70,
+          "HTML": 13.5,
+          "JavaScript": 10.9,
+          "CSS": 5.5,
+          "C": 0.1,
+          "others": 0
+        }
+
+        const total_contributors_count = {
+            "0": 1,
+            "1": 13,
+            "2": 0,
+            "3": 0,
+            "4": 4,
+            "5+": 2
+        }
+
+        this.teamSizeData = {
+          labels: ['1인', '2인', '3인', '4인', '5인 이상'],
+          data: [13, 0, 0, 4, 2]
+        }
+
+        const total_stats = {
+          "total_commits": 3555,
+          "added_lines": 509673,
+          "deleted_lines": 174331,
+          "total_changed_lines": 684004,
+          "total_open_issues": 3,
+          "total_closed_issues": 1,
+          "total_open_prs": 0,
+          "total_closed_prs": 3,
+          "total_stars": 3,
+          "total_forks": 0
+        }
+
+        this.stats = {
+          commitLines: {added: total_stats['added_lines'], deleted: total_stats['deleted_lines']},
+          issues: {created: total_stats['total_open_issues'], closed: total_stats['total_closed_issues']},
+          pullRequests: total_stats['total_closed_prs'],
+          openSourceContributions: 0
         }
       }
     },
@@ -910,6 +965,189 @@ export default {
       })
     },
 
+    // Helper method to convert techStackData object to chart array format
+    convertTechStackDataForChart() {
+      const colors = ['#FF176A', '#FF84A3', '#FFD1DC', '#C16179', '#FF90AB', '#FFA7AF']
+      
+      return Object.entries(this.techStackData)
+        .filter(([language, percentage]) => percentage > 0)
+        .map(([language, percentage], index) => ({
+          name: language,
+          value: percentage,
+          color: colors[index] || colors[colors.length - 1],
+          percentage: percentage
+        }))
+    },
+
+    // Method to load tech stack data from API response
+    loadTechStackData(responseData) {
+      try {
+        if (responseData && responseData.total_language_percentage) {
+          // Handle both object and array formats from API
+          let languageData
+          if (Array.isArray(responseData.total_language_percentage)) {
+            // Convert array format to object format
+            languageData = {}
+            responseData.total_language_percentage.forEach(item => {
+              languageData[item.language] = parseFloat(item.percentage) || 0
+            })
+          } else if (typeof responseData.total_language_percentage === 'object') {
+            // Use object format directly
+            languageData = responseData.total_language_percentage
+          } else {
+            console.warn('Invalid total_language_percentage format')
+            return
+          }
+
+          // Process the language data to match your object structure
+          this.techStackData = this.processLanguagePercentages(languageData)
+
+          console.log('Tech stack data loaded from API:', this.techStackData)
+
+          // Update the chart if it exists
+          if (this.techStackChart) {
+            this.createTechStackChart() // Recreate chart with new data
+          }
+        } else {
+          console.warn('No total_language_percentage data found in API response')
+        }
+      } catch (error) {
+        this.techStackData = {
+          "Java": 70,
+          "HTML": 13.5,
+          "JavaScript": 10.9,
+          "CSS": 5.5,
+          "C": 0.1,
+          "others": 0
+        }
+        console.error('Error loading tech stack data:', error)
+      }
+    },
+
+    // Helper method to process language percentages and ensure they sum to 100%
+    processLanguagePercentages(languageData) {
+      // Convert object to array and round to nearest tenth
+      let entries = Object.entries(languageData).map(([language, percentage]) => ({
+        language,
+        percentage: Math.round(parseFloat(percentage) * 10) / 10
+      }))
+
+      // Filter out zero values and sort by percentage descending
+      entries = entries.filter(item => item.percentage > 0)
+        .sort((a, b) => b.percentage - a.percentage)
+
+      // Limit to maximum 6 languages
+      if (entries.length > 6) {
+        // Sum the remaining languages into "others"
+        const topFive = entries.slice(0, 5)
+        const othersSum = entries.slice(5).reduce((sum, item) => sum + item.percentage, 0)
+        if (othersSum > 0) {
+          entries = [...topFive, { language: 'others', percentage: Math.round(othersSum * 10) / 10 }]
+        } else {
+          entries = topFive
+        }
+      }
+
+      // Ensure total is exactly 100% without exceeding
+      const currentTotal = entries.reduce((sum, item) => sum + item.percentage, 0)
+      const difference = Math.round((100 - currentTotal) * 10) / 10
+      
+      if (Math.abs(difference) >= 0.1) {
+        // Adjust the largest percentage to make total exactly 100%
+        if (entries.length > 0) {
+          entries[0].percentage = Math.round((entries[0].percentage + difference) * 10) / 10
+          // Ensure it doesn't go negative
+          if (entries[0].percentage < 0) {
+            entries[0].percentage = 0
+          }
+        }
+      }
+
+      // Convert back to object format matching your dummy data structure
+      const result = {}
+      entries.forEach(item => {
+        result[item.language] = item.percentage
+      })
+
+      return result
+    },
+
+    // Method to load team size data from API response
+    loadTeamSizeData(responseData) {
+      try {
+        if (responseData && responseData.total_contributors_count) {
+          // Process the total_contributors_count data
+          this.teamSizeData = this.processTeamSizeData(responseData.total_contributors_count)
+
+          console.log('Team size data loaded from API:', this.teamSizeData)
+
+          // Update the chart if it exists
+          if (this.teamSizeChart) {
+            this.createTeamSizeChart() // Recreate chart with new data
+          }
+        } else {
+          console.warn('No total_contributors_count data found in API response')
+        }
+      } catch (error) {
+        console.error('Error loading team size data:', error)
+      }
+    },
+
+    // Helper method to process total_contributors_count data
+    processTeamSizeData(total_contributors_count) {
+      // Map the API keys to chart labels, excluding "0" key
+      const keyMapping = {
+        '1': '1인',
+        '2': '2인', 
+        '3': '3인',
+        '4': '4인',
+        '5+': '5인 이상'
+      }
+
+      const labels = []
+      const data = []
+
+      // Process each key in the expected order
+      Object.keys(keyMapping).forEach(key => {
+        labels.push(keyMapping[key])
+        data.push(parseInt(total_contributors_count[key]) || 0)
+      })
+
+      return {
+        labels: ['1인', '2인', '3인', '4인', '5인 이상'],
+        data: data
+      }
+    },
+
+    // Method to load stats data from API response
+    loadStatsData(responseData) {
+      try {
+        if (responseData && responseData.total_stats) {
+          // Process the total_stats data
+          const totalStats = responseData.total_stats
+
+          this.stats = {
+            commitLines: {
+              added: parseInt(totalStats.added_lines) || 0, 
+              deleted: parseInt(totalStats.deleted_lines) || 0
+            },
+            issues: {
+              created: parseInt(totalStats.total_open_issues) || 0, 
+              closed: parseInt(totalStats.total_closed_issues) || 0
+            },
+            pullRequests: parseInt(totalStats.total_closed_prs) || 0,
+            openSourceContributions: 0 // Keep as 0 as in your example
+          }
+
+          console.log('Stats data loaded from API:', this.stats)
+        } else {
+          console.warn('No total_stats data found in API response')
+        }
+      } catch (error) {
+        console.error('Error loading stats data:', error)
+      }
+    },
+
     // Add these methods to your methods object
     loadRepositoriesFromResponse(responseData) {
       try {
@@ -923,17 +1161,33 @@ export default {
             ? responseData.repositories 
             : [responseData.repositories]
         } else {
-          this.repositoriesData = []
-        }
-        
-        // Update stats if available
-        if (responseData.total_stats) {
-          this.updateStatsFromRepositories(responseData.total_stats)
-        }
-        
-        // Update tech stack data if available
-        if (responseData.total_language_percentage) {
-          this.updateTechStackFromRepositories(responseData.total_language_percentage)
+          this.repositoriesData = [
+            {
+              id: "822988405",
+              name: "20241R0136COSE48000",
+              category: "산학캡스톤디자인",
+              url: "https://github.com/dlwls423/20241R0136COSE48000",
+              student_id: "2020320088",
+              owner_github_id: "dlwls423",
+              created_at: "2024-07-02T08:07:03Z",
+              updated_at: "2024-07-02T08:07:03Z",
+              fork_count: 0,
+              star_count: 0,
+              commit_count: 276,
+              total_issue_count: 0,
+              pr_count: 0,
+              language: "Java, CSS, JavaScript, HTML",
+              language_percentages: {
+                  "others": 0
+              },
+              contributors_count: 0,
+              contributors_list: [],
+              license: null,
+              has_readme: false,
+              description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
+              release_version: null
+            }
+          ]
         }
         
         console.log('Repository data processed:', this.repositoriesData)
@@ -941,53 +1195,11 @@ export default {
       } catch (error) {
         console.error('Repository data processing failed:', error)
         this.repositoriesError = error
-        this.repositoriesData = []
+        this.repositoriesData = [
+
+        ]
       } finally {
         this.repositoriesLoading = false
-      }
-    },
-
-    // Helper method to update stats from repository data
-    updateStatsFromRepositories(totalStats) {
-      if (totalStats.added_lines !== undefined && totalStats.deleted_lines !== undefined) {
-        this.stats.commitLines = {
-          added: totalStats.added_lines,
-          deleted: totalStats.deleted_lines
-        }
-      }
-      
-      if (totalStats.total_open_issues !== undefined && totalStats.total_closed_issues !== undefined) {
-        this.stats.issues = {
-          created: totalStats.total_open_issues + totalStats.total_closed_issues,
-          closed: totalStats.total_closed_issues
-        }
-      }
-      
-      if (totalStats.total_open_prs !== undefined && totalStats.total_closed_prs !== undefined) {
-        this.stats.pullRequests = totalStats.total_open_prs + totalStats.total_closed_prs
-      }
-      
-      console.log('Stats updated:', this.stats)
-    },
-
-    // Helper method to update tech stack from repository language data
-    updateTechStackFromRepositories(languagePercentages) {
-      const colors = ['#FF176A', '#FF84A3', '#FFD1DC', '#C16179', '#FF90AB']
-      let colorIndex = 0
-      
-      const newTechStackData = Object.entries(languagePercentages)
-        .sort(([,a], [,b]) => b - a) // Sort by percentage descending
-        .slice(0, 5) // Take top 5
-        .map(([language, percentage]) => ({
-          name: language,
-          value: Math.round(percentage),
-          color: colors[colorIndex++ % colors.length],
-          percentage: Math.round(percentage)
-        }))
-      
-      if (newTechStackData.length > 0) {
-        // this.updateTechStackData(newTechStackData)
-        console.log('Tech stack updated:', newTechStackData)
       }
     }
   }
@@ -1099,7 +1311,7 @@ export default {
   background: #FAFBFD;
   border: 1px solid #E8EDF8;
   border-radius: 20px;
-  padding: 1px 50px;
+  padding: 1px 15px;
   height: 142px;
   display: flex;
   align-items: center;
@@ -1173,6 +1385,13 @@ export default {
   margin: 0px;
 }
 
+.section-subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+  margin: 0px;
+}
+
 .tech-stack-content {
   display: flex;
   align-items: flex-start;
@@ -1189,8 +1408,9 @@ export default {
 
 .chart-and-legend {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 25px;
+  min-height: 120px;
 }
 
 .chart-container {
@@ -1208,15 +1428,19 @@ export default {
 .chart-legend {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  justify-content: center;
+  min-height: 120px;
+  max-width: 200px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
+  gap: 8px;
+  font-size: 13px;
   color: #616161;
+  line-height: 1.2;
 }
 
 .legend-color {
@@ -1393,20 +1617,37 @@ export default {
 }
 
 .skills-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 25px;
-  text-align: center;
+  display: flex;
   width: 100%;
   align-items: center;
+  height: 100%;
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   border-right: 1px solid #E8EDF8;
-  padding: 0 10px;
+  padding: 20px 10px;
+  text-align: center;
+  min-height: 80px;
+}
+
+.stat-item:nth-child(1) {
+  flex: 2.5; /* 추가 / 삭제 커밋 라인 수 - longest text */
+}
+
+.stat-item:nth-child(2) {
+  flex: 2; /* 이슈 생성 / 닫은 수 - medium text */
+}
+
+.stat-item:nth-child(3) {
+  flex: 1.5; /* PR 생성 수 - short text */
+}
+
+.stat-item:nth-child(4) {
+  flex: 2; /* 오픈 소스 프로젝트 - medium text */
 }
 
 .stat-item:last-child {
@@ -1418,7 +1659,8 @@ export default {
   font-weight: 500;
   color: #616161;
   margin: 0 0 26px 0;
-  white-space: nowrap;
+  text-align: center;
+  line-height: 1.3;
 }
 
 .stat-item p {
@@ -1607,29 +1849,86 @@ export default {
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   width: 1280px;
+  
+  /* Column width variables - easily adjustable */
+  --col-category: 130px;
+  --col-repository: 220px;
+  --col-stars: 90px;
+  --col-forks: 90px;
+  --col-commits: 100px;
+  --col-prs: 80px;
+  --col-issues: 90px;
+  --col-language: 130px;
+  --col-contributors: 130px;
 }
 
 .table-header {
   background: #F8F9FA;
   display: grid;
-  grid-template-columns: repeat(11, 1fr);
+  grid-template-columns: 
+    var(--col-category, 90px)
+    var(--col-repository, 180px) 
+    var(--col-stars, 70px) 
+    var(--col-forks, 70px) 
+    var(--col-commits, 80px) 
+    var(--col-prs, 60px) 
+    var(--col-issues, 70px) 
+    var(--col-language, 100px) 
+    var(--col-contributors, 110px);
   gap: 18px;
   padding: 15px 20px;
   font-size: 16px;
   font-weight: 600;
+  text-align: center;
   color: #CB385C;
   border-bottom: 1px solid #F9D2D6;
 }
 
 .table-row {
   display: grid;
-  grid-template-columns: repeat(11, 1fr);
+  grid-template-columns: 
+    var(--col-category, 90px)
+    var(--col-repository, 180px) 
+    var(--col-stars, 70px) 
+    var(--col-forks, 70px) 
+    var(--col-commits, 80px) 
+    var(--col-prs, 60px) 
+    var(--col-issues, 70px) 
+    var(--col-language, 100px) 
+    var(--col-contributors, 110px);
   gap: 18px;
   padding: 12px 20px;
   align-items: center;
+  text-align: center;
   border-bottom: 1px solid #DCE2ED;
   font-size: 16px;
   color: #262626;
+}
+
+.table-row > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Repository column hover effect */
+.table-row > span:nth-child(2) {
+  cursor: default;
+  transition: color 0.2s ease;
+}
+
+.table-row > span:nth-child(2):hover {
+  color: #CB385C;
+}
+
+/* Language column hover effect */
+.table-row > span:nth-child(9) {
+  cursor: default;
+  transition: color 0.2s ease;
+}
+
+.table-row > span:nth-child(9):hover {
+  color: #CB385C;
 }
 
 .table-row:last-child {
@@ -1641,7 +1940,11 @@ export default {
   border-radius: 10px;
   font-size: 14px;
   text-align: center;
-  max-width: 100px;
+  max-width: var(--col-category);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* white-space: nowrap; */
+  box-sizing: border-box;
 }
 
 .category-tag.autonomous {
