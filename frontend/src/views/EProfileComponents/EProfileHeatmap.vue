@@ -93,9 +93,9 @@ export default {
       return this.getHeatmapLevel(count)
     },
     getHeatmapLevel(count) {
-      if (count === 0) return 'level-0'
-      if (count <= 3) return 'level-1'
-      if (count <= 10) return 'level-2'
+      if (count <= 5) return 'level-0'
+      if (count <= 15) return 'level-1'
+      if (count <= 30) return 'level-2'
       return 'level-3'
     }
   }

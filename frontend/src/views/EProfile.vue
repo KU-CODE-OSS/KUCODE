@@ -204,7 +204,7 @@
             <div class="chart-header">
               <h3>활동 프로젝트 인원 비율</h3>
             </div>
-            <p class="chart-description">2인 프로젝트 비율이 가장 높습니다</p>
+            <p class="chart-description">{{ teamSizeDescription }}</p>
             
             <!-- Bar Chart Area -->
             <div class="team-size-chart-container">
@@ -281,7 +281,11 @@
           >
             {{ repo.category || 'N/A' }}
           </div>
-          <span :title="repo.name || 'N/A'">{{ repo.name || 'N/A' }}</span>
+          <span 
+            :title="repo.name || 'N/A'" 
+            class="repo-name-clickable"
+            @click="openRepoModal(repo)"
+          >{{ repo.name || 'N/A' }}</span>
           <span>{{ repo.star_count?.toLocaleString() || '0' }}</span>
           <span>{{ repo.fork_count?.toLocaleString() || '0' }}</span>
           <span>{{ repo.commit_count?.toLocaleString() || '0' }}</span>
@@ -315,12 +319,20 @@
       </section>
 
     </main>
+    
+    <!-- 프로젝트 상세 모달 -->
+    <RepoDetailModal 
+      :show="showRepoModal" 
+      :repo="selectedRepo" 
+      @close="closeRepoModal" 
+    />
   </div>
 </template>
 
 <script>
 import { Chart, registerables } from 'chart.js'
 import EProfileHeatmap from './EProfileComponents/EProfileHeatmap.vue'
+import RepoDetailModal from './EProfileComponents/RepoDetailModal.vue'
 import { getEProfileHeatmap } from '@/api.js'
 import { processActivityData, processAddedLinesData, estimateCommitLines } from './EProfileComponents/chartUtils/chartUtils.js'
 
@@ -330,7 +342,8 @@ Chart.register(...registerables)
 export default {
   name: 'EPortfolioDashboard',
   components: {
-    EProfileHeatmap
+    EProfileHeatmap,
+    RepoDetailModal
   },
   data() {
     return {
@@ -355,6 +368,9 @@ export default {
       techStackData: [],
       // 히트맵 데이터
       heatmapData: {},
+      // 모달 관련 데이터
+      showRepoModal: false,
+      selectedRepo: null,
       techStackChart: null,
       // Activity Chart Data - NEW ADDITIONS
       activityChart: null,
@@ -427,10 +443,28 @@ export default {
       repositoriesError: null,
       // Sorting state
       sortBy: '',
-      sortDirection: 'asc' // 'asc' or 'desc'
+      sortDirection: 'asc', // 'asc' or 'desc'
+      githubId: "YeoJune" // 임시 테스트용 GitHub 아이디 - TODO: 실제 로그인된 사용자 ID로 변경 필요
     }
   },
   computed: {
+    teamSizeDescription() {
+      if (!this.teamSizeData || !this.teamSizeData.data || this.teamSizeData.data.length === 0) {
+        return '프로젝트 데이터가 없습니다'
+      }
+      
+      // 가장 높은 값을 가진 인덱스 찾기
+      const maxIndex = this.teamSizeData.data.indexOf(Math.max(...this.teamSizeData.data))
+      const maxValue = this.teamSizeData.data[maxIndex]
+      const maxLabel = this.teamSizeData.labels[maxIndex]
+      
+      // 총합 계산
+      const total = this.teamSizeData.data.reduce((sum, val) => sum + val, 0)
+      const percentage = Math.round((maxValue / total) * 100)
+      
+      return `${maxLabel} 프로젝트 비율이 가장 높습니다 (${percentage}%)`
+    },
+
     sortedRepositoriesData() {
       if (!this.sortBy) {
         return this.repositoriesData
@@ -504,6 +538,15 @@ export default {
     document.removeEventListener('click', this.closeAllDropdowns)
   },
   methods: {
+    // 모달 관련 메서드
+    openRepoModal(repo) {
+      this.selectedRepo = repo
+      this.showRepoModal = true
+    },
+    closeRepoModal() {
+      this.showRepoModal = false
+      this.selectedRepo = null
+    },
     createTechStackChart() {
       const ctx = this.$refs.techStackChart.getContext('2d')
       
@@ -802,8 +845,6 @@ export default {
     },
     async loadActivityChart() {
       try {
-        const githubId = "dlwls423" // 임시 테스트용 GitHub 아이디
-        
         // Initialize with empty data
         this.activityData = {
           monthly: {
@@ -818,7 +859,7 @@ export default {
           }
         }
         
-        const response = await getEProfileHeatmap(githubId)
+        const response = await getEProfileHeatmap(this.githubId)
         console.log(response)
 
         // Process the API response data using utility function
@@ -843,27 +884,27 @@ export default {
           }
         }
         
-        // For now, keep weekly as empty or use sample data
+        // Weekly data will be empty for now
         this.activityData.weekly = {
-          labels: ['1주차', '2주차', '3주차', '4주차', '5주차', '6주차'],
-          commits: [8, 12, 15, 18, 14, 10],
-          commitLines: [68, 102, 128, 153, 119, 85]
+          labels: [],
+          commits: [],
+          commitLines: []
         }
         
         console.log('활동 추이 로드 완료:', this.activityData)
       } catch (error) {
         console.error('활동 차트 데이터 로드 실패:', error)
-        // 에러 시 기본 데이터 설정
+        // 에러 시 빈 데이터 설정
         this.activityData = {
           monthly: {
-            labels: ['5월', '6월', '7월', '8월', '10월', '11월'],
-            commits: [10, 15, 3, 37, 28, 15],
-            commitLines: [85, 128, 26, 315, 238, 128]
+            labels: [],
+            commits: [],
+            commitLines: []
           },
           weekly: {
-            labels: ['1주차', '2주차', '3주차', '4주차', '5주차', '6주차'],
-            commits: [8, 12, 15, 18, 14, 10],
-            commitLines: [68, 102, 128, 153, 119, 85]
+            labels: [],
+            commits: [],
+            commitLines: []
           }
         }
       }
@@ -871,9 +912,7 @@ export default {
 
     async loadHeatmapData() {
       try {
-        // TODO: 실제 로그인된 사용자의 GitHub 아이디를 가져오는 로직으로 변경 필요
-        const githubId = "dlwls423" // 임시 테스트용 GitHub 아이디
-        const response = await getEProfileHeatmap(githubId)
+        const response = await getEProfileHeatmap(this.githubId)
         this.heatmapData = response.data.heatmap
         console.log('히트맵 데이터 로드 완료:', this.heatmapData)
         
@@ -1031,11 +1070,10 @@ export default {
           "total_stars": 3,
           "total_forks": 0
         }
-
         this.stats = {
-          commitLines: {added: total_stats['added_lines'], deleted: total_stats['deleted_lines']},
-          issues: {created: total_stats['total_open_issues'], closed: total_stats['total_closed_issues']},
-          pullRequests: total_stats['total_closed_prs'],
+          commitLines: {added: 0, deleted: 0},
+          issues: {created: 0, closed: 0},
+          pullRequests: 0,
           openSourceContributions: 0
         }
       }
@@ -1229,7 +1267,8 @@ export default {
 
     // Helper method to process total_contributors_count data
     processTeamSizeData(total_contributors_count) {
-      // Map the API keys to chart labels, excluding "0" key
+      // Define the order we want to display
+      const orderedKeys = ['1', '2', '3', '4', '5+']
       const keyMapping = {
         '1': '1인',
         '2': '2인', 
@@ -1241,14 +1280,14 @@ export default {
       const labels = []
       const data = []
 
-      // Process each key in the expected order
-      Object.keys(keyMapping).forEach(key => {
+      // Process each key in the specific order
+      orderedKeys.forEach(key => {
         labels.push(keyMapping[key])
         data.push(parseInt(total_contributors_count[key]) || 0)
       })
 
       return {
-        labels: ['1인', '2인', '3인', '4인', '5인 이상'],
+        labels: labels,
         data: data
       }
     },
@@ -1295,33 +1334,7 @@ export default {
             ? responseData.repositories 
             : [responseData.repositories]
         } else {
-          this.repositoriesData = [
-            {
-              id: "822988405",
-              name: "20241R0136COSE48000",
-              category: "산학캡스톤디자인",
-              url: "https://github.com/dlwls423/20241R0136COSE48000",
-              student_id: "2020320088",
-              owner_github_id: "dlwls423",
-              created_at: "2024-07-02T08:07:03Z",
-              updated_at: "2024-07-02T08:07:03Z",
-              fork_count: 0,
-              star_count: 0,
-              commit_count: 276,
-              total_issue_count: 0,
-              pr_count: 0,
-              language: "Java, CSS, JavaScript, HTML",
-              language_percentages: {
-                  "others": 0
-              },
-              contributors_count: 0,
-              contributors_list: [],
-              license: null,
-              has_readme: false,
-              description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
-              release_version: null
-            }
-          ]
+          this.repositoriesData = []
         }
         
         console.log('Repository data processed:', this.repositoriesData)
@@ -2402,5 +2415,17 @@ export default {
   .skills-stats {
     grid-template-columns: 1fr;
   }
+}
+
+/* 클릭 가능한 레포지토리명 스타일 */
+.repo-name-clickable {
+  cursor: pointer;
+  color: #CB385C;
+  text-decoration: underline;
+  transition: color 0.3s ease;
+}
+
+.repo-name-clickable:hover {
+  color: #910024;
 }
 </style>
