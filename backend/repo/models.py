@@ -32,6 +32,8 @@ class Repository(models.Model):
     etc = models.CharField(max_length=100,null=True)
     crawled_date = models.CharField(max_length=100,null=True)
     summary = models.TextField(null=True) 
+    is_course = models.BooleanField(null=True)
+    category = models.CharField(max_length=50, null=True)
 
     def __str__(self):
         return self.name
