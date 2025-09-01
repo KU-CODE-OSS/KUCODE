@@ -20,6 +20,7 @@ from course.models import Course, Course_project, Course_registration
 from operator import itemgetter
 import requests
 import json
+import os
 
 from openai import OpenAI
 from dotenv import load_dotenv
