@@ -56,7 +56,48 @@
         <div class="section">
           <h3 class="section-title">프로젝트 요약</h3>
           <div class="summary-box">
-            <p>{{ repo?.description || '프로젝트 설명이 없습니다.' }}</p>
+            <div v-if="parsedSummary" class="summary-content">
+              <!-- 프로젝트 개요 -->
+              <div class="summary-overview">
+                <div class="overview-main">
+                  {{ parsedSummary.scale }} · {{ parsedSummary.primary_language }} 중심 · 활동 수준: {{ parsedSummary.activity }}
+                </div>
+                <div class="overview-features">
+                  주요 기능: {{ parsedSummary.features.join(', ') }}
+                </div>
+                <div class="overview-tech">
+                  기술 스택: {{ parsedSummary.tech_stack.join(', ') }}
+                </div>
+              </div>
+              
+              <!-- 기술 세부사항 -->
+              <div class="summary-technical">
+                <h4 class="summary-subtitle">기술 세부사항</h4>
+                <div class="technical-overview">
+                  {{ parsedSummary.testing }} · {{ parsedSummary.deployment }} · {{ parsedSummary.architecture }}
+                </div>
+                <div class="technical-details">
+                  프레임워크: {{ parsedSummary.frameworks.join(', ') }}
+                </div>
+                <div class="technical-tools">
+                  개발 도구: {{ parsedSummary.development_tools.length > 0 ? parsedSummary.development_tools.join(', ') : '없음' }}
+                </div>
+              </div>
+              
+              <!-- 품질 지표 -->
+              <div class="summary-quality">
+                <h4 class="summary-subtitle">품질 지표</h4>
+                <div class="quality-overview">
+                  베스트 프랙티스: {{ parsedSummary.best_practices }} · 유지보수성: {{ parsedSummary.maintainability }}
+                </div>
+                <div class="quality-details">
+                  코드 구조화: {{ parsedSummary.code_organization }}, 문서 품질: {{ parsedSummary.documentation_quality }}
+                </div>
+              </div>
+            </div>
+            <div v-else class="summary-fallback">
+              <p>{{ repo?.summary || '프로젝트 설명이 없습니다.' }}</p>
+            </div>
           </div>
         </div>
         
@@ -317,6 +358,50 @@ export default {
         }))
       
       return data
+    },
+    
+    // 프로젝트 요약 데이터 파싱
+    parsedSummary() {
+      if (!this.repo || !this.repo.summary) {
+        return null
+      }
+      
+      try {
+        // summary가 문자열인 경우 JSON 파싱 시도
+        let summaryData = this.repo.summary
+        if (typeof summaryData === 'string') {
+          summaryData = JSON.parse(summaryData)
+        }
+        
+        // project_summary, technical_details, quality_indicators 구조 확인
+        if (summaryData.project_summary && summaryData.technical_details && summaryData.quality_indicators) {
+          const project = summaryData.project_summary
+          const technical = summaryData.technical_details
+          const quality = summaryData.quality_indicators
+          
+          return {
+            scale: project.scale || 'N/A',
+            primary_language: project.primary_language || 'N/A',
+            activity: project.activity || 'N/A',
+            features: project.features || [],
+            tech_stack: project.tech_stack || [],
+            testing: technical.testing || 'N/A',
+            deployment: technical.deployment || 'N/A',
+            architecture: technical.architecture || 'N/A',
+            frameworks: technical.frameworks || [],
+            development_tools: technical.development_tools || [],
+            best_practices: quality.best_practices || 'N/A',
+            maintainability: quality.maintainability || 'N/A',
+            code_organization: quality.code_organization || 'N/A',
+            documentation_quality: quality.documentation_quality || 'N/A'
+          }
+        }
+        
+        return null
+      } catch (error) {
+        console.error('프로젝트 요약 파싱 오류:', error)
+        return null
+      }
     }
   },
   methods: {
@@ -475,6 +560,7 @@ export default {
   background: #FFFFFF;
   border-radius: 20px;
   font-family: 'Pretendard', sans-serif;
+  overflow: hidden; /* 스크롤바가 모달 경계를 넘지 않도록 */
 }
 
 /* 프로젝트 타입 태그 */
@@ -601,6 +687,34 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 35px;
+  overflow-y: auto; /* 세로 스크롤 추가 */
+  overflow-x: hidden; /* 가로 스크롤 숨김 */
+  padding-right: 20px; /* 스크롤바 공간 확보 */
+}
+
+/* 스크롤바 스타일링 */
+.modal-main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-main-content::-webkit-scrollbar-track {
+  background: #F8F9FA;
+  border-radius: 4px;
+}
+
+.modal-main-content::-webkit-scrollbar-thumb {
+  background: #CB385C;
+  border-radius: 4px;
+}
+
+.modal-main-content::-webkit-scrollbar-thumb:hover {
+  background: #A02D4A;
+}
+
+/* Firefox 스크롤바 스타일링 */
+.modal-main-content {
+  scrollbar-width: thin;
+  scrollbar-color: #CB385C #F8F9FA;
 }
 
 /* 섹션 공통 스타일 */
@@ -629,6 +743,7 @@ export default {
   width: 100%;
   height: 100px;
   position: relative;
+  box-sizing: border-box;
 }
 
 .table-header,
@@ -637,7 +752,7 @@ export default {
   align-items: center;
   gap: 35px;
   position: absolute;
-  width: 961px;
+  width: 100%;
   height: 19px;
 }
 
@@ -675,7 +790,7 @@ export default {
 .info-table::after {
   content: '';
   position: absolute;
-  width: 964px;
+  width: 100%;
   height: 0px;
   border: 1px solid #F9D2D6;
   border-radius: 1px;
@@ -692,14 +807,15 @@ export default {
 /* 프로젝트 요약 */
 .summary-box {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
   padding: 25px 35px;
   gap: 10px;
-  width: 964px;
-  height: 110px;
+  width: 100%;
+  min-height: 110px;
   background: #FAFBFD;
   border-radius: 10px;
+  box-sizing: border-box;
 }
 
 .summary-box p {
@@ -714,11 +830,83 @@ export default {
   margin: 0;
 }
 
+/* 파싱된 요약 내용 스타일 */
+.summary-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.summary-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.overview-main {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 19px;
+  color: #262626;
+}
+
+.overview-features,
+.overview-tech {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 17px;
+  color: #616161;
+}
+
+.summary-technical,
+.summary-quality {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-subtitle {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 18px;
+  color: #262626;
+  margin: 0;
+}
+
+.technical-overview,
+.technical-details,
+.technical-tools,
+.quality-overview,
+.quality-details {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 17px;
+  color: #616161;
+}
+
+.summary-fallback {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 /* 차트 섹션 */
 .charts-section {
   display: flex;
   gap: 20px;
   height: 360px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .chart-container {
@@ -730,10 +918,12 @@ export default {
 
 .timeline-chart {
   width: 600px;
+  flex-shrink: 0;
 }
 
 .language-chart {
   width: 348px;
+  flex-shrink: 0;
 }
 
 /* 차트 헤더 */
@@ -788,6 +978,7 @@ export default {
   top: 0;
   width: 493px;
   height: 100%;
+  max-width: calc(100% - 67px);
 }
 
 .chart-svg {
@@ -800,6 +991,7 @@ export default {
   bottom: -30px;
   left: 67px;
   width: 493px;
+  max-width: calc(100% - 67px);
   display: flex;
   justify-content: space-between;
   font-family: 'Pretendard';

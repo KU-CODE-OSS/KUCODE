@@ -972,7 +972,7 @@ export default {
 
     async loadHeatmapData() {
       try {
-        const response = await getEProfileHeatmap(this.githubId)
+        const response = await getEProfileHeatmap(this.student_uuid)
         this.heatmapData = response.data.heatmap
         console.log('히트맵 데이터 로드 완료:', this.heatmapData)
         

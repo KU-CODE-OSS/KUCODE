@@ -55,7 +55,7 @@ export function getRepoInfo() {
 export function getEProfileHeatmap(student_uuid) {
   // 전송할 데이터를 JSON 객체로 만듭니다.
   const data = {
-    student_uuid: student_uuid
+    uuid: student_uuid
   };
 
   // ajax 함수 호출 시 'data' 인자로 JSON 객체를 전달합니다.

@@ -13,7 +13,7 @@ class Status(models.TextChoices):
     PENDING = 'PENDING', 'Pending'
 
 class Member(models.Model):
-    id = models.UUIDField(primary_key=True)
+    id = models.CharField(max_length=100, primary_key=True)
     role = models.CharField(
         max_length=9,
         choices=Role.choices,
