@@ -14,18 +14,17 @@
           <div class="profile-header">
             <div class="profile-picture-placeholder"></div>
             <div class="profile-info">
-              <h2 class="profile-name">김OO 님</h2>
+              <h2 class="profile-name">여준 님</h2>
               <div class="profile-details">
                 <div class="detail-item">
                   <i class="icon-location"></i>
                   <div class="detail-content">
-                    <span>고려대학교</span>
-                    <span>컴퓨터학과</span>
+                    <span>고려대학교 컴퓨터학과</span>
                   </div>
                 </div>
                 <div class="detail-item">
                   <i class="icon-mail"></i>
-                  <span>abcde123@korea.ac.kr</span>
+                  <span>joyyoj1@korea.ac.kr</span>
                 </div>
               </div>
             </div>
@@ -42,10 +41,10 @@
               class="intro-input"
               placeholder="자신을 소개해 주세요..."
               rows="4"
-              maxlength="300"
+              maxlength="150"
             ></textarea>
             <div class="intro-counter">
-              {{ user.introduction.length }}/300
+              {{ user.introduction.length }}/150
             </div>
           </div>
           
@@ -273,13 +272,49 @@
           <!-- Replace the static table rows with dynamic data -->
           <div class="table-row" v-for="repo in sortedRepositoriesData" :key="repo.id">
           <div 
-            class="category-tag" 
+            class="category-column"
             :class="{ 
-              'autonomous': repo.category === '자율', 
-              'course': repo.category !== '자율' 
+              'autonomous': !repo.is_course, 
+              'course': repo.is_course 
             }"
           >
-            {{ repo.category || 'N/A' }}
+            <div class="category-type">
+              {{ repo.is_course ? '전공역량' : '자율활동' }}
+            </div>
+            <!-- Show dropdown only for autonomous projects (is_course: false) -->
+            <div 
+              v-if="!repo.is_course"
+              class="category-dropdown"
+              :class="{ 
+                'dropdown-open': categoryDropdownOpen[repo.id],
+                'dropdown-up': shouldDropUp(repo.id)
+              }"
+              @click.stop="toggleCategoryDropdown(repo.id)"
+              :ref="`categoryDropdown_${repo.id}`"
+            >
+              <div class="category-dropdown-selected">
+                <span>{{ repo.category || 'N/A' }}</span>
+                <i class="icon-arrow-down" :class="{ 'rotated': categoryDropdownOpen[repo.id] }"></i>
+              </div>
+              <div 
+                v-if="categoryDropdownOpen[repo.id]" 
+                class="category-dropdown-options"
+                :class="{ 'options-up': shouldDropUp(repo.id) }"
+              >
+                <div 
+                  v-for="option in categoryOptions" 
+                  :key="option"
+                  class="category-dropdown-option"
+                  @click.stop="selectCategoryOption(repo.id, option)"
+                >
+                  {{ option }}
+                </div>
+              </div>
+            </div>
+            <!-- Show static value for course projects (is_course: true) -->
+            <div v-else class="category-static">
+              {{ repo.category || 'N/A' }}
+            </div>
           </div>
           <span 
             :title="repo.name || 'N/A'" 
@@ -348,7 +383,7 @@ export default {
   data() {
     return {
       user: {
-        name: '김OO',
+        name: '김이진',
         university: '고려대학교',
         department: '컴퓨터공학과',
         email: 'abcde123@korea.ac.kr',
@@ -444,7 +479,28 @@ export default {
       // Sorting state
       sortBy: '',
       sortDirection: 'asc', // 'asc' or 'desc'
-      githubId: "YeoJune" // 임시 테스트용 GitHub 아이디 - TODO: 실제 로그인된 사용자 ID로 변경 필요
+      // githubId: "YeoJune", // 임시 테스트용 GitHub 아이디 - TODO: 실제 로그인된 사용자 ID로 변경 필요
+      student_uuid: 'rcmPR6PxrxcXP7Pmz0D2tZKsifm2',
+      // Category dropdown state
+      categoryDropdownOpen: {},
+      categoryOptions: [
+        '자료구조',
+        '알고리즘',
+        '컴퓨터구조',
+        '운영체제',
+        '데이터베이스',
+        '네트워크',
+        '인공지능',
+        '컴파일러',
+        '소프트웨어공학',
+        '클라우드컴퓨팅',
+        '운영체제실습',
+        '네트워크실습',
+        '프로그래밍언어론',
+        '분산시스템',
+        '컴퓨터그래픽스',
+        '사이버보안'
+      ]
     }
   },
   computed: {
@@ -519,6 +575,10 @@ export default {
         this.techStackDropdowns.forEach(dropdown => {
           dropdown.isOpen = false
         })
+      }
+      
+      if (!event.target.closest('.category-dropdown')) {
+        this.closeCategoryDropdowns()
       }
     }
     
@@ -859,7 +919,7 @@ export default {
           }
         }
         
-        const response = await getEProfileHeatmap(this.githubId)
+        const response = await getEProfileHeatmap(this.student_uuid)
         console.log(response)
 
         // Process the API response data using utility function
@@ -959,7 +1019,8 @@ export default {
             license: null,
             has_readme: false,
             description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
-            release_version: null
+            release_version: null,
+            is_course: true,
           },
 
           {
@@ -996,7 +1057,7 @@ export default {
             "has_readme": true,
             "description": "가치 있는일을 같이 진행하자! 일정 공유 어플리케이션! ",
             "release_version": null,
-            "monthly_commits": []
+            "monthly_commits": [],
           },
           {
             "id": "725163550",
@@ -1031,8 +1092,34 @@ export default {
             "has_readme": true,
             "description": "스파르타 내일배움캠프 Spring 3기 - 스프링 숙련 주차 팀 과제 : HabbyMate",
             "release_version": null,
-            "monthly_commits": []
-          }
+            "monthly_commits": [],
+          },
+          {
+            id: "822988409",
+            name: "20241R0136COSE48000",
+            category: "산학캡스톤",
+            url: "https://github.com/dlwls423/20241R0136COSE48000",
+            student_id: "2020320088",
+            owner_github_id: "dlwls423",
+            created_at: "2024-07-02T08:07:03Z",
+            updated_at: "2024-07-02T08:07:03Z",
+            fork_count: 0,
+            star_count: 0,
+            commit_count: 276,
+            total_issue_count: 0,
+            pr_count: 0,
+            language: "Java, CSS, JavaScript, HTML",
+            language_percentages: {
+                "others": 0
+            },
+            contributors_count: 0,
+            contributors_list: [],
+            license: null,
+            has_readme: false,
+            description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
+            release_version: null,
+            is_course: true,
+          },
         ]
 
         this.techStackData = {
@@ -1367,6 +1454,48 @@ export default {
         return 'icon-sort-default'
       }
       return this.sortDirection === 'asc' ? 'icon-sort-up' : 'icon-sort-down'
+    },
+
+    // Category dropdown methods
+    toggleCategoryDropdown(repoId) {
+      // Close all other category dropdowns
+      Object.keys(this.categoryDropdownOpen).forEach(id => {
+        if (id !== repoId.toString()) {
+          this.categoryDropdownOpen[id] = false
+        }
+      })
+      
+      // Toggle the clicked dropdown
+      this.categoryDropdownOpen[repoId] = !this.categoryDropdownOpen[repoId]
+      this.$forceUpdate() // Force reactivity update
+    },
+
+    selectCategoryOption(repoId, option) {
+      // Find the repository and update its category
+      const repo = this.repositoriesData.find(r => r.id === repoId)
+      if (repo) {
+        repo.category = option
+      }
+      
+      // Close the dropdown
+      this.categoryDropdownOpen[repoId] = false
+      this.$forceUpdate() // Force reactivity update
+    },
+
+    closeCategoryDropdowns() {
+      Object.keys(this.categoryDropdownOpen).forEach(id => {
+        this.categoryDropdownOpen[id] = false
+      })
+      this.$forceUpdate() // Force reactivity update
+    },
+
+    shouldDropUp(repoId) {
+      // Simple approach: check if this is one of the last few rows
+      const currentIndex = this.sortedRepositoriesData.findIndex(repo => repo.id === repoId)
+      const totalRows = this.sortedRepositoriesData.length
+      
+      // If it's in the last 3 rows, drop up
+      return currentIndex >= totalRows - 3
     }
   }
 }
@@ -2127,24 +2256,121 @@ export default {
   border-bottom: none;
 }
 
-.category-tag {
-  padding: 4px 21px;
-  border-radius: 10px;
-  font-size: 14px;
-  text-align: center;
+.category-column {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   max-width: var(--col-category);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  /* white-space: nowrap; */
   box-sizing: border-box;
 }
 
-.category-tag.autonomous {
+.category-type {
+  padding: 3px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.category-dropdown {
+  position: relative;
+  cursor: pointer;
+}
+
+.category-dropdown-selected {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  text-align: center;
+  background: #F8F9FA;
+  color: #616161;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.category-dropdown-selected:hover {
+  background: #E9ECEF;
+}
+
+.category-dropdown.dropdown-open .category-dropdown-selected {
+  border-radius: 6px 6px 0 0;
+  background: #E9ECEF;
+}
+
+.category-dropdown.dropdown-up .category-dropdown-selected {
+  border-radius: 0 0 6px 6px;
+  background: #E9ECEF;
+}
+
+.category-dropdown-selected i {
+  width: 10px;
+  height: 10px;
+  transition: transform 0.2s ease;
+}
+
+.category-dropdown-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border: 1px solid #DEE2E6;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  max-height: 150px;
+  overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+.category-dropdown-options.options-up {
+  top: auto;
+  bottom: 100%;
+  border-top: 1px solid #DEE2E6;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.category-dropdown-option {
+  padding: 6px 8px;
+  font-size: 11px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  color: #616161;
+}
+
+.category-dropdown-option:hover {
+  background: #F8F9FA;
+  color: #262626;
+}
+
+.category-dropdown-option:last-child {
+  border-radius: 0 0 6px 6px;
+}
+
+.category-static {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  text-align: center;
+  background: #F8F9FA;
+  color: #616161;
+}
+
+.category-column.autonomous .category-type {
   background: #EFF2F9;
   color: #507199;
 }
 
-.category-tag.course {
+.category-column.course .category-type {
   background: #FFEAEC;
   color: #CB385C;
 }

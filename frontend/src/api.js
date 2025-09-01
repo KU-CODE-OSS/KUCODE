@@ -52,10 +52,10 @@ export function getRepoInfo() {
 }
 
 // 히트맵 API 함수 (POST 방식)
-export function getEProfileHeatmap(githubId) {
+export function getEProfileHeatmap(student_uuid) {
   // 전송할 데이터를 JSON 객체로 만듭니다.
   const data = {
-    github_id: githubId
+    student_uuid: student_uuid
   };
 
   // ajax 함수 호출 시 'data' 인자로 JSON 객체를 전달합니다.
