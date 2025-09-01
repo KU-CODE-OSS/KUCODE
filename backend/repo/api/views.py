@@ -15,6 +15,7 @@ from django.db.models import Sum
 
 from repo.models import Repository, Repo_contributor, Repo_issue,Repo_pr, Repo_commit
 from account.models import Student
+from login.models import Student as LoginStudent
 from course.models import Course, Course_project, Course_registration
 from operator import itemgetter
 import requests
@@ -1305,17 +1306,22 @@ def repo_account_read_db(request):
         try:
             body_unicode = request.body.decode('utf-8')
             body_data = json.loads(body_unicode)
-            github_id = body_data.get('github_id')
+            uuid = body_data.get('uuid')
         except (json.JSONDecodeError, UnicodeDecodeError):
             return JsonResponse({"status": "Error", "message": "Invalid JSON format or character encoding"}, status=400)
         
-        if not github_id:
-            return JsonResponse({"status": "Error", "message": "github_id is required in the request body"}, status=400)
+        if not uuid:
+            return JsonResponse({"status": "Error", "message": "uuid is required in the request body"}, status=400)
 
         try:
-            # github_id로 Repository, Student 객체 조회
+            # uuid로 login.Student에서 학번(id) 조회 후 account.Student에서 github_id 조회
+            login_student = LoginStudent.objects.get(member_id=uuid)
+            student_id = login_student.id  # 학번
+            student = Student.objects.get(id=student_id)
+            github_id = student.github_id
+            # github_id로 Repository 조회
             repo_list = Repository.objects.filter(owner_github_id=github_id)
-            student = Student.objects.get(github_id=github_id)
+            # 전체 언어 비율 처리
             if isinstance(student.total_language_percentage, dict) and student.total_language_percentage:
                 sorted_total_language_percentages = sorted(student.total_language_percentage.items(), key=itemgetter(1), reverse=True)
                 top_5_total_language_percentages = dict(sorted_total_language_percentages[:5])
@@ -1324,8 +1330,12 @@ def repo_account_read_db(request):
             else: 
                 top_5_total_language_percentages = []
            
-        except:
-            return JsonResponse({"status": "Error", "message": "line 1300-1307"}, status=500)
+        except LoginStudent.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": f"Login student not found for uuid: {uuid}"}, status=404)
+        except Student.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": f"Account student not found for id: {student_id}"}, status=404)
+        except Exception as e:
+            return JsonResponse({"status": "Error", "message": f"Error resolving uuid to github_id: {str(e)}"}, status=500)
         
         if not repo_list:
             return JsonResponse({"status": "Error", "message": f"No repositories found for github_id: {github_id}"}, status=404)
@@ -1458,6 +1468,7 @@ def repo_account_read_db(request):
 
             total_contributors_count.update({str(contributors_count): total_contributors_count.get(str(contributors_count), 0) + 1}) if contributors_count < 5 else total_contributors_count.update({'5+': total_contributors_count.get('5+', 0) + 1})
 
+            # Repository별 언어 비율 처리
             repo_language_percentages = r.language_percentage or {}
             sorted_repo_language_percentages = sorted(repo_language_percentages.items(), key=itemgetter(1), reverse=True)
             top_5_language_percentages = dict(sorted_repo_language_percentages[:5])
@@ -1489,6 +1500,7 @@ def repo_account_read_db(request):
             'has_readme': r.has_readme,
             'description': r.description,
             'release_version': r.release_version,
+            'summary': r.summary,
             'monthly_commits': repo_monthly_commit_data
             }
             
