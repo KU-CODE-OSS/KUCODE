@@ -1316,6 +1316,7 @@ def repo_account_read_db(request):
             # github_id로 Repository, Student 객체 조회
             repo_list = Repository.objects.filter(owner_github_id=github_id)
             student = Student.objects.get(github_id=github_id)
+            # 전체 언어 비율 처리
             if isinstance(student.total_language_percentage, dict) and student.total_language_percentage:
                 sorted_total_language_percentages = sorted(student.total_language_percentage.items(), key=itemgetter(1), reverse=True)
                 top_5_total_language_percentages = dict(sorted_total_language_percentages[:5])
@@ -1458,6 +1459,7 @@ def repo_account_read_db(request):
 
             total_contributors_count.update({str(contributors_count): total_contributors_count.get(str(contributors_count), 0) + 1}) if contributors_count < 5 else total_contributors_count.update({'5+': total_contributors_count.get('5+', 0) + 1})
 
+            # Repository별 언어 비율 처리
             repo_language_percentages = r.language_percentage or {}
             sorted_repo_language_percentages = sorted(repo_language_percentages.items(), key=itemgetter(1), reverse=True)
             top_5_language_percentages = dict(sorted_repo_language_percentages[:5])
