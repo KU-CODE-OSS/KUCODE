@@ -27,19 +27,19 @@ const routes = [
     path: '/login',
     name: 'login',
     component: Login,
-    // beforeEnter: guestGuard
+    beforeEnter: guestGuard
   },
   {
     path: '/register',
     name: 'register',
     component: Register,
-    // beforeEnter: guestGuard
+    beforeEnter: guestGuard
   },
   {
     path: '/emailVerification',
     name: 'emailVerification',
     component: EmailVerification,
-    // beforeEnter: guestGuard
+    beforeEnter: guestGuard
   },
   {
     path: '/board',
@@ -80,6 +80,7 @@ const routes = [
     path: '/statistics',
     name: 'Statistics',
     component: Statistics,
+    beforeEnter: authGuard,
     children: [
       { // default path
         path: '',
@@ -106,13 +107,14 @@ const routes = [
   {
     path: '/qna',
     name: 'QnA',
-    component: QnA
+    component: QnA,
+    beforeEnter: authGuard,
   },
   {
     path: '/eprofile',
     name: 'EProfile',
     component: EProfile,
-    //beforeEnter: guestGuard,
+    beforeEnter: authGuard,
   }
 ];
 

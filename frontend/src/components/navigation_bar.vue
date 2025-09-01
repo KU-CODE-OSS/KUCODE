@@ -25,17 +25,44 @@
         </div>
       </div>
     </div>
+    
+    <!-- User Actions -->
+    <div class="user-actions" v-if="isAuthenticated">
+      <div class="user-info">
+        <span class="username">{{ user?.username }}</span>
+      </div>
+      <button @click="handleLogout" class="logout-button" :disabled="loading">
+        {{ loading ? '로그아웃 중...' : '로그아웃' }}
+      </button>
+    </div>
   </div>
 </template>
 
-<script>
-  export default {
-    data() {
-      return {
-        isBold: false,
-      };
-    },
-  };
+<script setup>
+import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+const user = computed(() => authStore.user)
+const isAuthenticated = computed(() => authStore.isAuthenticated)
+const loading = computed(() => authStore.loading)
+
+const handleLogout = async () => {
+  try {
+    await authStore.logout()
+    router.push('/login')
+  } catch (error) {
+    console.error('Logout error:', error)
+  }
+}
+
+// Initialize auth state on mount
+onMounted(async () => {
+  await authStore.checkSession()
+})
 </script>
 
 <style>
@@ -51,11 +78,10 @@
 }
 .header {
   display: flex;
-  justify-content: flex-start; /* Center the logo and navigation */
+  justify-content: space-between; /* Space between logo-nav and user-actions */
   align-items: center;
   width: 1920px;
   height: 120px;
-  /* padding-left: 320px; */
   border-bottom: 1px solid var(--Gray_stroke, #DCE2ED);
   background-color: var(--White, #FCFCFC);
   position: fixed;
@@ -69,7 +95,7 @@
   margin-left: 320px;
   display: flex;
   align-items: center;
-  width: 100%;
+  flex: 1;
   min-width: 860px;
 }
 
@@ -110,5 +136,46 @@
 .router-link-exact-active {
   font-weight: 700;
   color: #862633;
+}
+
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-right: 320px;
+  flex-shrink: 0;
+  color: var(--Gray100, #CDCDCD);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.username {
+  font-size: 16px;
+  font-weight: 500;
+  color: #262626;
+}
+
+.logout-button {
+  background: #910024;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.logout-button:hover:not(:disabled) {
+  background: #7C0019;
+}
+
+.logout-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

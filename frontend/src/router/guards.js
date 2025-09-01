@@ -31,6 +31,6 @@ export const guestGuard = async (to, from, next) => {
   if (!authStore.isAuthenticated) {
     next()
   } else {
-    next('/board')
+    next('/login')
   }
 }

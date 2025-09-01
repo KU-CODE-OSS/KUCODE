@@ -176,3 +176,8 @@ frontend/node_modules
 
 #backup file
 *.bak.DS_Store
+
+# Frontend Docker artifacts
+frontend/Dockerfile
+frontend/.dockerignore
+frontend/docekrRun.txt

@@ -14,18 +14,17 @@
           <div class="profile-header">
             <div class="profile-picture-placeholder"></div>
             <div class="profile-info">
-              <h2 class="profile-name">김OO 님</h2>
+              <h2 class="profile-name">여준 님</h2>
               <div class="profile-details">
                 <div class="detail-item">
                   <i class="icon-location"></i>
                   <div class="detail-content">
-                    <span>고려대학교</span>
-                    <span>컴퓨터학과</span>
+                    <span>고려대학교 컴퓨터학과</span>
                   </div>
                 </div>
                 <div class="detail-item">
                   <i class="icon-mail"></i>
-                  <span>abcde123@korea.ac.kr</span>
+                  <span>joyyoj1@korea.ac.kr</span>
                 </div>
               </div>
             </div>
@@ -42,10 +41,10 @@
               class="intro-input"
               placeholder="자신을 소개해 주세요..."
               rows="4"
-              maxlength="300"
+              maxlength="150"
             ></textarea>
             <div class="intro-counter">
-              {{ user.introduction.length }}/300
+              {{ user.introduction.length }}/150
             </div>
           </div>
           
@@ -204,7 +203,7 @@
             <div class="chart-header">
               <h3>활동 프로젝트 인원 비율</h3>
             </div>
-            <p class="chart-description">2인 프로젝트 비율이 가장 높습니다</p>
+            <p class="chart-description">{{ teamSizeDescription }}</p>
             
             <!-- Bar Chart Area -->
             <div class="team-size-chart-container">
@@ -235,29 +234,93 @@
         <!-- Projects Table -->
         <div class="projects-table">
           <div class="table-header">
-            <span>Category</span>
-            <span>Repository</span>
-            <span>Stars</span>
-            <span>Forks</span>
-            <span>Commits</span>
-            <span>PRs</span>
-            <span>Issues</span>
+            <span class="sortable-header" @click="sortByColumn('category')">
+              Category
+              <i :class="getSortIcon('category')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('name')">
+              Repository
+              <i :class="getSortIcon('name')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('star_count')">
+              Stars
+              <i :class="getSortIcon('star_count')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('fork_count')">
+              Forks
+              <i :class="getSortIcon('fork_count')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('commit_count')">
+              Commits
+              <i :class="getSortIcon('commit_count')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('pr_count')">
+              PRs
+              <i :class="getSortIcon('pr_count')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('total_issue_count')">
+              Issues
+              <i :class="getSortIcon('total_issue_count')"></i>
+            </span>
             <span>Language</span>
-            <span>Contributors</span>
+            <span class="sortable-header" @click="sortByColumn('contributors_count')">
+              Contributors
+              <i :class="getSortIcon('contributors_count')"></i>
+            </span>
           </div>
           
           <!-- Replace the static table rows with dynamic data -->
-          <div class="table-row" v-for="repo in repositoriesData" :key="repo.id">
+          <div class="table-row" v-for="repo in sortedRepositoriesData" :key="repo.id">
           <div 
-            class="category-tag" 
+            class="category-column"
             :class="{ 
-              'autonomous': repo.category === '자율', 
-              'course': repo.category !== '자율' 
+              'autonomous': !repo.is_course, 
+              'course': repo.is_course 
             }"
           >
-            {{ repo.category || 'N/A' }}
+            <div class="category-type">
+              {{ repo.is_course ? '전공역량' : '자율활동' }}
+            </div>
+            <!-- Show dropdown only for autonomous projects (is_course: false) -->
+            <div 
+              v-if="!repo.is_course"
+              class="category-dropdown"
+              :class="{ 
+                'dropdown-open': categoryDropdownOpen[repo.id],
+                'dropdown-up': shouldDropUp(repo.id)
+              }"
+              @click.stop="toggleCategoryDropdown(repo.id)"
+              :ref="`categoryDropdown_${repo.id}`"
+            >
+              <div class="category-dropdown-selected">
+                <span>{{ repo.category || 'N/A' }}</span>
+                <i class="icon-arrow-down" :class="{ 'rotated': categoryDropdownOpen[repo.id] }"></i>
+              </div>
+              <div 
+                v-if="categoryDropdownOpen[repo.id]" 
+                class="category-dropdown-options"
+                :class="{ 'options-up': shouldDropUp(repo.id) }"
+              >
+                <div 
+                  v-for="option in categoryOptions" 
+                  :key="option"
+                  class="category-dropdown-option"
+                  @click.stop="selectCategoryOption(repo.id, option)"
+                >
+                  {{ option }}
+                </div>
+              </div>
+            </div>
+            <!-- Show static value for course projects (is_course: true) -->
+            <div v-else class="category-static">
+              {{ repo.category || 'N/A' }}
+            </div>
           </div>
-          <span :title="repo.name || 'N/A'">{{ repo.name || 'N/A' }}</span>
+          <span 
+            :title="repo.name || 'N/A'" 
+            class="repo-name-clickable"
+            @click="openRepoModal(repo)"
+          >{{ repo.name || 'N/A' }}</span>
           <span>{{ repo.star_count?.toLocaleString() || '0' }}</span>
           <span>{{ repo.fork_count?.toLocaleString() || '0' }}</span>
           <span>{{ repo.commit_count?.toLocaleString() || '0' }}</span>
@@ -291,12 +354,20 @@
       </section>
 
     </main>
+    
+    <!-- 프로젝트 상세 모달 -->
+    <RepoDetailModal 
+      :show="showRepoModal" 
+      :repo="selectedRepo" 
+      @close="closeRepoModal" 
+    />
   </div>
 </template>
 
 <script>
 import { Chart, registerables } from 'chart.js'
 import EProfileHeatmap from './EProfileComponents/EProfileHeatmap.vue'
+import RepoDetailModal from './EProfileComponents/RepoDetailModal.vue'
 import { getEProfileHeatmap } from '@/api.js'
 import { processActivityData, processAddedLinesData, estimateCommitLines } from './EProfileComponents/chartUtils/chartUtils.js'
 
@@ -306,12 +377,13 @@ Chart.register(...registerables)
 export default {
   name: 'EPortfolioDashboard',
   components: {
-    EProfileHeatmap
+    EProfileHeatmap,
+    RepoDetailModal
   },
   data() {
     return {
       user: {
-        name: '김OO',
+        name: '김이진',
         university: '고려대학교',
         department: '컴퓨터공학과',
         email: 'abcde123@korea.ac.kr',
@@ -331,6 +403,9 @@ export default {
       techStackData: [],
       // 히트맵 데이터
       heatmapData: {},
+      // 모달 관련 데이터
+      showRepoModal: false,
+      selectedRepo: null,
       techStackChart: null,
       // Activity Chart Data - NEW ADDITIONS
       activityChart: null,
@@ -400,7 +475,84 @@ export default {
       ],
       repositoriesData: [],
       repositoriesLoading: false,
-      repositoriesError: null
+      repositoriesError: null,
+      // Sorting state
+      sortBy: '',
+      sortDirection: 'asc', // 'asc' or 'desc'
+      // githubId: "YeoJune", // 임시 테스트용 GitHub 아이디 - TODO: 실제 로그인된 사용자 ID로 변경 필요
+      student_uuid: 'rcmPR6PxrxcXP7Pmz0D2tZKsifm2',
+      // Category dropdown state
+      categoryDropdownOpen: {},
+      categoryOptions: [
+        '자료구조',
+        '알고리즘',
+        '컴퓨터구조',
+        '운영체제',
+        '데이터베이스',
+        '네트워크',
+        '인공지능',
+        '컴파일러',
+        '소프트웨어공학',
+        '클라우드컴퓨팅',
+        '운영체제실습',
+        '네트워크실습',
+        '프로그래밍언어론',
+        '분산시스템',
+        '컴퓨터그래픽스',
+        '사이버보안'
+      ]
+    }
+  },
+  computed: {
+    teamSizeDescription() {
+      if (!this.teamSizeData || !this.teamSizeData.data || this.teamSizeData.data.length === 0) {
+        return '프로젝트 데이터가 없습니다'
+      }
+      
+      // 가장 높은 값을 가진 인덱스 찾기
+      const maxIndex = this.teamSizeData.data.indexOf(Math.max(...this.teamSizeData.data))
+      const maxValue = this.teamSizeData.data[maxIndex]
+      const maxLabel = this.teamSizeData.labels[maxIndex]
+      
+      // 총합 계산
+      const total = this.teamSizeData.data.reduce((sum, val) => sum + val, 0)
+      const percentage = Math.round((maxValue / total) * 100)
+      
+      return `${maxLabel} 프로젝트 비율이 가장 높습니다 (${percentage}%)`
+    },
+
+    sortedRepositoriesData() {
+      if (!this.sortBy) {
+        return this.repositoriesData
+      }
+      
+      const sorted = [...this.repositoriesData].sort((a, b) => {
+        let aVal = a[this.sortBy]
+        let bVal = b[this.sortBy]
+        
+        // Handle different data types
+        if (this.sortBy === 'category') {
+          // Sort category: course projects first, then autonomous
+          aVal = a.is_course ? 0 : 1
+          bVal = b.is_course ? 0 : 1
+        } else if (this.sortBy === 'name') {
+          // String comparison for repository names
+          aVal = (aVal || '').toString().toLowerCase()
+          bVal = (bVal || '').toString().toLowerCase()
+        } else if (['star_count', 'fork_count', 'commit_count', 'pr_count', 'total_issue_count', 'contributors_count'].includes(this.sortBy)) {
+          // Numeric comparison
+          aVal = parseInt(aVal) || 0
+          bVal = parseInt(bVal) || 0
+        }
+        
+        if (this.sortDirection === 'asc') {
+          return aVal > bVal ? 1 : aVal < bVal ? -1 : 0
+        } else {
+          return aVal < bVal ? 1 : aVal > bVal ? -1 : 0
+        }
+      })
+      
+      return sorted
     }
   },
   async mounted() {
@@ -424,6 +576,10 @@ export default {
           dropdown.isOpen = false
         })
       }
+      
+      if (!event.target.closest('.category-dropdown')) {
+        this.closeCategoryDropdowns()
+      }
     }
     
     document.addEventListener('click', this.closeAllDropdowns)
@@ -442,6 +598,15 @@ export default {
     document.removeEventListener('click', this.closeAllDropdowns)
   },
   methods: {
+    // 모달 관련 메서드
+    openRepoModal(repo) {
+      this.selectedRepo = repo
+      this.showRepoModal = true
+    },
+    closeRepoModal() {
+      this.showRepoModal = false
+      this.selectedRepo = null
+    },
     createTechStackChart() {
       const ctx = this.$refs.techStackChart.getContext('2d')
       
@@ -740,8 +905,6 @@ export default {
     },
     async loadActivityChart() {
       try {
-        const githubId = "dlwls423" // 임시 테스트용 GitHub 아이디
-        
         // Initialize with empty data
         this.activityData = {
           monthly: {
@@ -756,7 +919,7 @@ export default {
           }
         }
         
-        const response = await getEProfileHeatmap(githubId)
+        const response = await getEProfileHeatmap(this.student_uuid)
         console.log(response)
 
         // Process the API response data using utility function
@@ -781,27 +944,27 @@ export default {
           }
         }
         
-        // For now, keep weekly as empty or use sample data
+        // Weekly data will be empty for now
         this.activityData.weekly = {
-          labels: ['1주차', '2주차', '3주차', '4주차', '5주차', '6주차'],
-          commits: [8, 12, 15, 18, 14, 10],
-          commitLines: [68, 102, 128, 153, 119, 85]
+          labels: [],
+          commits: [],
+          commitLines: []
         }
         
         console.log('활동 추이 로드 완료:', this.activityData)
       } catch (error) {
         console.error('활동 차트 데이터 로드 실패:', error)
-        // 에러 시 기본 데이터 설정
+        // 에러 시 빈 데이터 설정
         this.activityData = {
           monthly: {
-            labels: ['5월', '6월', '7월', '8월', '10월', '11월'],
-            commits: [10, 15, 3, 37, 28, 15],
-            commitLines: [85, 128, 26, 315, 238, 128]
+            labels: [],
+            commits: [],
+            commitLines: []
           },
           weekly: {
-            labels: ['1주차', '2주차', '3주차', '4주차', '5주차', '6주차'],
-            commits: [8, 12, 15, 18, 14, 10],
-            commitLines: [68, 102, 128, 153, 119, 85]
+            labels: [],
+            commits: [],
+            commitLines: []
           }
         }
       }
@@ -809,9 +972,7 @@ export default {
 
     async loadHeatmapData() {
       try {
-        // TODO: 실제 로그인된 사용자의 GitHub 아이디를 가져오는 로직으로 변경 필요
-        const githubId = "dlwls423" // 임시 테스트용 GitHub 아이디
-        const response = await getEProfileHeatmap(githubId)
+        const response = await getEProfileHeatmap(this.githubId)
         this.heatmapData = response.data.heatmap
         console.log('히트맵 데이터 로드 완료:', this.heatmapData)
         
@@ -858,8 +1019,107 @@ export default {
             license: null,
             has_readme: false,
             description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
-            release_version: null
-          }
+            release_version: null,
+            is_course: true,
+          },
+
+          {
+            "id": "738312382",
+            "name": "value-together",
+            "is_course": false,
+            "category": "-",
+            "url": "https://github.com/dlwls423/value-together",
+            "student_id": "2020320088",
+            "owner_github_id": "dlwls423",
+            "created_at": "2024-01-03T00:04:04Z",
+            "updated_at": "2024-01-03T00:04:04Z",
+            "fork_count": 0,
+            "star_count": 0,
+            "commit_count": 739,
+            "total_issue_count": 0,
+            "pr_count": 0,
+            "language": "Java, Dockerfile",
+            "language_percentages": {
+                "Java": 99.9,
+                "Dockerfile": 0.1,
+                "others": 0
+            },
+            "contributors_count": 5,
+            "contributors_list": [
+                [
+                    "이예진",
+                    "컴퓨터학과",
+                    "2020320088",
+                    "dlwls423"
+                ]
+            ],
+            "license": null,
+            "has_readme": true,
+            "description": "가치 있는일을 같이 진행하자! 일정 공유 어플리케이션! ",
+            "release_version": null,
+            "monthly_commits": [],
+          },
+          {
+            "id": "725163550",
+            "name": "hobby-bungae",
+            "is_course": false,
+            "category": "-",
+            "url": "https://github.com/dlwls423/hobby-bungae",
+            "student_id": "2020320088",
+            "owner_github_id": "dlwls423",
+            "created_at": "2023-11-29T15:11:21Z",
+            "updated_at": "2023-11-29T15:11:21Z",
+            "fork_count": 0,
+            "star_count": 0,
+            "commit_count": 165,
+            "total_issue_count": 0,
+            "pr_count": 0,
+            "language": "Java",
+            "language_percentages": {
+                "Java": 100,
+                "others": 0
+            },
+            "contributors_count": 4,
+            "contributors_list": [
+                [
+                    "이예진",
+                    "컴퓨터학과",
+                    "2020320088",
+                    "dlwls423"
+                ]
+            ],
+            "license": null,
+            "has_readme": true,
+            "description": "스파르타 내일배움캠프 Spring 3기 - 스프링 숙련 주차 팀 과제 : HabbyMate",
+            "release_version": null,
+            "monthly_commits": [],
+          },
+          {
+            id: "822988409",
+            name: "20241R0136COSE48000",
+            category: "산학캡스톤",
+            url: "https://github.com/dlwls423/20241R0136COSE48000",
+            student_id: "2020320088",
+            owner_github_id: "dlwls423",
+            created_at: "2024-07-02T08:07:03Z",
+            updated_at: "2024-07-02T08:07:03Z",
+            fork_count: 0,
+            star_count: 0,
+            commit_count: 276,
+            total_issue_count: 0,
+            pr_count: 0,
+            language: "Java, CSS, JavaScript, HTML",
+            language_percentages: {
+                "others": 0
+            },
+            contributors_count: 0,
+            contributors_list: [],
+            license: null,
+            has_readme: false,
+            description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
+            release_version: null,
+            is_course: true,
+          },
         ]
 
         this.techStackData = {
@@ -897,11 +1157,10 @@ export default {
           "total_stars": 3,
           "total_forks": 0
         }
-
         this.stats = {
-          commitLines: {added: total_stats['added_lines'], deleted: total_stats['deleted_lines']},
-          issues: {created: total_stats['total_open_issues'], closed: total_stats['total_closed_issues']},
-          pullRequests: total_stats['total_closed_prs'],
+          commitLines: {added: 0, deleted: 0},
+          issues: {created: 0, closed: 0},
+          pullRequests: 0,
           openSourceContributions: 0
         }
       }
@@ -1095,7 +1354,8 @@ export default {
 
     // Helper method to process total_contributors_count data
     processTeamSizeData(total_contributors_count) {
-      // Map the API keys to chart labels, excluding "0" key
+      // Define the order we want to display
+      const orderedKeys = ['1', '2', '3', '4', '5+']
       const keyMapping = {
         '1': '1인',
         '2': '2인', 
@@ -1107,14 +1367,14 @@ export default {
       const labels = []
       const data = []
 
-      // Process each key in the expected order
-      Object.keys(keyMapping).forEach(key => {
+      // Process each key in the specific order
+      orderedKeys.forEach(key => {
         labels.push(keyMapping[key])
         data.push(parseInt(total_contributors_count[key]) || 0)
       })
 
       return {
-        labels: ['1인', '2인', '3인', '4인', '5인 이상'],
+        labels: labels,
         data: data
       }
     },
@@ -1161,33 +1421,7 @@ export default {
             ? responseData.repositories 
             : [responseData.repositories]
         } else {
-          this.repositoriesData = [
-            {
-              id: "822988405",
-              name: "20241R0136COSE48000",
-              category: "산학캡스톤디자인",
-              url: "https://github.com/dlwls423/20241R0136COSE48000",
-              student_id: "2020320088",
-              owner_github_id: "dlwls423",
-              created_at: "2024-07-02T08:07:03Z",
-              updated_at: "2024-07-02T08:07:03Z",
-              fork_count: 0,
-              star_count: 0,
-              commit_count: 276,
-              total_issue_count: 0,
-              pr_count: 0,
-              language: "Java, CSS, JavaScript, HTML",
-              language_percentages: {
-                  "others": 0
-              },
-              contributors_count: 0,
-              contributors_list: [],
-              license: null,
-              has_readme: false,
-              description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
-              release_version: null
-            }
-          ]
+          this.repositoriesData = []
         }
         
         console.log('Repository data processed:', this.repositoriesData)
@@ -1201,6 +1435,67 @@ export default {
       } finally {
         this.repositoriesLoading = false
       }
+    },
+
+    // Sorting methods
+    sortByColumn(column) {
+      if (this.sortBy === column) {
+        // Toggle sort direction if clicking the same column
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
+      } else {
+        // Set new column and default to ascending
+        this.sortBy = column
+        this.sortDirection = 'asc'
+      }
+    },
+
+    getSortIcon(column) {
+      if (this.sortBy !== column) {
+        return 'icon-sort-default'
+      }
+      return this.sortDirection === 'asc' ? 'icon-sort-up' : 'icon-sort-down'
+    },
+
+    // Category dropdown methods
+    toggleCategoryDropdown(repoId) {
+      // Close all other category dropdowns
+      Object.keys(this.categoryDropdownOpen).forEach(id => {
+        if (id !== repoId.toString()) {
+          this.categoryDropdownOpen[id] = false
+        }
+      })
+      
+      // Toggle the clicked dropdown
+      this.categoryDropdownOpen[repoId] = !this.categoryDropdownOpen[repoId]
+      this.$forceUpdate() // Force reactivity update
+    },
+
+    selectCategoryOption(repoId, option) {
+      // Find the repository and update its category
+      const repo = this.repositoriesData.find(r => r.id === repoId)
+      if (repo) {
+        repo.category = option
+      }
+      
+      // Close the dropdown
+      this.categoryDropdownOpen[repoId] = false
+      this.$forceUpdate() // Force reactivity update
+    },
+
+    closeCategoryDropdowns() {
+      Object.keys(this.categoryDropdownOpen).forEach(id => {
+        this.categoryDropdownOpen[id] = false
+      })
+      this.$forceUpdate() // Force reactivity update
+    },
+
+    shouldDropUp(repoId) {
+      // Simple approach: check if this is one of the last few rows
+      const currentIndex = this.sortedRepositoriesData.findIndex(repo => repo.id === repoId)
+      const totalRows = this.sortedRepositoriesData.length
+      
+      // If it's in the last 3 rows, drop up
+      return currentIndex >= totalRows - 3
     }
   }
 }
@@ -1884,6 +2179,32 @@ export default {
   border-bottom: 1px solid #F9D2D6;
 }
 
+/* Sortable Header Styles */
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: color 0.2s ease;
+}
+
+.sortable-header:hover {
+  color: #910024;
+}
+
+.sortable-header i {
+  width: 12px;
+  height: 12px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.sortable-header:hover i {
+  opacity: 1;
+}
+
 .table-row {
   display: grid;
   grid-template-columns: 
@@ -1935,24 +2256,121 @@ export default {
   border-bottom: none;
 }
 
-.category-tag {
-  padding: 4px 21px;
-  border-radius: 10px;
-  font-size: 14px;
-  text-align: center;
+.category-column {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   max-width: var(--col-category);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  /* white-space: nowrap; */
   box-sizing: border-box;
 }
 
-.category-tag.autonomous {
+.category-type {
+  padding: 3px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.category-dropdown {
+  position: relative;
+  cursor: pointer;
+}
+
+.category-dropdown-selected {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  text-align: center;
+  background: #F8F9FA;
+  color: #616161;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.category-dropdown-selected:hover {
+  background: #E9ECEF;
+}
+
+.category-dropdown.dropdown-open .category-dropdown-selected {
+  border-radius: 6px 6px 0 0;
+  background: #E9ECEF;
+}
+
+.category-dropdown.dropdown-up .category-dropdown-selected {
+  border-radius: 0 0 6px 6px;
+  background: #E9ECEF;
+}
+
+.category-dropdown-selected i {
+  width: 10px;
+  height: 10px;
+  transition: transform 0.2s ease;
+}
+
+.category-dropdown-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border: 1px solid #DEE2E6;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  max-height: 150px;
+  overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+.category-dropdown-options.options-up {
+  top: auto;
+  bottom: 100%;
+  border-top: 1px solid #DEE2E6;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.category-dropdown-option {
+  padding: 6px 8px;
+  font-size: 11px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  color: #616161;
+}
+
+.category-dropdown-option:hover {
+  background: #F8F9FA;
+  color: #262626;
+}
+
+.category-dropdown-option:last-child {
+  border-radius: 0 0 6px 6px;
+}
+
+.category-static {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  text-align: center;
+  background: #F8F9FA;
+  color: #616161;
+}
+
+.category-column.autonomous .category-type {
   background: #EFF2F9;
   color: #507199;
 }
 
-.category-tag.course {
+.category-column.course .category-type {
   background: #FFEAEC;
   color: #CB385C;
 }
@@ -2084,6 +2502,33 @@ export default {
 .icon-gcp { background: url('@/assets/icons/logos/gcp.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
 .icon-azure { background: url('@/assets/icons/logos/azure.svg') no-repeat center; background-size: contain; width: 18px; height: 18px; flex-shrink: 0; }
 
+/* Sorting Icons */
+.icon-sort-default,
+.icon-sort-up,
+.icon-sort-down {
+  width: 12px;
+  height: 12px;
+  background: #CB385C;
+  flex-shrink: 0;
+}
+
+.icon-sort-default {
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23CB385C"><path d="M7 10l5 5 5-5H7z"/></svg>') no-repeat center;
+  background-size: contain;
+  transform: rotate(0deg);
+  opacity: 0.4;
+}
+
+.icon-sort-up {
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23CB385C"><path d="M7 14l5-5 5 5H7z"/></svg>') no-repeat center;
+  background-size: contain;
+}
+
+.icon-sort-down {
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23CB385C"><path d="M7 10l5 5 5-5H7z"/></svg>') no-repeat center;
+  background-size: contain;
+}
+
 /* Profile Introduction Styles - EDITABLE */
 .profile-intro {
   margin: 20px 0 30px 0;
@@ -2196,5 +2641,17 @@ export default {
   .skills-stats {
     grid-template-columns: 1fr;
   }
+}
+
+/* 클릭 가능한 레포지토리명 스타일 */
+.repo-name-clickable {
+  cursor: pointer;
+  color: #CB385C;
+  text-decoration: underline;
+  transition: color 0.3s ease;
+}
+
+.repo-name-clickable:hover {
+  color: #910024;
 }
 </style>
