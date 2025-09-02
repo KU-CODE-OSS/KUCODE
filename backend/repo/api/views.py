@@ -1979,7 +1979,7 @@ class RepoSummaryAnalyzer:
         "primary_language": "주요 언어",
         "purpose": "프로젝트의 목적과 용도",
         "tech_stack": ["기술1", "기술2", "기술3"],
-        "features": ["특징1", "특징2", "특징3"],
+        "key_functionalities": ["핵심 기능1", "핵심 기능2", "핵심 기능3"],
         "scale": "소규모/중규모/대규모",
         "activity": "활발함/보통/비활성",
         "key_highlights": ["주요 하이라이트 1", "주요 하이라이트 2"]
@@ -1998,6 +1998,12 @@ class RepoSummaryAnalyzer:
         "maintainability": "높음/보통/낮음"
     }}
 }}
+
+분석 시 주의사항:
+- key_functionalities: 이 프로젝트가 실제로 제공하는 구체적인 기능들을 명시해주세요. 
+  예: "사용자 인증", "데이터 시각화", "REST API 제공", "이미지 처리", "실시간 채팅"
+- 정보가 부족하여 정확한 분석이 어려운 항목은 빈 배열([])이나 "미확인"으로 남겨주세요.
+- 추측보다는 확실한 정보만 포함해주세요.
 """
         return prompt
 
@@ -2010,32 +2016,51 @@ class RepoSummaryAnalyzer:
         project_structure = repo_structure.get('project_structure', {})
         framework_indicators = project_structure.get('framework_indicators', [])
         
-        # 기본 분석
+        # 기본 분석 - 확실한 정보만 포함
         purpose = self._infer_basic_purpose(primary_language, framework_indicators, repo_data)
-        tech_stack = [primary_language] + framework_indicators[:3]
+        tech_stack = [primary_language] if primary_language != "Unknown" else []
+        if framework_indicators:
+            tech_stack.extend(framework_indicators[:2])  # 최대 3개까지만
+        
+        # 핵심 기능은 정보 부족으로 비워둠
+        key_functionalities = []
+        
+        # README나 설명이 있고 명확한 경우에만 기능 추론
+        description = (repo_data.get('description') or '').lower()
+        if description:
+            if 'api' in description:
+                key_functionalities.append("API 제공")
+            if 'web' in description or 'website' in description:
+                key_functionalities.append("웹 서비스")
+            if 'dashboard' in description or 'admin' in description:
+                key_functionalities.append("관리 대시보드")
+            if 'bot' in description:
+                key_functionalities.append("봇 서비스")
+            if 'cli' in description or 'command' in description:
+                key_functionalities.append("명령줄 도구")
         
         return {
             "project_summary": {
                 "primary_language": primary_language,
                 "purpose": purpose,
                 "tech_stack": tech_stack,
-                "features": ["코드 저장소", "버전 관리"],
+                "key_functionalities": key_functionalities,  # 정보 부족시 빈 배열
                 "scale": "중규모" if repo_structure.get('total_files', 0) > 50 else "소규모",
                 "activity": "보통",
-                "key_highlights": [f"{primary_language} 기반 프로젝트"]
+                "key_highlights": [f"{primary_language} 기반 프로젝트"] if primary_language != "Unknown" else []
             },
             "technical_details": {
-                "architecture": "표준 구조",
+                "architecture": "미확인",  # 정보 부족으로 미확인
                 "frameworks": framework_indicators,
-                "development_tools": [],
+                "development_tools": [],  # 정보 부족으로 비워둠
                 "deployment": "미확인",
-                "testing": "테스트 파일 있음" if project_structure.get('has_tests') else "테스트 없음"
+                "testing": "테스트 파일 있음" if project_structure.get('has_tests') else "미확인"
             },
             "quality_indicators": {
-                "documentation_quality": "보통" if project_structure.get('has_docs') else "부족",
-                "code_organization": "보통",
-                "best_practices": "부분적",
-                "maintainability": "보통"
+                "documentation_quality": "보통" if project_structure.get('has_docs') else "미확인",
+                "code_organization": "미확인",  # 정보 부족으로 미확인
+                "best_practices": "미확인",
+                "maintainability": "미확인"
             }
         }
 
@@ -2079,11 +2104,11 @@ class RepoSummaryAnalyzer:
                 tech_str = ", ".join(tech_stack[:4])
                 description_parts.append(f"• 기술 스택: {tech_str}")
 
-            # 주요 특징
-            features = project_summary.get("features", [])
-            if features:
-                features_str = ", ".join(features[:3])
-                description_parts.append(f"• 주요 특징: {features_str}")
+            # 핵심 기능 (features 대신 key_functionalities 사용)
+            key_functionalities = project_summary.get("key_functionalities", [])
+            if key_functionalities:
+                func_str = ", ".join(key_functionalities[:3])
+                description_parts.append(f"• 핵심 기능: {func_str}")
 
             # 핵심 하이라이트
             highlights = project_summary.get("key_highlights", [])
@@ -2091,22 +2116,22 @@ class RepoSummaryAnalyzer:
                 highlights_str = ", ".join(highlights[:2])
                 description_parts.append(f"• 핵심 특징: {highlights_str}")
 
-            # 아키텍처 정보
+            # 아키텍처 정보 (미확인 제외)
             architecture = technical_details.get("architecture", "")
-            if architecture and architecture != "표준 구조":
+            if architecture and architecture not in ["표준 구조", "미확인"]:
                 description_parts.append(f"• 아키텍처: {architecture}")
 
-            # 배포 방식
+            # 배포 방식 (미확인 제외)
             deployment = technical_details.get("deployment", "")
             if deployment and deployment != "미확인":
                 description_parts.append(f"• 배포: {deployment}")
 
-            # 테스트 현황
+            # 테스트 현황 (미확인 제외)
             testing = technical_details.get("testing", "")
-            if testing:
+            if testing and testing != "미확인":
                 description_parts.append(f"• 테스트: {testing}")
 
-            # 품질 지표
+            # 품질 지표 (미확인 항목 제외)
             quality_items = []
             doc_quality = quality_indicators.get("documentation_quality", "")
             if doc_quality == "좋음":
@@ -2130,6 +2155,10 @@ class RepoSummaryAnalyzer:
             activity = project_summary.get("activity", "보통")
             description_parts.append(f"• 규모 및 활성도: {scale}, {activity}")
 
+            # 설명이 너무 적은 경우 기본 메시지 추가
+            if len(description_parts) < 3:
+                description_parts.append("• 상세 분석을 위해 추가 정보가 필요합니다")
+
             return "\n".join(description_parts)
 
         except Exception as e:
@@ -2144,7 +2173,7 @@ class RepoSummaryAnalyzer:
             lang = ps.get("primary_language") or "Unknown"
             purpose = ps.get("purpose") or "프로젝트"
             techs = ", ".join((ps.get("tech_stack") or [])[:4])
-            features = ", ".join((ps.get("features") or [])[:2])
+            key_functionalities = ", ".join((ps.get("key_functionalities") or [])[:2])
             arch = td.get("architecture")
             testing = td.get("testing")
             scale = ps.get("scale") or "중규모"
@@ -2153,9 +2182,9 @@ class RepoSummaryAnalyzer:
             parts = [f"{lang} 기반 {purpose}입니다."]
             if techs:
                 parts.append(f"주요 기술로 {techs}를 사용합니다.")
-            if features:
-                parts.append(f"주요 기능은 {features} 등이 있습니다.")
-            if arch and arch != "표준 구조":
+            if key_functionalities:
+                parts.append(f"핵심 기능은 {key_functionalities} 등이 있습니다.")
+            if arch and arch not in ["표준 구조", "미확인"]:
                 parts.append(f"아키텍처는 {arch}를 따릅니다.")
             if testing and testing != "미확인":
                 parts.append(f"테스트 현황은 '{testing}'입니다.")
@@ -2188,10 +2217,10 @@ class RepoSummaryAnalyzer:
             # 기술 스택 (최대 4개)
             tech_stack = project_summary.get("tech_stack", [])[:4]
 
-            # 주요 특징 (특징 + 하이라이트 결합)
-            features = project_summary.get("features", [])[:2]
+            # 핵심 기능 + 하이라이트 결합 (features 대신 key_functionalities 사용)
+            key_functionalities = project_summary.get("key_functionalities", [])[:2]
             highlights = project_summary.get("key_highlights", [])[:1]
-            key_features = features + highlights
+            key_features = key_functionalities + highlights
 
             # 개발 메트릭 - 원본 repo_data에서 가져오기
             if repo_data:
@@ -2208,7 +2237,7 @@ class RepoSummaryAnalyzer:
                     "forks": 0,
                 }
 
-            # 품질 지표
+            # 품질 지표 - 미확인 항목 제외
             quality_items = []
             
             doc_quality = quality_indicators.get("documentation_quality", "")
@@ -2230,7 +2259,7 @@ class RepoSummaryAnalyzer:
             return {
                 "core_info": core_info,
                 "tech_stack": tech_stack,
-                "key_features": key_features,
+                "key_features": key_features,  # key_functionalities + highlights
                 "metrics": metrics,
                 "quality_indicators": quality_items,
                 "bullet_description": self._generate_bullet_description(llm_analysis),
@@ -2246,10 +2275,10 @@ class RepoSummaryAnalyzer:
                     "scale_and_activity": "미확인",
                 },
                 "tech_stack": [],
-                "key_features": ["분석 실패"],
+                "key_features": [],  # 에러시에도 비워둠
                 "metrics": {"commits": 0, "stars": 0, "forks": 0},
                 "quality_indicators": [],
-                "bullet_description": "• 분석 실패",
+                "bullet_description": "• 분석 실패로 정보를 가져올 수 없습니다",
             }
 
 # ========================================
