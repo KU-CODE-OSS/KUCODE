@@ -14,7 +14,7 @@
           <div class="profile-header">
             <div class="profile-picture-placeholder"></div>
             <div class="profile-info">
-              <h2 class="profile-name">여준 님</h2>
+              <h2 class="profile-name">최다영 님</h2>
               <div class="profile-details">
                 <div class="detail-item">
                   <i class="icon-location"></i>
@@ -1690,7 +1690,7 @@ export default {
 .tech-stack-content {
   display: flex;
   align-items: flex-start;
-  gap: 50px;
+  gap: 40px;
   height: 100%;
 }
 

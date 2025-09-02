@@ -1039,6 +1039,11 @@ export default {
   margin-top: 55px;
 }
 
+.donut-chart canvas {
+  z-index: 10;
+  position: relative;
+}
+
 .donut-center {
   position: absolute;
   top: 50%;
