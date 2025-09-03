@@ -38,8 +38,6 @@ urlpatterns = [
 # read_db_per_request
   path('repo_account_read_db', views.repo_account_read_db, name='repo_account_read_db'),
 
-# repository summary
   path("generate_repo_summary/", views.GenerateRepoSummaryAPIView.as_view(), name='generate_repo_summary'),
-  path("generate_repo_summary_batch/", views.GenerateRepoSummaryBatchAPIView.as_view(), name='generate_repo_summary_batch'),
   path("get_repo_summary/", views.GetRepoSummaryAPIView.as_view(), name='get_repo_summary')
 ]

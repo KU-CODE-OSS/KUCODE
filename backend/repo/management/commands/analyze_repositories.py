@@ -59,7 +59,7 @@ class Command(BaseCommand):
             request_data["student_ids"] = student_ids
 
         # API 호출
-        api_url = f"{host}/api/repo/generate_repo_summary_batch/"
+        api_url = f"{host}/api/repo/generate_repo_summary/"
 
         self.stdout.write(f"배치 분석 시작...")
         self.stdout.write(f"API URL: {api_url}")

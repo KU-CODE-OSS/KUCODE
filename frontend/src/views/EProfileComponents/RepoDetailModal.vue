@@ -36,7 +36,7 @@
               <span>Commits</span>
               <span>PRs</span>
               <span>Issues</span>
-              <span>Language</span>
+              <span>Languages</span>
               <span>Contributors</span>
             </div>
             <!-- 데이터 행 -->
@@ -46,7 +46,17 @@
               <span>{{ repo?.commit_count?.toLocaleString() || '0' }}</span>
               <span>{{ repo?.pr_count?.toLocaleString() || '0' }}</span>
               <span>{{ repo?.total_issue_count?.toLocaleString() || '0' }}</span>
-              <span>{{ repo?.language || 'N/A' }}</span>
+              <div class="language-cell">
+                <span class="language-preview">{{ topLanguagesPreview }}</span>
+                <button class="link-button" @click.stop="toggleLanguagePanel" v-if="allLanguagesList.length > 0">전체 보기</button>
+                <div v-if="showLanguagePanel" class="language-popover" @click.stop>
+                  <div class="popover-header">
+                    <span>Languages</span>
+                    <button class="close-x" @click.stop="closeLanguagePanel">✕</button>
+                  </div>
+                  <p class="language-flow">{{ languagesFlowText }}</p>
+                </div>
+              </div>
               <span>{{ repo?.contributors_count?.toLocaleString() || '0' }}</span>
             </div>
           </div>
@@ -57,41 +67,31 @@
           <h3 class="section-title">프로젝트 요약</h3>
           <div class="summary-box">
             <div v-if="parsedSummary" class="summary-content">
-              <!-- 프로젝트 개요 -->
-              <div class="summary-overview">
-                <div class="overview-main">
-                  {{ parsedSummary.scale }} · {{ parsedSummary.primary_language }} 중심 · 활동 수준: {{ parsedSummary.activity }}
+              <!-- 프로젝트 개요 (현재 JSON 스키마 기준) -->
+              <div class="summary-grid">
+                <div class="summary-item full">
+                  <div class="label">규모</div>
+                  <div class="value">{{ parsedSummary.scale }}</div>
                 </div>
-                <div class="overview-features">
-                  주요 기능: {{ parsedSummary.features.join(', ') }}
+                <div class="summary-item full">
+                  <div class="label">주요 언어</div>
+                  <div class="value">{{ parsedSummary.primary_language }}</div>
                 </div>
-                <div class="overview-tech">
-                  기술 스택: {{ parsedSummary.tech_stack.join(', ') }}
+                <div class="summary-item full">
+                  <div class="label">목적</div>
+                  <div class="value">{{ parsedSummary.purpose }}</div>
                 </div>
-              </div>
-              
-              <!-- 기술 세부사항 -->
-              <div class="summary-technical">
-                <h4 class="summary-subtitle">기술 세부사항</h4>
-                <div class="technical-overview">
-                  {{ parsedSummary.testing }} · {{ parsedSummary.deployment }} · {{ parsedSummary.architecture }}
+                <div class="summary-item full">
+                  <div class="label">핵심 기능</div>
+                  <ul class="value list">
+                    <li v-for="(f, idx) in parsedSummary.features" :key="idx">{{ f }}</li>
+                  </ul>
                 </div>
-                <div class="technical-details">
-                  프레임워크: {{ parsedSummary.frameworks.join(', ') }}
-                </div>
-                <div class="technical-tools">
-                  개발 도구: {{ parsedSummary.development_tools.length > 0 ? parsedSummary.development_tools.join(', ') : '없음' }}
-                </div>
-              </div>
-              
-              <!-- 품질 지표 -->
-              <div class="summary-quality">
-                <h4 class="summary-subtitle">품질 지표</h4>
-                <div class="quality-overview">
-                  베스트 프랙티스: {{ parsedSummary.best_practices }} · 유지보수성: {{ parsedSummary.maintainability }}
-                </div>
-                <div class="quality-details">
-                  코드 구조화: {{ parsedSummary.code_organization }}, 문서 품질: {{ parsedSummary.documentation_quality }}
+                <div class="summary-item full">
+                  <div class="label">기술 스택</div>
+                  <div class="value chips">
+                    <span v-for="(t, idx) in parsedSummary.tech_stack" :key="idx" class="chip">{{ t }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -196,6 +196,7 @@
       </div>
     </div>
   </div>
+  
 </template>
 
 <script>
@@ -218,7 +219,8 @@ export default {
   },
   data() {
     return {
-      languageChart: null
+  languageChart: null,
+  showLanguagePanel: false
     }
   },
   computed: {
@@ -278,6 +280,25 @@ export default {
       return labels
     },
     
+    // 언어 전체 목록 및 프리뷰
+    allLanguagesList() {
+      const raw = this.repo?.language || ''
+      return raw.split(',').map(s => s.trim()).filter(Boolean)
+    },
+    topLanguagesPreview() {
+      const list = this.allLanguagesList
+      if (list.length === 0) return 'N/A'
+      const top = list.slice(0, 3)
+      const rest = list.length - top.length
+      return rest > 0 ? `${top.join(', ')} 외 ${rest}개` : top.join(', ')
+    },
+    languagesFlowText() {
+      const list = this.allLanguagesList
+      if (list.length === 0) return 'N/A'
+      // join with comma and space; avoid trailing comma
+      return list.join(', ')
+    },
+
     // 차트 좌표 계산
     timelinePoints() {
       const points = []
@@ -360,44 +381,29 @@ export default {
       return data
     },
     
-    // 프로젝트 요약 데이터 파싱
+    // 프로젝트 요약 데이터 파싱 (현재 백엔드 JSON 스키마 전용)
     parsedSummary() {
-      if (!this.repo || !this.repo.summary) {
-        return null
-      }
-      
+      if (!this.repo || !this.repo.summary) return null
+
       try {
-        // summary가 문자열인 경우 JSON 파싱 시도
+        // summary가 문자열이면 파싱
         let summaryData = this.repo.summary
         if (typeof summaryData === 'string') {
           summaryData = JSON.parse(summaryData)
         }
-        
-        // project_summary, technical_details, quality_indicators 구조 확인
-        if (summaryData.project_summary && summaryData.technical_details && summaryData.quality_indicators) {
-          const project = summaryData.project_summary
-          const technical = summaryData.technical_details
-          const quality = summaryData.quality_indicators
-          
-          return {
-            scale: project.scale || 'N/A',
-            primary_language: project.primary_language || 'N/A',
-            activity: project.activity || 'N/A',
-            features: project.features || [],
-            tech_stack: project.tech_stack || [],
-            testing: technical.testing || 'N/A',
-            deployment: technical.deployment || 'N/A',
-            architecture: technical.architecture || 'N/A',
-            frameworks: technical.frameworks || [],
-            development_tools: technical.development_tools || [],
-            best_practices: quality.best_practices || 'N/A',
-            maintainability: quality.maintainability || 'N/A',
-            code_organization: quality.code_organization || 'N/A',
-            documentation_quality: quality.documentation_quality || 'N/A'
-          }
+
+        if (!summaryData || typeof summaryData !== 'object') return null
+
+        // 현재 스키마: { user_content: { description }, project_summary: { ... } }
+  const project = (summaryData.project_summary || {})
+
+        return {
+          scale: project.scale || 'N/A',
+          primary_language: project.primary_language || 'N/A',
+          purpose: project.purpose || 'N/A',
+          features: project.key_functionalities || project.features || [],
+          tech_stack: project.tech_stack || [],
         }
-        
-        return null
       } catch (error) {
         console.error('프로젝트 요약 파싱 오류:', error)
         return null
@@ -407,6 +413,12 @@ export default {
   methods: {
     closeModal() {
       this.$emit('close')
+    },
+    toggleLanguagePanel() {
+      this.showLanguagePanel = !this.showLanguagePanel
+    },
+    closeLanguagePanel() {
+      this.showLanguagePanel = false
     },
     
     getTopLanguage() {
@@ -515,6 +527,8 @@ export default {
           this.languageChart.destroy()
           this.languageChart = null
         }
+  // 언어 팝오버 닫기
+  this.showLanguagePanel = false
       }
     },
     
@@ -785,6 +799,98 @@ export default {
   color: #262626;
 }
 
+/* Make language cell align like other table cells */
+.table-data .language-cell {
+  width: 120px;
+  /* height removed to let preview + button show */
+  justify-content: center;
+  align-items: center;
+  flex-direction: column; /* stack preview and button */
+  gap: 2px;
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 19px;
+  text-align: center;
+  color: #262626;
+}
+
+.language-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative; /* popover positioning base */
+}
+
+.language-preview {
+  max-width: 100px; /* a touch wider to show more */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #CB385C;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* inline popover below the cell */
+.language-popover {
+  position: absolute;
+  top: 44px; /* below stacked preview/button */
+  left: -2px; /* nudge to align closer to grid */
+  min-width: 260px;
+  max-width: 420px;
+  max-height: 240px;
+  background: #FFFFFF;
+  border: 1px solid #E8EDF8;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  padding: 12px 12px 12px 4px; /* minimal left padding */
+  z-index: 1100;
+  overflow: auto;
+}
+
+.language-popover .popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  color: #262626;
+  margin: 0 0 4px 0; /* remove extra margins */
+}
+
+.language-popover .close-x {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #949494;
+}
+
+.language-flow {
+  margin: 0 0 0 14px; /* slight indent to align visually with header */
+  color: #616161;
+  font-size: 14px;
+  line-height: 1.7;
+  word-break: keep-all; /* better Korean/English readability */
+  white-space: normal; /* allow wrapping */
+}
+
+/* Prevent long values (e.g., languages) from overflowing */
+.table-data .truncate {
+  display: inline-block;
+  max-width: 140px; /* slightly wider to accommodate longer labels */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
 /* 구분선 */
 .info-table::before,
 .info-table::after {
@@ -838,30 +944,60 @@ export default {
   gap: 20px;
 }
 
-.summary-overview {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
 
-.overview-main {
-  font-family: 'Pretendard';
-  font-style: normal;
-  font-weight: 600;
-  font-size: 16px;
-  line-height: 19px;
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* all items are full width */
+
+.label {
+  font-weight: 700;
+  font-size: 15px;
   color: #262626;
 }
 
-.overview-features,
-.overview-tech {
-  font-family: 'Pretendard';
-  font-style: normal;
-  font-weight: 400;
+.value {
   font-size: 14px;
-  line-height: 17px;
   color: #616161;
+  line-height: 1.6;
+  white-space: pre-wrap;
 }
+
+.value.list {
+  list-style-type: disc;
+  list-style-position: outside;
+  padding-left: 18px;
+  margin: 0;
+}
+
+.value.list li {
+  margin: 4px 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  background: #EFF2F9;
+  color: #507199;
+  border: 1px solid #E8EDF8;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+/* legacy styles removed in favor of summary-grid */
 
 .summary-technical,
 .summary-quality {
