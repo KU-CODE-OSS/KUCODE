@@ -1398,9 +1398,6 @@ def repo_account_read_db(request):
                 monthly_added_lines[month_key] = monthly_added_lines.get(month_key, 0) + added
                 monthly_deleted_lines[month_key] = monthly_deleted_lines.get(month_key, 0) + deleted
                 monthly_changed_lines[month_key] = monthly_changed_lines.get(month_key, 0) + added + deleted
-            
-                repo_id = commit.repo.id
-                repo_monthly_commits[repo_id][month_key] = repo_monthly_commits[repo_id].get(month_key, 0) + 1
 
                 # 히트맵 데이터 집계
                 weekday_index = commit_datetime.weekday() # 0 = 월요일
@@ -1408,6 +1405,41 @@ def repo_account_read_db(request):
                 day_name = days_of_week[weekday_index]
                 
                 heatmap_data[day_name][str(hour)] += 1
+
+        # repo_monthly_commits 별도 처리: 각 레포지토리별 마지막 커밋 날짜 기준으로 1년 전까지 계산
+        for repo in repo_list:
+            # 해당 레포지토리의 커밋들만 필터링
+            repo_commits = [commit for commit in all_commits if commit.repo.id == repo.id]
+            
+            if not repo_commits:
+                continue
+                
+            # 해당 레포지토리의 가장 마지막 커밋 날짜 찾기
+            latest_commit_date = None
+            for commit in repo_commits:
+                try:
+                    commit_datetime = datetime.strptime(commit.last_update, '%Y-%m-%dT%H:%M:%SZ')
+                    if latest_commit_date is None or commit_datetime > latest_commit_date:
+                        latest_commit_date = commit_datetime
+                except (ValueError, TypeError):
+                    continue
+            
+            # 마지막 커밋 날짜가 없으면 현재 날짜 사용
+            if latest_commit_date is None:
+                latest_commit_date = datetime.now()
+            
+            # 해당 레포지토리의 마지막 커밋 날짜 기준으로 1년 전 계산
+            repo_one_year_ago = latest_commit_date - timedelta(days=365)
+            
+            # 해당 레포지토리의 마지막 커밋 날짜 기준 1년 내 커밋들을 월별로 집계
+            for commit in repo_commits:
+                try:
+                    commit_datetime = datetime.strptime(commit.last_update, '%Y-%m-%dT%H:%M:%SZ')
+                    if commit_datetime >= repo_one_year_ago:
+                        month_key = commit_datetime.strftime('%Y-%m')
+                        repo_monthly_commits[repo.id][month_key] = repo_monthly_commits[repo.id].get(month_key, 0) + 1
+                except (ValueError, TypeError):
+                    continue
 
         # 데이터 정렬
         sorted_commit_counts = sorted(monthly_commit_counts.items())
