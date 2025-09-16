@@ -270,7 +270,7 @@
           </div>
           
           <!-- Replace the static table rows with dynamic data -->
-          <div class="table-row" v-for="repo in sortedRepositoriesData" :key="repo.id">
+          <div class="table-row" v-for="repo in paginatedRepositoriesData" :key="repo.id">
           <div 
             class="category-column"
             :class="{ 
@@ -349,6 +349,63 @@
             <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #616161;">
               등록된 프로젝트가 없습니다.
             </div>
+          </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-section" v-if="totalPages > 1">
+          <div class="pagination-info">
+            {{ paginationInfo.start }}-{{ paginationInfo.end }} / {{ paginationInfo.total }}개 프로젝트
+          </div>
+
+          <div class="pagination-controls">
+            <button
+              class="pagination-btn"
+              :class="{ 'disabled': currentPage === 1 }"
+              @click="goToPage(1)"
+              :disabled="currentPage === 1"
+            >
+              첫 페이지
+            </button>
+
+            <button
+              class="pagination-btn"
+              :class="{ 'disabled': currentPage === 1 }"
+              @click="goToPage(currentPage - 1)"
+              :disabled="currentPage === 1"
+            >
+              이전
+            </button>
+
+            <div class="page-numbers">
+              <button
+                v-for="page in visiblePages"
+                :key="page"
+                class="page-number"
+                :class="{ 'active': page === currentPage }"
+                @click="goToPage(page)"
+              >
+                {{ page }}
+              </button>
+            </div>
+
+            <button
+              class="pagination-btn"
+              :class="{ 'disabled': currentPage === totalPages }"
+              @click="goToPage(currentPage + 1)"
+              :disabled="currentPage === totalPages"
+            >
+              다음
+            </button>
+
+            <button
+              class="pagination-btn"
+              :class="{ 'disabled': currentPage === totalPages }"
+              @click="goToPage(totalPages)"
+              :disabled="currentPage === totalPages"
+            >
+              마지막 페이지
+            </button>
           </div>
         </div>
       </section>
@@ -500,7 +557,10 @@ export default {
         '분산시스템',
         '컴퓨터그래픽스',
         '사이버보안'
-      ]
+      ],
+      // Pagination properties
+      currentPage: 1,
+      itemsPerPage: 10
     }
   },
   computed: {
@@ -525,11 +585,11 @@ export default {
       if (!this.sortBy) {
         return this.repositoriesData
       }
-      
+
       const sorted = [...this.repositoriesData].sort((a, b) => {
         let aVal = a[this.sortBy]
         let bVal = b[this.sortBy]
-        
+
         // Handle different data types
         if (this.sortBy === 'category') {
           // Sort category: course projects first, then autonomous
@@ -544,15 +604,49 @@ export default {
           aVal = parseInt(aVal) || 0
           bVal = parseInt(bVal) || 0
         }
-        
+
         if (this.sortDirection === 'asc') {
           return aVal > bVal ? 1 : aVal < bVal ? -1 : 0
         } else {
           return aVal < bVal ? 1 : aVal > bVal ? -1 : 0
         }
       })
-      
+
       return sorted
+    },
+
+    // Pagination computed properties
+    totalPages() {
+      return Math.ceil(this.sortedRepositoriesData.length / this.itemsPerPage)
+    },
+
+    paginatedRepositoriesData() {
+      const start = (this.currentPage - 1) * this.itemsPerPage
+      const end = start + this.itemsPerPage
+      return this.sortedRepositoriesData.slice(start, end)
+    },
+
+    paginationInfo() {
+      const start = (this.currentPage - 1) * this.itemsPerPage + 1
+      const end = Math.min(this.currentPage * this.itemsPerPage, this.sortedRepositoriesData.length)
+      const total = this.sortedRepositoriesData.length
+      return { start, end, total }
+    },
+
+    visiblePages() {
+      const maxVisible = 5
+      const totalPages = this.totalPages
+      const currentPage = this.currentPage
+
+      if (totalPages <= maxVisible) {
+        return Array.from({ length: totalPages }, (_, i) => i + 1)
+      }
+
+      const start = Math.max(1, currentPage - Math.floor(maxVisible / 2))
+      const end = Math.min(totalPages, start + maxVisible - 1)
+      const adjustedStart = Math.max(1, end - maxVisible + 1)
+
+      return Array.from({ length: end - adjustedStart + 1 }, (_, i) => adjustedStart + i)
     }
   },
   async mounted() {
@@ -1447,6 +1541,8 @@ export default {
         this.sortBy = column
         this.sortDirection = 'asc'
       }
+      // Reset pagination when sorting changes
+      this.resetPagination()
     },
 
     getSortIcon(column) {
@@ -1491,11 +1587,24 @@ export default {
 
     shouldDropUp(repoId) {
       // Simple approach: check if this is one of the last few rows
-      const currentIndex = this.sortedRepositoriesData.findIndex(repo => repo.id === repoId)
-      const totalRows = this.sortedRepositoriesData.length
-      
+      const currentIndex = this.paginatedRepositoriesData.findIndex(repo => repo.id === repoId)
+      const totalRows = this.paginatedRepositoriesData.length
+
       // If it's in the last 3 rows, drop up
       return currentIndex >= totalRows - 3
+    },
+
+    // Pagination methods
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+        this.currentPage = page
+        this.closeCategoryDropdowns()
+      }
+    },
+
+    // Reset pagination when sorting changes
+    resetPagination() {
+      this.currentPage = 1
     }
   }
 }
@@ -1557,7 +1666,7 @@ export default {
 }
 
 .profile-card {
-  background: #FAFBFD;
+  background: #F5F7FA;
   border: 1px solid #E8EDF8;
   border-radius: 20px;
   padding: 30px;
@@ -1593,7 +1702,7 @@ export default {
 }
 
 .tech-stack-card {
-  background: #FAFBFD;
+  background: #F5F7FA;
   border: 1px solid #E8EDF8;
   border-radius: 20px;
   padding: 30px 50px;
@@ -1603,7 +1712,7 @@ export default {
 
 /* Skills Card - MOVED AND UPDATED */
 .skills-card {
-  background: #FAFBFD;
+  background: #F5F7FA;
   border: 1px solid #E8EDF8;
   border-radius: 20px;
   padding: 1px 15px;
@@ -1978,7 +2087,7 @@ export default {
 }
 
 .chart-card {
-  background: #FFFBFB;
+  background: #FDF8F8;
   border-radius: 20px;
   padding: 30px 40px;
   height: 347px;
@@ -2126,7 +2235,7 @@ export default {
 
 /* Time Pattern */
 .time-pattern-card {
-  background: #FFFBFB;
+  background: #FDF8F8;
   border-radius: 20px;
   padding: 30px 40px;
   width: 1280px;
@@ -2653,5 +2762,117 @@ export default {
 
 .repo-name-clickable:hover {
   color: #910024;
+}
+
+/* Pagination Styles */
+.pagination-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  margin-top: 20px;
+  border-top: 1px solid #E8EDF8;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #616161;
+  font-weight: 500;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #616161;
+  background: #FFFFFF;
+  border: 1px solid #E8EDF8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.pagination-btn:hover:not(.disabled) {
+  background: #F8F9FA;
+  border-color: #CB385C;
+  color: #CB385C;
+}
+
+.pagination-btn.disabled {
+  color: #CDCDCD;
+  cursor: not-allowed;
+  background: #F8F9FA;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 4px;
+  margin: 0 8px;
+}
+
+.page-number {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #616161;
+  background: #FFFFFF;
+  border: 1px solid #E8EDF8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-number:hover {
+  background: #F8F9FA;
+  border-color: #CB385C;
+  color: #CB385C;
+}
+
+.page-number.active {
+  background: #CB385C;
+  border-color: #CB385C;
+  color: #FFFFFF;
+}
+
+.page-number.active:hover {
+  background: #910024;
+  border-color: #910024;
+}
+
+/* Responsive Pagination */
+@media (max-width: 768px) {
+  .pagination-section {
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pagination-btn {
+    min-width: 60px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .page-number {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
 }
 </style>
