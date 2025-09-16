@@ -560,7 +560,7 @@ export default {
       ],
       // Pagination properties
       currentPage: 1,
-      itemsPerPage: 2
+      itemsPerPage: 10
     }
   },
   computed: {
@@ -1666,7 +1666,7 @@ export default {
 }
 
 .profile-card {
-  background: #FAFBFD;
+  background: #F5F7FA;
   border: 1px solid #E8EDF8;
   border-radius: 20px;
   padding: 30px;
@@ -1702,7 +1702,7 @@ export default {
 }
 
 .tech-stack-card {
-  background: #FAFBFD;
+  background: #F5F7FA;
   border: 1px solid #E8EDF8;
   border-radius: 20px;
   padding: 30px 50px;
@@ -1712,7 +1712,7 @@ export default {
 
 /* Skills Card - MOVED AND UPDATED */
 .skills-card {
-  background: #FAFBFD;
+  background: #F5F7FA;
   border: 1px solid #E8EDF8;
   border-radius: 20px;
   padding: 1px 15px;
@@ -2087,7 +2087,7 @@ export default {
 }
 
 .chart-card {
-  background: #FFFBFB;
+  background: #FDF8F8;
   border-radius: 20px;
   padding: 30px 40px;
   height: 347px;
@@ -2235,7 +2235,7 @@ export default {
 
 /* Time Pattern */
 .time-pattern-card {
-  background: #FFFBFB;
+  background: #FDF8F8;
   border-radius: 20px;
   padding: 30px 40px;
   width: 1280px;
