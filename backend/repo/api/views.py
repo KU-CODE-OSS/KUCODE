@@ -1,3 +1,4 @@
+import logging
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -15,10 +16,19 @@ from django.db.models import Sum
 
 from repo.models import Repository, Repo_contributor, Repo_issue,Repo_pr, Repo_commit
 from account.models import Student
+from login.models import Student as LoginStudent
 from course.models import Course, Course_project, Course_registration
 from operator import itemgetter
 import requests
 import json
+import os
+import base64
+
+from openai import OpenAI
+from dotenv import load_dotenv
+
+# .env 파일에서 환경 변수 로드
+load_dotenv("~/KUCODE/.env")
 
 class HealthCheckAPIView(APIView):
     def get(self, request):
@@ -343,7 +353,23 @@ def repo_read_db(request):
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # ---------------------------------------------
-
+#-------------SYNC REPO CATEGORY-------------#
+def sync_repo_category(request):
+    updated_repos = []
+    repositories = Repository.objects.all()
+    for repo in repositories:
+        try:
+            course = Course.objects.get(course_repo_name=repo.name)
+            repo.category = course.name
+            repo.is_course = True 
+        except ObjectDoesNotExist:
+            repo.is_course = False
+            if repo.category is None:
+                repo.category = "-"
+        updated_repos.append(repo)
+    Repository.objects.bulk_update(updated_repos, ['category', 'is_course'])
+    return JsonResponse({"status": "200", "message": "Repository categories synchronized successfully."})
+# ---------------------------------------------
 # ------------CONTRIBUTOR--------------#
 def sync_repo_contributor_db(request):
     # 1. Initialization
@@ -772,7 +798,7 @@ def repo_commit_read_db(request):
             'repo_id',
             'repo_url',
             'owner_github_id',
-            'author_github_id', # Corrected field name for consistency
+            'author_github_id',
             'added_lines',
             'deleted_lines',
             'last_update'
@@ -1289,17 +1315,22 @@ def repo_account_read_db(request):
         try:
             body_unicode = request.body.decode('utf-8')
             body_data = json.loads(body_unicode)
-            github_id = body_data.get('github_id')
+            uuid = body_data.get('uuid')
         except (json.JSONDecodeError, UnicodeDecodeError):
             return JsonResponse({"status": "Error", "message": "Invalid JSON format or character encoding"}, status=400)
         
-        if not github_id:
-            return JsonResponse({"status": "Error", "message": "github_id is required in the request body"}, status=400)
+        if not uuid:
+            return JsonResponse({"status": "Error", "message": "uuid is required in the request body"}, status=400)
 
         try:
-            # github_id로 Repository, Student 객체 조회
+            # uuid로 login.Student에서 학번(id) 조회 후 account.Student에서 github_id 조회
+            login_student = LoginStudent.objects.get(member_id=uuid)
+            student_id = login_student.id  # 학번
+            student = Student.objects.get(id=student_id)
+            github_id = student.github_id
+            # github_id로 Repository 조회
             repo_list = Repository.objects.filter(owner_github_id=github_id)
-            student = Student.objects.get(github_id=github_id)
+            # 전체 언어 비율 처리
             if isinstance(student.total_language_percentage, dict) and student.total_language_percentage:
                 sorted_total_language_percentages = sorted(student.total_language_percentage.items(), key=itemgetter(1), reverse=True)
                 top_5_total_language_percentages = dict(sorted_total_language_percentages[:5])
@@ -1308,8 +1339,12 @@ def repo_account_read_db(request):
             else: 
                 top_5_total_language_percentages = []
            
-        except:
-            return JsonResponse({"status": "Error", "message": "line 1300-1307"}, status=500)
+        except LoginStudent.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": f"Login student not found for uuid: {uuid}"}, status=404)
+        except Student.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": f"Account student not found for id: {student_id}"}, status=404)
+        except Exception as e:
+            return JsonResponse({"status": "Error", "message": f"Error resolving uuid to github_id: {str(e)}"}, status=500)
         
         if not repo_list:
             return JsonResponse({"status": "Error", "message": f"No repositories found for github_id: {github_id}"}, status=404)
@@ -1339,7 +1374,8 @@ def repo_account_read_db(request):
         monthly_added_lines = {}
         monthly_deleted_lines = {}
         monthly_changed_lines = {}
-        
+        repo_monthly_commits = {repo.id: {} for repo in repo_list}
+
         # 히트맵 데이터 초기화
         days_of_week = {0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun'}
         heatmap_data = {day: {str(hour): 0 for hour in range(24)} for day in days_of_week.values()}
@@ -1362,13 +1398,48 @@ def repo_account_read_db(request):
                 monthly_added_lines[month_key] = monthly_added_lines.get(month_key, 0) + added
                 monthly_deleted_lines[month_key] = monthly_deleted_lines.get(month_key, 0) + deleted
                 monthly_changed_lines[month_key] = monthly_changed_lines.get(month_key, 0) + added + deleted
-            
+
                 # 히트맵 데이터 집계
                 weekday_index = commit_datetime.weekday() # 0 = 월요일
                 hour = commit_datetime.hour
                 day_name = days_of_week[weekday_index]
                 
                 heatmap_data[day_name][str(hour)] += 1
+
+        # repo_monthly_commits 별도 처리: 각 레포지토리별 마지막 커밋 날짜 기준으로 1년 전까지 계산
+        for repo in repo_list:
+            # 해당 레포지토리의 커밋들만 필터링
+            repo_commits = [commit for commit in all_commits if commit.repo.id == repo.id]
+            
+            if not repo_commits:
+                continue
+                
+            # 해당 레포지토리의 가장 마지막 커밋 날짜 찾기
+            latest_commit_date = None
+            for commit in repo_commits:
+                try:
+                    commit_datetime = datetime.strptime(commit.last_update, '%Y-%m-%dT%H:%M:%SZ')
+                    if latest_commit_date is None or commit_datetime > latest_commit_date:
+                        latest_commit_date = commit_datetime
+                except (ValueError, TypeError):
+                    continue
+            
+            # 마지막 커밋 날짜가 없으면 현재 날짜 사용
+            if latest_commit_date is None:
+                latest_commit_date = datetime.now()
+            
+            # 해당 레포지토리의 마지막 커밋 날짜 기준으로 1년 전 계산
+            repo_one_year_ago = latest_commit_date - timedelta(days=365)
+            
+            # 해당 레포지토리의 마지막 커밋 날짜 기준 1년 내 커밋들을 월별로 집계
+            for commit in repo_commits:
+                try:
+                    commit_datetime = datetime.strptime(commit.last_update, '%Y-%m-%dT%H:%M:%SZ')
+                    if commit_datetime >= repo_one_year_ago:
+                        month_key = commit_datetime.strftime('%Y-%m')
+                        repo_monthly_commits[repo.id][month_key] = repo_monthly_commits[repo.id].get(month_key, 0) + 1
+                except (ValueError, TypeError):
+                    continue
 
         # 데이터 정렬
         sorted_commit_counts = sorted(monthly_commit_counts.items())
@@ -1397,12 +1468,6 @@ def repo_account_read_db(request):
 
         data =[]
         for r in repo_list:
-            
-            try:
-                course = Course.objects.get(course_repo_name=r.name)
-                category = course.name 
-            except ObjectDoesNotExist:
-                category = "-"
             
             pr_count = Repo_pr.objects.filter(repo=r).count()
             contributors_list = r.contributors.split(",")
@@ -1436,7 +1501,7 @@ def repo_account_read_db(request):
                 contributors_without_dash = [info for info in contributors_total_info if '-' not in info[0]]  # Sort by name (index 0)
                 contributors_with_dash = [info for info in contributors_total_info if '-' in info[0]]
 
-                # Sort contributors_without_dash by name (ascending order)
+                # Sort the registered contributors by name (ascending).
                 contributors_without_dash.sort(key=lambda x: x[0])
 
                 # Concatenate sorted lists, placing contributors with '-' at the end
@@ -1444,16 +1509,22 @@ def repo_account_read_db(request):
 
             total_contributors_count.update({str(contributors_count): total_contributors_count.get(str(contributors_count), 0) + 1}) if contributors_count < 5 else total_contributors_count.update({'5+': total_contributors_count.get('5+', 0) + 1})
 
+            # Repository별 언어 비율 처리
             repo_language_percentages = r.language_percentage or {}
             sorted_repo_language_percentages = sorted(repo_language_percentages.items(), key=itemgetter(1), reverse=True)
             top_5_language_percentages = dict(sorted_repo_language_percentages[:5])
             other_languages_percentage = sum(value for key, value in sorted_repo_language_percentages[5:])
             top_5_language_percentages['others'] = round(other_languages_percentage, 1)
 
+            repo_monthly_commit_data = sorted(repo_monthly_commits.get(r.id, {}).items())
+
+            # Send raw summary as stored (full JSON string/dict)
+
             repo_info = {
             'id': r.id,
             'name': r.name,
-            'category' : category,
+            'is_course': r.is_course,
+            'category' : r.category,
             'url': r.url,
             'student_id': student.id if student else None,
             'owner_github_id': r.owner_github_id,
@@ -1471,7 +1542,9 @@ def repo_account_read_db(request):
             'license': r.license,
             'has_readme': r.has_readme,
             'description': r.description,
-            'release_version': r.release_version
+            'release_version': r.release_version,
+            'summary': r.summary,
+            'monthly_commits': repo_monthly_commit_data
             }
             
             data.append(repo_info)
@@ -1494,3 +1567,398 @@ def repo_account_read_db(request):
      
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+    
+# ========================================
+# LLM Summary
+# ========================================
+class RepoSummaryAnalyzer:
+    """GitHub API와 OpenAI로 레포지토리를 분석합니다."""
+
+    def __init__(self, openai_key: str = None, github_token: str = None):
+        self.openai_key = openai_key or os.getenv("OPENAI_API_KEY")
+        self.github_token = github_token or os.getenv("GITHUB_TOKEN")
+
+        if not self.openai_key:
+            raise ValueError("OpenAI API 키가 필요합니다")
+        
+        if not self.github_token:
+            raise ValueError("GitHub Token이 필요합니다")
+
+        self.openai_client = OpenAI(api_key=self.openai_key)
+        self.github_headers = {
+            "Authorization": f"token {self.github_token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+
+    def analyze_repository(
+        self, repo_data: dict, include_frontend_data: bool = False
+    ) -> dict:
+        """GitHub API와 OpenAI를 활용한 실제 레포지토리 분석"""
+        try:
+            owner = repo_data.get('owner_github_id')
+            repo_name = repo_data.get('name')
+            
+            repo_structure = self._fetch_repository_structure(owner, repo_name)
+            readme_content = self._fetch_readme_content(owner, repo_name)
+            key_files_content = self._fetch_key_files(owner, repo_name, repo_structure)
+            
+            llm_analysis = self._analyze_with_llm(
+                repo_data, repo_structure, readme_content, key_files_content
+            )
+            
+            result = {
+                "success": True,
+                "repository": f"{owner}/{repo_name}",
+                "structured_summary": llm_analysis,
+                "analyzed_at": datetime.now().isoformat(),
+            }
+
+            if include_frontend_data:
+                frontend_summary = self._generate_frontend_summary(llm_analysis)
+                result.update({
+                    "description": llm_analysis.get("user_content", {}).get("description", ""),
+                    "frontend_summary": frontend_summary,
+                })
+
+            return result
+
+        except Exception as e:
+            logging.exception(f"[{owner}/{repo_name}] 전체 분석 과정에서 오류 발생: {e}")
+            # 전체 분석 실패 시에도 폴백 데이터 생성
+            fallback_summary = self._create_fallback_analysis(repo_data, {}, "")
+            return {
+                "success": False,
+                "repository": f"{owner}/{repo_name}",
+                "error": str(e),
+                "analyzed_at": datetime.now().isoformat(),
+                "structured_summary": fallback_summary
+            }
+
+    def _fetch_repository_structure(self, owner: str, repo_name: str) -> dict:
+        """GitHub API로 레포지토리 파일 구조 가져오기"""
+        try:
+            url = f"https://api.github.com/repos/{owner}/{repo_name}/git/trees/HEAD?recursive=1"
+            response = requests.get(url, headers=self.github_headers)
+            if response.status_code != 200:
+                return {"error": f"GitHub API 요청 실패: {response.status_code}"}
+            
+            tree_data = response.json()
+            files, directories = [], set()
+            
+            for item in tree_data.get('tree', []):
+                if item['type'] == 'blob':
+                    files.append({'path': item['path'], 'size': item.get('size', 0)})
+                elif item['type'] == 'tree':
+                    directories.add(item['path'])
+            
+            file_analysis = self._analyze_file_structure(files)
+            
+            return {
+                "total_files": len(files),
+                "directories": list(directories),
+                "file_analysis": file_analysis,
+                "project_structure": self._infer_project_structure(files, directories)
+            }
+        except Exception as e:
+            return {"error": f"구조 분석 실패: {str(e)}"}
+
+    def _fetch_readme_content(self, owner: str, repo_name: str) -> str:
+        """README 파일 내용 가져오기"""
+        try:
+            readme_names = ['README.md', 'README.rst', 'README.txt', 'README', 'readme.md']
+            for readme_name in readme_names:
+                url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/{readme_name}"
+                response = requests.get(url, headers=self.github_headers)
+                if response.status_code == 200:
+                    content_data = response.json()
+                    if content_data.get('encoding') == 'base64' and content_data.get('content'):
+                        return base64.b64decode(content_data['content']).decode('utf-8', errors='ignore')[:3000]
+            return ""
+        except Exception:
+            return ""
+
+    def _fetch_key_files(self, owner: str, repo_name: str, repo_structure: dict) -> dict:
+        """주요 설정 파일들의 내용 분석"""
+        key_files = {'package.json': None, 'requirements.txt': None, '.github/workflows': []}
+        try:
+            file_analysis = repo_structure.get('file_analysis', {})
+            if 'package.json' in file_analysis.get('config_files', []):
+                content = self._fetch_file_content(owner, repo_name, 'package.json')
+                if content:
+                    try:
+                        package_data = json.loads(content)
+                        key_files['package.json'] = {
+                            'dependencies': list(package_data.get('dependencies', {}).keys())[:10],
+                            'devDependencies': list(package_data.get('devDependencies', {}).keys())[:10],
+                        }
+                    except json.JSONDecodeError: pass
+            for req_file in ['requirements.txt', 'requirements/base.txt', 'requirements/production.txt']:
+                if any(req_file in f for f in file_analysis.get('config_files', [])):
+                    content = self._fetch_file_content(owner, repo_name, req_file)
+                    if content:
+                        key_files['requirements.txt'] = [line.split('==')[0].strip() for line in content.split('\n') if line.strip() and not line.startswith('#')][:15]
+                        break
+            key_files['.github/workflows'] = self._fetch_github_workflows(owner, repo_name)
+            return key_files
+        except Exception:
+            return key_files
+
+    def _fetch_file_content(self, owner: str, repo_name: str, file_path: str) -> str:
+        """특정 파일의 내용 가져오기"""
+        try:
+            url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/{file_path}"
+            response = requests.get(url, headers=self.github_headers)
+            if response.status_code == 200:
+                content_data = response.json()
+                if content_data.get('encoding') == 'base64':
+                    return base64.b64decode(content_data['content']).decode('utf-8')
+            return ""
+        except Exception:
+            return ""
+
+    def _fetch_github_workflows(self, owner: str, repo_name: str) -> list:
+        """GitHub Actions 워크플로우 정보 가져오기"""
+        try:
+            url = f"https://api.github.com/repos/{owner}/{repo_name}/actions/workflows"
+            response = requests.get(url, headers=self.github_headers)
+            if response.status_code == 200:
+                return [{'name': w['name'], 'state': w['state']} for w in response.json().get('workflows', [])]
+            return []
+        except Exception:
+            return []
+
+    def _analyze_file_structure(self, files: list) -> dict:
+        """파일 구조 분석"""
+        analysis = {'languages': {}, 'config_files': [], 'test_files': [], 'doc_files': []}
+        lang_ext = {'.py': 'Python', '.js': 'JavaScript', '.ts': 'TypeScript', '.java': 'Java', '.html': 'HTML', '.css': 'CSS'}
+        for file_info in files:
+            path = file_info['path']
+            ext = os.path.splitext(path)[1]
+            if ext in lang_ext:
+                lang = lang_ext[ext]
+                analysis['languages'][lang] = analysis['languages'].get(lang, 0) + 1
+            if any(p in path.lower() for p in ['config', 'requirements.txt', 'package.json', 'dockerfile']):
+                analysis['config_files'].append(path)
+            if 'test' in path.lower():
+                analysis['test_files'].append(path)
+            if 'doc' in path.lower() or '.md' in path.lower():
+                analysis['doc_files'].append(path)
+        return analysis
+
+    def _infer_project_structure(self, files: list, directories: list) -> dict:
+        """프로젝트 구조 추론"""
+        structure = {'project_type': 'unknown', 'framework_indicators': []}
+        all_content = ' '.join([f['path'] for f in files] + list(directories)).lower()
+        if 'react' in all_content: structure['framework_indicators'].append('React')
+        if 'vue' in all_content: structure['framework_indicators'].append('Vue')
+        if 'django' in all_content: structure['framework_indicators'].append('Django')
+        if 'flask' in all_content: structure['framework_indicators'].append('Flask')
+        if structure['framework_indicators']:
+            structure['project_type'] = 'backend' if any(f in ['Django', 'Flask'] for f in structure['framework_indicators']) else 'frontend'
+        elif '.py' in all_content: structure['project_type'] = 'python'
+        elif '.js' in all_content: structure['project_type'] = 'javascript'
+        return structure
+
+    def _analyze_with_llm(self, repo_data: dict, repo_structure: dict, readme_content: str, key_files_content: dict) -> dict:
+        """OpenAI를 사용한 종합 분석"""
+        owner = repo_data.get('owner_github_id', 'unknown')
+        repo_name = repo_data.get('name', 'unknown')
+        try:
+            analysis_prompt = self._create_analysis_prompt(repo_data, repo_structure, readme_content, key_files_content)
+            logging.info(f"[LLM CALL] model=gpt-5-nano repo={owner}/{repo_name}")
+            response = self.openai_client.responses.create(
+                model="gpt-5-nano",
+                input=analysis_prompt,
+                reasoning={"effort": "low"},
+                text={"verbosity": "low"},
+            )
+            # GPT-5 Responses API는 output_text 필드에 결과를 담아 반환합니다.
+            output = getattr(response, 'output_text', None)
+            if not output:
+                logging.warning(f"[LLM EMPTY OUTPUT] repo={owner}/{repo_name}")
+                return self._create_fallback_analysis(repo_data, repo_structure, readme_content)
+            try:
+                return json.loads(output)
+            except Exception:
+                logging.warning(f"[LLM NON-JSON OUTPUT] repo={owner}/{repo_name} output_head={output[:120]}")
+                return self._create_fallback_analysis(repo_data, repo_structure, readme_content)
+        except Exception as e:
+            logging.exception(f"[{owner}/{repo_name}] LLM 분석 실패: {e}")
+            return self._create_fallback_analysis(repo_data, repo_structure, readme_content)
+
+    def _create_analysis_prompt(self, repo_data: dict, repo_structure: dict, readme_content: str, key_files_content: dict) -> str:
+        """LLM 분석용 프롬프트 생성"""
+        prompt = f"""
+                다음 레포지토리를 분석하고 결과를 한국어 JSON 형식으로 제공해주세요.
+
+                **레포지토리 정보:**
+                - 이름: {repo_data.get('owner_github_id')}/{repo_data.get('name')}
+                - 설명: {repo_data.get('description', '설명 없음')}
+                - 언어 분포: {repo_structure.get('file_analysis', {}).get('languages', {})}
+
+                **README 내용:**
+                {readme_content[:1200] if readme_content else 'README 파일이 없거나 비어있습니다.'}
+
+                **요구사항:**
+                분석 결과를 반드시 다음 JSON 형식에 맞춰 한국어로 작성해주세요.
+
+                {{
+                    "project_summary": {{
+                        "primary_language": "가장 많이 사용된 프로그래밍 언어",
+                        "purpose": "이 프로젝트가 해결하려는 문제나 제공하는 기능에 대한 구체적인 설명",
+                        "tech_stack": ["주요 기술 3-4개 목록"],
+                        "key_functionalities": ["구현된 주요 기능 2-4개 목록"],
+                        "scale": "small/medium/large 중 하나"
+                    }},
+                    "user_content": {{
+                        "description": "일반인도 이해할 수 있도록 프로젝트에 대해 한 문단으로 포괄적으로 설명해주세요."
+                    }}
+                }}
+                """
+        return prompt
+
+    def _create_fallback_analysis(self, repo_data: dict, repo_structure: dict, readme_content: str = "") -> dict:
+        """LLM 분석 실패 시 폴백 분석"""
+        languages = repo_data.get('language_bytes', {})
+        primary_language = max(languages, key=languages.get) if languages else "Unknown"
+        purpose = repo_data.get('description', f"{primary_language} project")
+        
+        description = f"{purpose}. "
+        if readme_content:
+            description += readme_content[:200] + "..."
+
+        return {
+            "project_summary": {
+                "primary_language": primary_language,
+                "purpose": purpose,
+                "tech_stack": [primary_language],
+                "key_functionalities": ["Feature extraction failed"],
+                "scale": "medium"
+            },
+            "user_content": {
+                "description": description.strip()
+            }
+        }
+
+    def _generate_frontend_summary(self, llm_analysis: dict) -> dict:
+        """분석 결과를 프론트엔드 전달용으로 가공"""
+        summary = llm_analysis.get("project_summary", {})
+        user_content = llm_analysis.get("user_content", {})
+        
+        return {
+            "description": user_content.get("description", summary.get("purpose", "No description available.")),
+            "key_functionalities": summary.get("key_functionalities", []),
+            "tech_stack": summary.get("tech_stack", []),
+        }
+
+class GenerateRepoSummaryAPIView(APIView):
+    """
+    레포지토리 분석을 실행하고 결과를 DB에 저장합니다.
+    요청 본문에 필터 조건이 없으면 모든 레포지토리를 대상으로 분석을 실행합니다.
+    """
+    def post(self, request, *args, **kwargs):
+        analyzer = RepoSummaryAnalyzer()
+        queryset = Repository.objects.all()
+
+        # 요청 본문에서 필터 조건 가져오기
+        student_ids = request.data.get("student_ids")
+        repo_ids = request.data.get("repo_ids")
+        filter_type = request.data.get("filter")
+
+        # 1. 학생 ID로 필터링
+        if student_ids:
+            try:
+                # Student 모델에서 github_id 조회
+                github_ids = Student.objects.filter(id__in=student_ids).values_list('github_id', flat=True)
+                queryset = queryset.filter(owner_github_id__in=list(github_ids))
+            except Exception as e:
+                return Response({"error": f"학생 ID 필터링 오류: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 2. 레포지토리 ID로 필터링
+        if repo_ids:
+            queryset = queryset.filter(id__in=repo_ids)
+
+        # 3. 상태(filter_type)로 필터링
+        if filter_type == "missing_summary":
+            queryset = queryset.filter(summary__isnull=True)
+        elif filter_type == "outdated":
+            # 예: 30일 이상된 분석 결과 필터링
+            thirty_days_ago = make_aware(datetime.now() - timedelta(days=30))
+            # 이 부분은 summary 필드가 JSON 객체일 때를 가정하므로, 실제 필드 구조에 맞게 조정 필요
+            # queryset = queryset.filter(summary__analyzed_at__lte=thirty_days_ago.isoformat())
+
+        repositories = queryset.all()
+        total_requested = len(repositories)
+        
+        success_count, failure_count = 0, 0
+        failed_repositories = []
+        
+        for repo in repositories:
+            repo_data = {
+                'id': repo.id, 'name': repo.name, 'owner_github_id': repo.owner_github_id,
+                'description': repo.description, 'language_bytes': repo.language_bytes,
+            }
+            
+            analysis_result = analyzer.analyze_repository(repo_data)
+            
+            # 실제 분석 내용인 structured_summary를 추출
+            llm_summary = analysis_result.get("structured_summary")
+            
+            # llm_summary가 존재하면 성공/실패 여부와 무관하게 저장
+            if llm_summary:
+                # 성공 시, TextField에 유효한 JSON 문자열로 저장 (DB가 JSONB여도 캐스팅 가능)
+                repo.summary = json.dumps(llm_summary, ensure_ascii=False)
+                repo.save(update_fields=['summary'])
+                print(f"[SUMMARY SAVED] repo={repo.owner_github_id}/{repo.name} id={repo.id} len={len(repo.summary)}")
+                success_count += 1
+            else:
+                # 실패 시, 실패 카운트를 올리고 실패 목록에 추가
+                failure_count += 1
+                failed_repositories.append({
+                    "repository": f"{repo.owner_github_id}/{repo.name}",
+                    "error": analysis_result.get("error", "Unknown error")
+                })
+                print(f"[SUMMARY NOT SAVED] repo={repo.owner_github_id}/{repo.name} id={repo.id} reason=no_summary")
+                # (선택) 실패 시 폴백 데이터를 저장하고 싶다면 아래 주석 해제
+                # if llm_summary:
+                #     repo.summary = json.dumps(llm_summary, ensure_ascii=False)
+                #     repo.save(update_fields=['summary'])
+                
+        return Response({
+            "message": "Repository analysis completed.",
+            "total_requested": total_requested,
+            "processed": success_count,
+            "failed": failure_count,
+            "failed_repositories": failed_repositories
+        }, status=status.HTTP_200_OK)
+
+class GetRepoSummaryAPIView(APIView):
+    """
+    특정 레포지토리의 분석 결과를 프론트엔드 형식으로 반환합니다.
+    """
+    def get(self, request, *args, **kwargs):
+        repo_id = request.query_params.get('repo_id')
+        if not repo_id:
+            return Response({"error": "repo_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            repo = Repository.objects.get(id=repo_id)
+        except Repository.DoesNotExist:
+            return Response({"error": "Repository not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        summary_text = repo.summary
+        if not summary_text:
+            return Response({"error": "Analysis not found."}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            llm_analysis = json.loads(summary_text)
+        except Exception:
+            return Response({"error": "Analysis data is invalid."}, status=status.HTTP_404_NOT_FOUND)
+
+        analyzer = RepoSummaryAnalyzer()
+        frontend_data = analyzer._generate_frontend_summary(llm_analysis)
+
+        return Response({
+            "description": frontend_data.get("description"),
+            "bullet_description": frontend_data.get("key_functionalities"),
+            "tech_stack": frontend_data.get("tech_stack"),
+        }, status=status.HTTP_200_OK)

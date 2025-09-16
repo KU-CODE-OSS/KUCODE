@@ -180,3 +180,4 @@ frontend/node_modules
 # Frontend Docker artifacts
 frontend/Dockerfile
 frontend/.dockerignore
+frontend/docekrRun.txt

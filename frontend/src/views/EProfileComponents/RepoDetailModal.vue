@@ -18,6 +18,11 @@
         </a>
       </div>
       
+      <!-- 저장 버튼 -->
+      <button class="modal-save-btn" @click="saveChanges">
+        변경사항 저장
+      </button>
+      
       <!-- 닫기 버튼 -->
       <button class="modal-close-btn" @click="closeModal">
         <div class="close-icon"></div>
@@ -36,7 +41,7 @@
               <span>Commits</span>
               <span>PRs</span>
               <span>Issues</span>
-              <span>Language</span>
+              <span>Languages</span>
               <span>Contributors</span>
             </div>
             <!-- 데이터 행 -->
@@ -46,17 +51,77 @@
               <span>{{ repo?.commit_count?.toLocaleString() || '0' }}</span>
               <span>{{ repo?.pr_count?.toLocaleString() || '0' }}</span>
               <span>{{ repo?.total_issue_count?.toLocaleString() || '0' }}</span>
-              <span>{{ repo?.language || 'N/A' }}</span>
+              <div class="language-cell">
+                <span class="language-preview">{{ topLanguagesPreview }}</span>
+                <button class="link-button" @click.stop="toggleLanguagePanel" v-if="allLanguagesList.length > 0">전체 보기</button>
+                <div v-if="showLanguagePanel" class="language-popover" @click.stop>
+                  <div class="popover-header">
+                    <span>Languages</span>
+                    <button class="close-x" @click.stop="closeLanguagePanel">✕</button>
+                  </div>
+                  <p class="language-flow">{{ languagesFlowText }}</p>
+                </div>
+              </div>
               <span>{{ repo?.contributors_count?.toLocaleString() || '0' }}</span>
             </div>
           </div>
         </div>
         
+        <!-- 프로젝트 메모 섹션 -->
+        <div class="section">
+          <h3 class="section-title">프로젝트 메모</h3>
+          <div class="memo-box">
+            <textarea 
+              v-model="projectMemo"
+              class="memo-textarea"
+              placeholder="프로젝트에 대한 메모를 입력하세요..."
+              @input="adjustTextareaHeight"
+              ref="memoTextarea"
+            ></textarea>
+          </div>
+        </div>
+        
         <!-- 프로젝트 요약 섹션 -->
         <div class="section">
-          <h3 class="section-title">프로젝트 요약</h3>
+          <div class="section-header">
+            <h3 class="section-title">프로젝트 요약</h3>
+            <div class="readme-icon" title="README가 없습니다">
+              <span class="readme-question">?</span>
+            </div>
+          </div>
           <div class="summary-box">
-            <p>{{ repo?.description || '프로젝트 설명이 없습니다.' }}</p>
+            <div v-if="parsedSummary" class="summary-content">
+              <!-- 프로젝트 개요 (현재 JSON 스키마 기준) -->
+              <div class="summary-grid">
+                <div class="summary-item full">
+                  <div class="label">규모</div>
+                  <div class="value">{{ parsedSummary.scale }}</div>
+                </div>
+                <div class="summary-item full">
+                  <div class="label">주요 언어</div>
+                  <div class="value">{{ parsedSummary.primary_language }}</div>
+                </div>
+                <div class="summary-item full">
+                  <div class="label">목적</div>
+                  <div class="value">{{ parsedSummary.purpose }}</div>
+                </div>
+                <div class="summary-item full">
+                  <div class="label">핵심 기능</div>
+                  <ul class="value list">
+                    <li v-for="(f, idx) in parsedSummary.features" :key="idx">{{ f }}</li>
+                  </ul>
+                </div>
+                <div class="summary-item full">
+                  <div class="label">기술 스택</div>
+                  <div class="value chips">
+                    <span v-for="(t, idx) in parsedSummary.tech_stack" :key="idx" class="chip">{{ t }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="summary-fallback">
+              <p>{{ repo?.summary || '프로젝트 설명이 없습니다.' }}</p>
+            </div>
           </div>
         </div>
         
@@ -155,6 +220,7 @@
       </div>
     </div>
   </div>
+  
 </template>
 
 <script>
@@ -177,7 +243,9 @@ export default {
   },
   data() {
     return {
-      languageChart: null
+  languageChart: null,
+  showLanguagePanel: false,
+  projectMemo: ''
     }
   },
   computed: {
@@ -237,6 +305,25 @@ export default {
       return labels
     },
     
+    // 언어 전체 목록 및 프리뷰
+    allLanguagesList() {
+      const raw = this.repo?.language || ''
+      return raw.split(',').map(s => s.trim()).filter(Boolean)
+    },
+    topLanguagesPreview() {
+      const list = this.allLanguagesList
+      if (list.length === 0) return 'N/A'
+      const top = list.slice(0, 3)
+      const rest = list.length - top.length
+      return rest > 0 ? `${top.join(', ')} 외 ${rest}개` : top.join(', ')
+    },
+    languagesFlowText() {
+      const list = this.allLanguagesList
+      if (list.length === 0) return 'N/A'
+      // join with comma and space; avoid trailing comma
+      return list.join(', ')
+    },
+
     // 차트 좌표 계산
     timelinePoints() {
       const points = []
@@ -317,11 +404,52 @@ export default {
         }))
       
       return data
+    },
+    
+    // 프로젝트 요약 데이터 파싱 (현재 백엔드 JSON 스키마 전용)
+    parsedSummary() {
+      if (!this.repo || !this.repo.summary) return null
+
+      try {
+        // summary가 문자열이면 파싱
+        let summaryData = this.repo.summary
+        if (typeof summaryData === 'string') {
+          summaryData = JSON.parse(summaryData)
+        }
+
+        if (!summaryData || typeof summaryData !== 'object') return null
+
+        // 현재 스키마: { user_content: { description }, project_summary: { ... } }
+  const project = (summaryData.project_summary || {})
+
+        return {
+          scale: project.scale || 'N/A',
+          primary_language: project.primary_language || 'N/A',
+          purpose: project.purpose || 'N/A',
+          features: project.key_functionalities || project.features || [],
+          tech_stack: project.tech_stack || [],
+        }
+      } catch (error) {
+        console.error('프로젝트 요약 파싱 오류:', error)
+        return null
+      }
     }
   },
   methods: {
     closeModal() {
       this.$emit('close')
+    },
+    
+    saveChanges() {
+      console.log('Save changes clicked')
+      // TODO: 실제 저장 로직 구현
+      // 예: this.$emit('save', { memo: this.projectMemo })
+    },
+    toggleLanguagePanel() {
+      this.showLanguagePanel = !this.showLanguagePanel
+    },
+    closeLanguagePanel() {
+      this.showLanguagePanel = false
     },
     
     getTopLanguage() {
@@ -415,6 +543,17 @@ export default {
         this.languageChart.data.datasets[0].backgroundColor = chartData.map(item => item.color)
         this.languageChart.update()
       }
+    },
+    
+    adjustTextareaHeight() {
+      this.$nextTick(() => {
+        const textarea = this.$refs.memoTextarea
+        if (textarea) {
+          // 높이를 초기화하고 스크롤 높이에 맞춰 조정
+          textarea.style.height = 'auto'
+          textarea.style.height = Math.max(60, textarea.scrollHeight) + 'px'
+        }
+      })
     }
   },
   
@@ -423,6 +562,7 @@ export default {
       if (newVal) {
         this.$nextTick(() => {
           this.createLanguageChart()
+          this.adjustTextareaHeight()
         })
       } else {
         // 모달이 닫힐 때 차트 정리
@@ -430,6 +570,8 @@ export default {
           this.languageChart.destroy()
           this.languageChart = null
         }
+        // 언어 팝오버 닫기
+        this.showLanguagePanel = false
       }
     },
     
@@ -475,6 +617,7 @@ export default {
   background: #FFFFFF;
   border-radius: 20px;
   font-family: 'Pretendard', sans-serif;
+  overflow: hidden; /* 스크롤바가 모달 경계를 넘지 않도록 */
 }
 
 /* 프로젝트 타입 태그 */
@@ -551,6 +694,33 @@ export default {
   font-size: 16px;
 }
 
+/* 저장 버튼 */
+.modal-save-btn {
+  position: absolute;
+  right: 90px;
+  top: 40px;
+  background: #FCFCFC;
+  border: 1px solid #CB385C;
+  border-radius: 30px;
+  padding: 5px 17px;
+  font-size: 14px;
+  color: #CB385C;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 113px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Pretendard';
+  font-weight: 500;
+}
+
+.modal-save-btn:hover {
+  background: #CB385C;
+  color: #FCFCFC;
+}
+
 /* 닫기 버튼 */
 .modal-close-btn {
   position: absolute;
@@ -601,6 +771,34 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 35px;
+  overflow-y: auto; /* 세로 스크롤 추가 */
+  overflow-x: hidden; /* 가로 스크롤 숨김 */
+  padding-right: 20px; /* 스크롤바 공간 확보 */
+}
+
+/* 스크롤바 스타일링 */
+.modal-main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-main-content::-webkit-scrollbar-track {
+  background: #F8F9FA;
+  border-radius: 4px;
+}
+
+.modal-main-content::-webkit-scrollbar-thumb {
+  background: #CB385C;
+  border-radius: 4px;
+}
+
+.modal-main-content::-webkit-scrollbar-thumb:hover {
+  background: #A02D4A;
+}
+
+/* Firefox 스크롤바 스타일링 */
+.modal-main-content {
+  scrollbar-width: thin;
+  scrollbar-color: #CB385C #F8F9FA;
 }
 
 /* 섹션 공통 스타일 */
@@ -608,6 +806,12 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 15px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .section-title {
@@ -620,6 +824,77 @@ export default {
   margin: 0;
 }
 
+/* README 아이콘 */
+.readme-icon {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  background: #FFD700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.readme-icon:hover {
+  background: #FFC107;
+  transform: scale(1.1);
+}
+
+.readme-question {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 17px;
+  color: #FFFFFF;
+  text-align: center;
+}
+
+/* README 툴팁 */
+.readme-icon::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  margin-bottom: 5px;
+}
+
+.readme-icon::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #333333;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  margin-bottom: -5px;
+}
+
+.readme-icon:hover::after,
+.readme-icon:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
 .project-details-title {
   margin-bottom: -10px;
 }
@@ -629,6 +904,7 @@ export default {
   width: 100%;
   height: 100px;
   position: relative;
+  box-sizing: border-box;
 }
 
 .table-header,
@@ -637,7 +913,7 @@ export default {
   align-items: center;
   gap: 35px;
   position: absolute;
-  width: 961px;
+  width: 100%;
   height: 19px;
 }
 
@@ -670,12 +946,104 @@ export default {
   color: #262626;
 }
 
+/* Make language cell align like other table cells */
+.table-data .language-cell {
+  width: 120px;
+  /* height removed to let preview + button show */
+  justify-content: center;
+  align-items: center;
+  flex-direction: column; /* stack preview and button */
+  gap: 2px;
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 19px;
+  text-align: center;
+  color: #262626;
+}
+
+.language-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative; /* popover positioning base */
+}
+
+.language-preview {
+  max-width: 100px; /* a touch wider to show more */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #CB385C;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* inline popover below the cell */
+.language-popover {
+  position: absolute;
+  top: 44px; /* below stacked preview/button */
+  left: -2px; /* nudge to align closer to grid */
+  min-width: 260px;
+  max-width: 420px;
+  max-height: 240px;
+  background: #FFFFFF;
+  border: 1px solid #E8EDF8;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  padding: 12px 12px 12px 4px; /* minimal left padding */
+  z-index: 1100;
+  overflow: auto;
+}
+
+.language-popover .popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  color: #262626;
+  margin: 0 0 4px 0; /* remove extra margins */
+}
+
+.language-popover .close-x {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #949494;
+}
+
+.language-flow {
+  margin: 0 0 0 14px; /* slight indent to align visually with header */
+  color: #616161;
+  font-size: 14px;
+  line-height: 1.7;
+  word-break: keep-all; /* better Korean/English readability */
+  white-space: normal; /* allow wrapping */
+}
+
+/* Prevent long values (e.g., languages) from overflowing */
+.table-data .truncate {
+  display: inline-block;
+  max-width: 140px; /* slightly wider to accommodate longer labels */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
 /* 구분선 */
 .info-table::before,
 .info-table::after {
   content: '';
   position: absolute;
-  width: 964px;
+  width: 100%;
   height: 0px;
   border: 1px solid #F9D2D6;
   border-radius: 1px;
@@ -689,17 +1057,73 @@ export default {
   top: 55px;
 }
 
+/* 프로젝트 메모 */
+.memo-box {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 25px 35px;
+  gap: 10px;
+  width: 100%;
+  min-height: 110px;
+  background: #FAFBFD;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.memo-textarea {
+  width: 100%;
+  min-height: 60px;
+  max-height: 300px;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 18px;
+  color: #616161;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.memo-textarea::placeholder {
+  color: #949494;
+  font-style: italic;
+}
+
+.memo-textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.memo-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.memo-textarea::-webkit-scrollbar-thumb {
+  background: #CB385C;
+  border-radius: 3px;
+}
+
+.memo-textarea::-webkit-scrollbar-thumb:hover {
+  background: #A02D4A;
+}
+
 /* 프로젝트 요약 */
 .summary-box {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
   padding: 25px 35px;
   gap: 10px;
-  width: 964px;
-  height: 110px;
+  width: 100%;
+  min-height: 110px;
   background: #FAFBFD;
   border-radius: 10px;
+  box-sizing: border-box;
 }
 
 .summary-box p {
@@ -714,11 +1138,113 @@ export default {
   margin: 0;
 }
 
+/* 파싱된 요약 내용 스타일 */
+.summary-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* all items are full width */
+
+.label {
+  font-weight: 700;
+  font-size: 15px;
+  color: #262626;
+}
+
+.value {
+  font-size: 14px;
+  color: #616161;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.value.list {
+  list-style-type: disc;
+  list-style-position: outside;
+  padding-left: 18px;
+  margin: 0;
+}
+
+.value.list li {
+  margin: 4px 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  background: #EFF2F9;
+  color: #507199;
+  border: 1px solid #E8EDF8;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+/* legacy styles removed in favor of summary-grid */
+
+.summary-technical,
+.summary-quality {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-subtitle {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 18px;
+  color: #262626;
+  margin: 0;
+}
+
+.technical-overview,
+.technical-details,
+.technical-tools,
+.quality-overview,
+.quality-details {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 17px;
+  color: #616161;
+}
+
+.summary-fallback {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 /* 차트 섹션 */
 .charts-section {
   display: flex;
   gap: 20px;
   height: 360px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .chart-container {
@@ -730,10 +1256,12 @@ export default {
 
 .timeline-chart {
   width: 600px;
+  flex-shrink: 0;
 }
 
 .language-chart {
   width: 348px;
+  flex-shrink: 0;
 }
 
 /* 차트 헤더 */
@@ -788,6 +1316,7 @@ export default {
   top: 0;
   width: 493px;
   height: 100%;
+  max-width: calc(100% - 67px);
 }
 
 .chart-svg {
@@ -800,6 +1329,7 @@ export default {
   bottom: -30px;
   left: 67px;
   width: 493px;
+  max-width: calc(100% - 67px);
   display: flex;
   justify-content: space-between;
   font-family: 'Pretendard';
@@ -845,6 +1375,11 @@ export default {
   height: 140px;
   margin: 0 auto 15px;
   margin-top: 55px;
+}
+
+.donut-chart canvas {
+  z-index: 10;
+  position: relative;
 }
 
 .donut-center {

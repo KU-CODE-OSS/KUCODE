@@ -599,7 +599,7 @@ onMounted(async () => {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  padding: 18px 32px;
+  /* padding: 18px 32px; */
   gap: 10px;
   width: 92px;
   height: 56px;
