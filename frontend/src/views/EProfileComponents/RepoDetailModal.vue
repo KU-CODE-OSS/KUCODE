@@ -69,12 +69,12 @@
         
         <!-- 프로젝트 메모 섹션 -->
         <div class="section">
-          <h3 class="section-title">프로젝트 메모</h3>
+          <h3 class="section-title">프로젝트 소개</h3>
           <div class="memo-box">
             <textarea 
               v-model="projectMemo"
               class="memo-textarea"
-              placeholder="프로젝트에 대한 메모를 입력하세요..."
+              placeholder="프로젝트에 대한 소개를 입력하세요..."
               @input="adjustTextareaHeight"
               ref="memoTextarea"
             ></textarea>
@@ -1057,7 +1057,7 @@ export default {
   top: 55px;
 }
 
-/* 프로젝트 메모 */
+/* 프로젝트 소개 */
 .memo-box {
   display: flex;
   justify-content: flex-start;
