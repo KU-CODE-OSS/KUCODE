@@ -1561,6 +1561,8 @@ def repo_account_read_db(request):
                 'changed_lines': sorted_changed_lines
             },
             'heatmap': heatmap_data,
+            'student_introduction': student.introduction or "",
+            'student_technology_stack': student.technology_stack or [],
         }
 
         return JsonResponse(response_data, safe=False)
