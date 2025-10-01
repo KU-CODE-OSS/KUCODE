@@ -34,6 +34,7 @@ class Repository(models.Model):
     summary = models.TextField(null=True) 
     is_course = models.BooleanField(null=True)
     category = models.CharField(max_length=50, null=True)
+    repo_introduction = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
