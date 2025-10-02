@@ -37,6 +37,7 @@ urlpatterns = [
   
 # read_db_per_request
   path('repo_account_read_db', views.repo_account_read_db, name='repo_account_read_db'),
+  path('save_repo_introduction', views.save_repo_introduction, name='save_repo_introduction'),
 
   path("generate_repo_summary/", views.GenerateRepoSummaryAPIView.as_view(), name='generate_repo_summary'),
   path("get_repo_summary/", views.GetRepoSummaryAPIView.as_view(), name='get_repo_summary')
