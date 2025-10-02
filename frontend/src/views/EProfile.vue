@@ -2,7 +2,7 @@
   <div class="e-portfolio">
     <!-- Save Button -->
       <div class="save-section">
-        <button class="save-btn">변경사항 저장</button>
+        <button class="save-btn" @click="showSavePopup">변경사항 저장</button>
       </div>
       
     <!-- Main Content -->
@@ -428,10 +428,10 @@
     </main>
     
     <!-- 프로젝트 상세 모달 -->
-    <RepoDetailModal 
-      :show="showRepoModal" 
-      :repo="selectedRepo" 
-      @close="closeRepoModal" 
+    <RepoDetailModal
+      :show="showRepoModal"
+      :repo="selectedRepo"
+      @close="closeRepoModal"
     />
   </div>
 </template>
@@ -462,8 +462,8 @@ export default {
         introduction: ''
       },
       techStack: {
-        languages: ['Python', 'C++', 'JavaScript'],
-        frameworks: ['Django', 'React', 'Vue.js']
+        languages: [],
+        frameworks: []
       },
       stats: {
         commitLines: { added: 1200, deleted: 500 },
@@ -520,27 +520,27 @@ export default {
       'Redis', 'Docker', 'Kubernetes', 'AWS', 'Google Cloud', 'Azure'],
       techStackDropdowns: [
         {
-          selected: 'Python',
+          selected: '',
           isOpen: false,
           options: []
         },
         {
-          selected: 'JavaScript',
+          selected: '',
           isOpen: false,
           options: []
         },
         {
-          selected: 'Go',
+          selected: '',
           isOpen: false,
           options: []
         },
         {
-          selected: 'Rust',
+          selected: '',
           isOpen: false,
           options: []
         },
         {
-          selected: 'Kubernetes',
+          selected: '',
           isOpen: false,
           options: []
         }
@@ -707,6 +707,10 @@ export default {
     document.removeEventListener('click', this.closeAllDropdowns)
   },
   methods: {
+    // 저장 버튼 클릭 핸들러
+    showSavePopup() {
+      alert('저장 완료')
+    },
     // 모달 관련 메서드
     openRepoModal(repo) {
       this.selectedRepo = repo
@@ -1088,7 +1092,10 @@ export default {
         // Load repositories data from the same response
         this.loadRepositoriesFromResponse(response.data)
 
-        // Load tech stack data from total_language_percentage
+        // Load tech language data from total_language_percentage
+        this.loadTechLanguagesData(response.data)
+
+        // Load tech stack data from student_technolog_stack
         this.loadTechStackData(response.data)
 
         // Load team size data from total_contributors_count
@@ -1348,7 +1355,7 @@ export default {
     },
 
     // Method to load tech stack data from API response
-    loadTechStackData(responseData) {
+    loadTechLanguagesData(responseData) {
       try {
         if (responseData && responseData.total_language_percentage) {
           // Handle both object and array formats from API
@@ -1389,6 +1396,33 @@ export default {
           "others": 0
         }
         console.error('Error loading tech stack data:', error)
+      }
+    },
+
+    loadTechStackData(responseData) {
+      try {
+        if (responseData.student_technology_stack) {
+          const techStack = responseData.student_technology_stack
+
+          // Parse if it's a string, otherwise use as is
+          const techStackArray = typeof techStack === 'string' ? JSON.parse(techStack) : techStack
+
+          // Update the techStackDropdowns with the loaded data
+          if (Array.isArray(techStackArray)) {
+            techStackArray.forEach((tech, index) => {
+              if (index < this.techStackDropdowns.length && tech) {
+                this.techStackDropdowns[index].selected = tech
+                // Update available options for other dropdowns
+                this.updateDropdownOptions()
+              }
+            })
+            console.log('Tech stack dropdowns loaded from API:', this.techStackDropdowns)
+          }
+        } else {
+          console.warn('No student_technology_stack data found in API response')
+        }
+      } catch (error) {
+        console.error('Error loading tech stack dropdown data:', error)
       }
     },
 
