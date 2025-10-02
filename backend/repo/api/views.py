@@ -1542,6 +1542,7 @@ def repo_account_read_db(request):
             'license': r.license,
             'has_readme': r.has_readme,
             'description': r.description,
+            'project_introduction': r.repo_introduction or "",
             'release_version': r.release_version,
             'summary': r.summary,
             'monthly_commits': repo_monthly_commit_data
@@ -1561,6 +1562,8 @@ def repo_account_read_db(request):
                 'changed_lines': sorted_changed_lines
             },
             'heatmap': heatmap_data,
+            'student_introduction': student.introduction or "",
+            'student_technology_stack': student.technology_stack or [],
         }
 
         return JsonResponse(response_data, safe=False)
@@ -1962,3 +1965,58 @@ class GetRepoSummaryAPIView(APIView):
             "bullet_description": frontend_data.get("key_functionalities"),
             "tech_stack": frontend_data.get("tech_stack"),
         }, status=status.HTTP_200_OK)
+
+# ---------------------------------------------
+# Save repo introduction per Repository
+# ---------------------------------------------
+@csrf_exempt
+def update_repo_introduction(request):
+    try:
+        if request.method != 'POST':
+            return JsonResponse({"status": "Error", "message": "Only POST method is allowed"}, status=405)
+
+        try:
+            body = json.loads(request.body.decode('utf-8') or '{}')
+        except Exception:
+            body = {}
+
+        uuid = body.get('uuid')
+        repo_id = body.get('repo_id')
+        project_introduction = body.get('project_introduction', '')
+
+        if not uuid:
+            return JsonResponse({"status": "Error", "message": "uuid is required"}, status=400)
+        if not repo_id:
+            return JsonResponse({"status": "Error", "message": "repo_id is required"}, status=400)
+
+        # uuid → login_student → account_student 검증 (소유자 확인용)
+        try:
+            login_student = LoginStudent.objects.get(member_id=uuid)
+            account_student = Student.objects.get(id=login_student.id)
+        except LoginStudent.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": "login_student not found for given uuid"}, status=404)
+        except Student.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": "account_student not found for given student id"}, status=404)
+
+        try:
+            repo = Repository.objects.get(id=repo_id)
+        except Repository.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": "repository not found"}, status=404)
+
+        # 선택: 요청자가 해당 repo의 owner인지 확인 (owner_github_id 매칭)
+        owner_mismatch = account_student.github_id and repo.owner_github_id and (account_student.github_id != repo.owner_github_id)
+        if owner_mismatch:
+            return JsonResponse({"status": "Error", "message": "permission denied: not the repo owner"}, status=403)
+
+        repo.repo_introduction = project_introduction or ''
+        repo.save()
+
+        return JsonResponse({
+            "status": "OK",
+            "message": "project_introduction saved",
+            "repo_id": repo.id,
+            "project_introduction": repo.repo_introduction,
+        })
+
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)

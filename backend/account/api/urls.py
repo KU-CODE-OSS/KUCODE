@@ -52,4 +52,8 @@ urlpatterns = [
     # 학생관점 과목 수강 엑셀 리스트
     path("student_course_read_excel", views.student_course_read_excel, name="student_course_read_excel"),
 
+    # profile update
+    path("update_student_introduction", views.update_student_introduction, name="update_student_introduction"),
+    path("update_student_technology_stack", views.update_student_technology_stack, name="update_student_technology_stack"),
+
 ]   

@@ -80,3 +80,19 @@ function ajax(url, method, { params = {}, data = {}, headers = {} } = {}) {
     });
   });
 }
+
+export function checkStudentIdNumber() {
+  return ajax(ip_for_develop + '/authentication/studentIdNumber_verification', 'get')
+}
+
+export function updateStudentIntroduction() {
+  return ajax(ip_for_develop + '/account/update_student_introduction', 'post')
+}
+
+export function updateStudentTechnologyStack() {
+  return ajax(ip_for_develop + '/account/update_student_technology_stack', 'post')
+}
+
+export function updateRepoIntroduction() {
+  return ajax(ip_for_develop + '/repo/update_repo_introduction', 'post')
+}

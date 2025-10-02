@@ -159,6 +159,8 @@ import { useRouter } from 'vue-router'
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
 import { auth } from '../services/firebase'
 import { useAuthStore } from '../stores/auth'
+import { checkStudentIdNumber } from '@/api.js'
+import axios from 'axios'
 
 // Form data
 const studentId = ref('')
@@ -195,37 +197,62 @@ const isFormValid = computed(() => {
 // Handle student ID verification
 const handleStudentIdVerification = async () => {
   try {
-    studentIdVerifying.value = true
+    studentIdVerifying.value = false
     basicInfoError.value = ''
-    
-    // TODO: Replace with actual student ID verification service
-    // This is where you would integrate with your university's student verification API
-    // Example: const response = await verifyStudentId(studentId.value)
-    
-    // Simulate verification API call (remove this in production)
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // Demo validation - replace with real verification service
-    if (studentId.value && studentId.value.length >= 0) {
-      studentIdVerified.value = true
-    } else {
-      basicInfoError.value = '유효하지 않은 학번입니다'
-    }
-    
-    // TODO: In real implementation, handle verification response:
-    // if (response.success) {
-    //   studentIdVerified.value = true
-    //   // Optionally auto-fill verified student name from response
-    //   // studentName.value = response.studentName
-    // } else {
-    //   basicInfoError.value = response.error || '학번 인증에 실패했습니다'
-    // }
-    
-  } catch (error) {
-    basicInfoError.value = '인증 중 오류가 발생했습니다'
+
+    // TODO: Catch up on KU API status -> fix 학번 verification once caught up
+    // const result = await checkStudentIdNumber(studentId)
+    // console.log(result)
+
+    // const undergraduate_url = "https://kuapi.korea.ac.kr/svc/academic-record/student/undergraduate-gra"
+    // const CLIENT_ID = "openSourcePlat"
+    // const ACCESS_TOKEN = "6dff0e00dfc84b1a81a7d6a1b3c66a0d"
+
+    // // Make API call to verify student ID
+    // const response = await axios.get(undergraduate_url, {
+    //   headers: {'AUTH_KEY': ACCESS_TOKEN},
+    //   params: {
+    //     'client_id': CLIENT_ID,
+    //     'std_id': studentId.value
+    //   },
+    // })
+
+  // --------------------
+  //   // Handle successful verification response
+  //   if (response.data.success) {
+  //     studentIdVerified.value = true
+  //     // Optionally auto-fill verified student name from response
+  //     if (response.data.studentName) {
+  //       studentName.value = response.data.studentName
+  //     }
+  //   } else {
+  //     basicInfoError.value = response.data.error || '학번 인증에 실패했습니다'
+  //   }
+
+  // } catch (error) {
+  //   // Handle API error
+  //   if (error.response) {
+  //     // Server responded with error status
+  //     basicInfoError.value = error.response.data?.message || '학번 인증에 실패했습니다'
+  //   } else if (error.request) {
+  //     // Network error
+  //     basicInfoError.value = '네트워크 오류가 발생했습니다'
+  //   } else {
+  //     // Other error
+  //     basicInfoError.value = '인증 중 오류가 발생했습니다'
+  //   }
+  //   console.error('Student ID verification error:', error)
+  // } finally {
+  //   studentIdVerifying.value = false
+  }
+  catch{
+    studentIdVerifying.value = false
+    studentIdVerified.value = true
   } finally {
     studentIdVerifying.value = false
+    studentIdVerified.value = true
   }
+
 }
 
 // Handle sign up

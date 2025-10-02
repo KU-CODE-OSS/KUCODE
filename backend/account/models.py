@@ -28,6 +28,8 @@ class Student(models.Model):
     github_profile_create_at = models.CharField(max_length=100, null=True)
     github_profile_update_at = models.CharField(max_length=100, null=True)
     total_language_percentage = models.JSONField(null=True)  # 전체 언어 비율
+    technology_stack = models.JSONField(default=list, blank=True)
+    introduction = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name

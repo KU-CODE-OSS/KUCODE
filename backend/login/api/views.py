@@ -11,6 +11,7 @@ from rest_framework import status
 from account.models import User,Student,Administration
 from course.models import Course, Course_registration, Course_project
 from repo.models import Repo_commit, Repo_pr ,Repo_issue, Repository
+from login.models import Member, Student as LoginStudent
 from django.db.models import Sum
 from openpyxl import load_workbook
 from django.db.models import Q
@@ -23,6 +24,8 @@ from rest_framework.decorators import api_view
 from rest_framework.permissions import BasePermission
 
 import requests
+
+
 
 temp_student_id = ''
 
@@ -108,3 +111,84 @@ def admin_login(request):
         
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+
+@api_view(['POST'])
+@csrf_exempt
+def signup(request):
+    """
+    회원가입 API
+    프론트엔드로부터 UUID와 학번을 받아서 login_member와 login_student 테이블에 저장
+    """
+    try:
+        # 요청 데이터 추출
+        data = request.data
+        uuid = data.get('uuid')
+        student_id = data.get('student_id')
+        name = data.get('name', '')  # 이름은 선택사항
+        email = data.get('email', '')  # 이메일은 선택사항
+        
+        # 필수 필드 검증
+        if not uuid:
+            return JsonResponse({
+                "status": "Error", 
+                "message": "UUID는 필수입니다."
+            }, status=400)
+            
+        if not student_id:
+            return JsonResponse({
+                "status": "Error", 
+                "message": "학번은 필수입니다."
+            }, status=400)
+        
+        # UUID가 이미 존재하는지 확인
+        if Member.objects.filter(id=uuid).exists():
+            return JsonResponse({
+                "status": "Error", 
+                "message": "이미 존재하는 UUID입니다."
+            }, status=400)
+        
+        # 학번이 이미 존재하는지 확인
+        if LoginStudent.objects.filter(id=student_id).exists():
+            return JsonResponse({
+                "status": "Error", 
+                "message": "이미 존재하는 학번입니다."
+            }, status=400)
+        
+        # 트랜잭션으로 Member와 Student 생성
+        from django.db import transaction
+        
+        with transaction.atomic():
+            # Member 생성
+            member = Member.objects.create(
+                id=uuid,
+                role='STUDENT',  # 기본값
+                name=name,
+                email=email
+            )
+            
+            # Student 생성
+            student = LoginStudent.objects.create(
+                member=member,
+                id=student_id,
+                github_auth='LOCKED'  # 기본값
+            )
+        
+        return JsonResponse({
+            "status": "Success",
+            "message": "회원가입이 완료되었습니다.",
+            "data": {
+                "uuid": member.id,
+                "student_id": student.id,
+                "name": member.name,
+                "email": member.email,
+                "role": member.role,
+                "github_auth": student.github_auth
+            }
+        }, status=201)
+        
+    except Exception as e:
+        return JsonResponse({
+            "status": "Error", 
+            "message": f"회원가입 중 오류가 발생했습니다: {str(e)}"
+        }, status=500)
