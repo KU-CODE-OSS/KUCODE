@@ -2,7 +2,7 @@
   <div class="e-portfolio">
     <!-- Save Button -->
       <div class="save-section">
-        <button class="save-btn">변경사항 저장</button>
+        <button class="save-btn" @click="showSavePopup">변경사항 저장</button>
       </div>
       
     <!-- Main Content -->
@@ -53,69 +53,70 @@
 
         <!-- Right Column Container -->
         <div class="right-column">
-          <!-- Tech Stack Section -->
-          <div class="tech-stack-card">
-            <h3 class="section-title">나의 기술 스택</h3>
-            
-            <!-- Horizontal Layout Container -->
-            <div class="tech-stack-content">
-              <!-- Left Section: Main Languages -->
-              <div class="main-languages-section">
-                <h4 class="tech-column-title">주요 사용 언어</h4>
-                
-                <!-- Chart and Legend Container -->
-                <div class="chart-and-legend">
-                  <div class="chart-container">
-                    <!-- Chart.js Donut Chart -->
-                    <canvas ref="techStackChart" width="120" height="120"></canvas>
-                  </div>
-                  <div class="chart-legend">
-                    <div 
-                      v-for="(lang, index) in convertTechStackDataForChart()" 
-                      :key="lang.name"
-                      class="legend-item"
-                    >
+          <!-- Combined Tech Stack and Skills Section -->
+          <div class="combined-tech-skills-card">
+            <!-- Tech Stack Section -->
+            <div class="tech-stack-section">
+              <!-- Horizontal Layout Container -->
+              <div class="tech-stack-content">
+                <!-- Left Section: Main Languages -->
+                <div class="main-languages-section">
+                  <h4 class="tech-column-title">주요 사용 언어</h4>
+                  
+                  <!-- Chart and Legend Container -->
+                  <div class="chart-and-legend">
+                    <div class="chart-container">
+                      <!-- Chart.js Donut Chart -->
+                      <canvas ref="techStackChart" width="120" height="120"></canvas>
+                    </div>
+                    <div class="chart-legend">
                       <div 
-                        class="legend-color" 
-                        :style="{ background: lang.color }"
-                      ></div>
-                      <span>{{ lang.name }} ({{ lang.percentage }}%)</span>
+                        v-for="(lang, index) in convertTechStackDataForChart()" 
+                        :key="lang.name"
+                        class="legend-item"
+                      >
+                        <div 
+                          class="legend-color" 
+                          :style="{ background: lang.color }"
+                        ></div>
+                        <span>{{ lang.name }} ({{ lang.percentage }}%)</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Vertical Divider -->
-              <div class="vertical-divider"></div>
+                <!-- Vertical Divider -->
+                <div class="vertical-divider"></div>
 
-              <!-- Right Section: Tech Stack -->
-              <div class="tech-stack-section">
-                <h4 class="tech-column-title">주요 기술 스택</h4>
-                <div class="tech-dropdowns">
-                  <div 
-                    v-for="(dropdown, index) in techStackDropdowns" 
-                    :key="index"
-                    class="tech-dropdown-container"
-                  >
+                <!-- Right Section: Tech Stack -->
+                <div class="tech-stack-dropdown-section">
+                  <h4 class="tech-column-title">주요 기술 스택</h4>
+                  <div class="tech-dropdowns">
                     <div 
-                      class="tech-dropdown"
-                      :class="{ 'dropdown-open': dropdown.isOpen }"
-                      @click.stop="toggleDropdown(index)"
+                      v-for="(dropdown, index) in techStackDropdowns" 
+                      :key="index"
+                      class="tech-dropdown-container"
                     >
-                      <div class="dropdown-selected">
-                        <i :class="getIconClass(dropdown.selected)"></i>
-                        <span>{{ dropdown.selected || '선택하세요' }}</span>
-                        <i class="icon-arrow-down" :class="{ 'rotated': dropdown.isOpen }"></i>
-                      </div>
-                      <div v-if="dropdown.isOpen" class="dropdown-options">
-                        <div 
-                          v-for="option in dropdown.options" 
-                          :key="option"
-                          class="dropdown-option"
-                          @click.stop="selectOption(index, option)"
-                        >
-                          <i :class="getIconClass(option)"></i>
-                          <span>{{ option }}</span>
+                      <div 
+                        class="tech-dropdown"
+                        :class="{ 'dropdown-open': dropdown.isOpen }"
+                        @click.stop="toggleDropdown(index)"
+                      >
+                        <div class="dropdown-selected">
+                          <i :class="getIconClass(dropdown.selected)"></i>
+                          <span>{{ dropdown.selected || '선택하세요' }}</span>
+                          <i class="icon-arrow-down" :class="{ 'rotated': dropdown.isOpen }"></i>
+                        </div>
+                        <div v-if="dropdown.isOpen" class="dropdown-options">
+                          <div 
+                            v-for="option in dropdown.options" 
+                            :key="option"
+                            class="dropdown-option"
+                            @click.stop="selectOption(index, option)"
+                          >
+                            <i :class="getIconClass(option)"></i>
+                            <span>{{ option }}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -123,26 +124,36 @@
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Skills Section - MOVED HERE -->
-          <div class="skills-card">
-            <div class="skills-stats">
-              <div class="stat-item">
-                <h4><div class="section-subtitle">개발 생산성</div>(추가·삭제 라인 수)</h4>
-                <p>{{ stats.commitLines.added.toLocaleString() }} / {{ stats.commitLines.deleted.toLocaleString() }}</p>
-              </div>
-              <div class="stat-item">
-                <h4><div class="section-subtitle">문제 해결력</div>(생성·해결 이슈)</h4>
-                <p>{{ stats.issues.created }} / {{ stats.issues.closed }}</p>
-              </div>
-              <div class="stat-item">
-                <h4><div class="section-subtitle">협업 능력</div>(PR 생성)</h4>
-                <p>{{ stats.pullRequests }}개</p>
-              </div>
-              <div class="stat-item">
-                <h4><div class="section-subtitle">오픈소스 기여 역량</div>(참여 오픈소스)</h4>
-                <p>{{ stats.openSourceContributions }}개</p>
+            <!-- Skills Section -->
+            <div class="skills-section">
+              <div class="skills-stats-container">
+                <div class="skills-stats">
+                  <div class="stat-item">
+                    <div class="stat-content">
+                      <div class="stat-title">추가 / 삭제 커밋 라인 수</div>
+                      <div class="stat-value">{{ stats.commitLines.added.toLocaleString() }} / {{ stats.commitLines.deleted.toLocaleString() }}</div>
+                    </div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-content">
+                      <div class="stat-title">이슈 생성 / 닫은 수</div>
+                      <div class="stat-value">{{ stats.issues.created }} / {{ stats.issues.closed }}</div>
+                    </div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-content">
+                      <div class="stat-title">PR 생성 수</div>
+                      <div class="stat-value">{{ stats.pullRequests }}개</div>
+                    </div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-content">
+                      <div class="stat-title">오픈소스 프로젝트</div>
+                      <div class="stat-value">{{ stats.openSourceContributions }}개</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -151,14 +162,19 @@
 
       <!-- Activity Section -->
       <section class="activity-section">
+        <!-- Activity Section Header -->
+        <div class="activity-section-header">
+          <div class="activity-header-content">
+            <i class="icon-activity"></i>
+            <h2 class="activity-title">개발 활동 패턴</h2>
+          </div>
+        </div>
+        
         <div class="activity-charts">
           <!-- Activity Trends Chart -->
-          <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-title">
-                <i class="icon-activity"></i>
-                <h3>활동 추이</h3>
-              </div>
+            <div class="chart-card">
+              <div class="chart-header">
+                <h3 class="chart-title-text">활동 추이</h3>
               <!-- <div class="chart-toggle">
                 <span 
                   :class="{ 'toggle-active': activityViewMode === 'monthly', 'toggle-inactive': activityViewMode !== 'monthly' }"
@@ -199,10 +215,10 @@
           </div>
 
           <!-- Project Team Size Chart -->
-          <div class="chart-card">
-            <div class="chart-header">
-              <h3>활동 프로젝트 인원 비율</h3>
-            </div>
+            <div class="chart-card">
+              <div class="chart-header">
+                <h3 class="chart-title-text">활동 프로젝트 비율</h3>
+              </div>
             <p class="chart-description">{{ teamSizeDescription }}</p>
             
             <!-- Bar Chart Area -->
@@ -213,11 +229,10 @@
         </div>
 
         <!-- Activity Time Pattern -->
-        <div class="time-pattern-card">
-          <div class="section-header">
-            <i class="icon-activity"></i>
-            <h3>활동 시간대</h3>
-          </div>
+          <div class="time-pattern-card">
+            <div class="section-header">
+              <h3 class="chart-title-text">활동 시간대</h3>
+            </div>
           
           <!-- 히트맵 컴포넌트 -->
           <EProfileHeatmap :heatmapData="heatmapData" />
@@ -270,7 +285,7 @@
           </div>
           
           <!-- Replace the static table rows with dynamic data -->
-          <div class="table-row" v-for="repo in sortedRepositoriesData" :key="repo.id">
+          <div class="table-row" v-for="repo in paginatedRepositoriesData" :key="repo.id">
           <div 
             class="category-column"
             :class="{ 
@@ -351,15 +366,72 @@
             </div>
           </div>
         </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-section" v-if="totalPages > 1">
+          <div class="pagination-info">
+            {{ paginationInfo.start }}-{{ paginationInfo.end }} / {{ paginationInfo.total }}개 프로젝트
+          </div>
+
+          <div class="pagination-controls">
+            <button
+              class="pagination-btn"
+              :class="{ 'disabled': currentPage === 1 }"
+              @click="goToPage(1)"
+              :disabled="currentPage === 1"
+            >
+              첫 페이지
+            </button>
+
+            <button
+              class="pagination-btn"
+              :class="{ 'disabled': currentPage === 1 }"
+              @click="goToPage(currentPage - 1)"
+              :disabled="currentPage === 1"
+            >
+              이전
+            </button>
+
+            <div class="page-numbers">
+              <button
+                v-for="page in visiblePages"
+                :key="page"
+                class="page-number"
+                :class="{ 'active': page === currentPage }"
+                @click="goToPage(page)"
+              >
+                {{ page }}
+              </button>
+            </div>
+
+            <button
+              class="pagination-btn"
+              :class="{ 'disabled': currentPage === totalPages }"
+              @click="goToPage(currentPage + 1)"
+              :disabled="currentPage === totalPages"
+            >
+              다음
+            </button>
+
+            <button
+              class="pagination-btn"
+              :class="{ 'disabled': currentPage === totalPages }"
+              @click="goToPage(totalPages)"
+              :disabled="currentPage === totalPages"
+            >
+              마지막 페이지
+            </button>
+          </div>
+        </div>
       </section>
 
     </main>
     
     <!-- 프로젝트 상세 모달 -->
-    <RepoDetailModal 
-      :show="showRepoModal" 
-      :repo="selectedRepo" 
-      @close="closeRepoModal" 
+    <RepoDetailModal
+      :show="showRepoModal"
+      :repo="selectedRepo"
+      @close="closeRepoModal"
     />
   </div>
 </template>
@@ -390,8 +462,8 @@ export default {
         introduction: ''
       },
       techStack: {
-        languages: ['Python', 'C++', 'JavaScript'],
-        frameworks: ['Django', 'React', 'Vue.js']
+        languages: [],
+        frameworks: []
       },
       stats: {
         commitLines: { added: 1200, deleted: 500 },
@@ -448,27 +520,27 @@ export default {
       'Redis', 'Docker', 'Kubernetes', 'AWS', 'Google Cloud', 'Azure'],
       techStackDropdowns: [
         {
-          selected: 'Python',
+          selected: '',
           isOpen: false,
           options: []
         },
         {
-          selected: 'JavaScript',
+          selected: '',
           isOpen: false,
           options: []
         },
         {
-          selected: 'Go',
+          selected: '',
           isOpen: false,
           options: []
         },
         {
-          selected: 'Rust',
+          selected: '',
           isOpen: false,
           options: []
         },
         {
-          selected: 'Kubernetes',
+          selected: '',
           isOpen: false,
           options: []
         }
@@ -500,7 +572,10 @@ export default {
         '분산시스템',
         '컴퓨터그래픽스',
         '사이버보안'
-      ]
+      ],
+      // Pagination properties
+      currentPage: 1,
+      itemsPerPage: 10
     }
   },
   computed: {
@@ -525,11 +600,11 @@ export default {
       if (!this.sortBy) {
         return this.repositoriesData
       }
-      
+
       const sorted = [...this.repositoriesData].sort((a, b) => {
         let aVal = a[this.sortBy]
         let bVal = b[this.sortBy]
-        
+
         // Handle different data types
         if (this.sortBy === 'category') {
           // Sort category: course projects first, then autonomous
@@ -544,15 +619,49 @@ export default {
           aVal = parseInt(aVal) || 0
           bVal = parseInt(bVal) || 0
         }
-        
+
         if (this.sortDirection === 'asc') {
           return aVal > bVal ? 1 : aVal < bVal ? -1 : 0
         } else {
           return aVal < bVal ? 1 : aVal > bVal ? -1 : 0
         }
       })
-      
+
       return sorted
+    },
+
+    // Pagination computed properties
+    totalPages() {
+      return Math.ceil(this.sortedRepositoriesData.length / this.itemsPerPage)
+    },
+
+    paginatedRepositoriesData() {
+      const start = (this.currentPage - 1) * this.itemsPerPage
+      const end = start + this.itemsPerPage
+      return this.sortedRepositoriesData.slice(start, end)
+    },
+
+    paginationInfo() {
+      const start = (this.currentPage - 1) * this.itemsPerPage + 1
+      const end = Math.min(this.currentPage * this.itemsPerPage, this.sortedRepositoriesData.length)
+      const total = this.sortedRepositoriesData.length
+      return { start, end, total }
+    },
+
+    visiblePages() {
+      const maxVisible = 5
+      const totalPages = this.totalPages
+      const currentPage = this.currentPage
+
+      if (totalPages <= maxVisible) {
+        return Array.from({ length: totalPages }, (_, i) => i + 1)
+      }
+
+      const start = Math.max(1, currentPage - Math.floor(maxVisible / 2))
+      const end = Math.min(totalPages, start + maxVisible - 1)
+      const adjustedStart = Math.max(1, end - maxVisible + 1)
+
+      return Array.from({ length: end - adjustedStart + 1 }, (_, i) => adjustedStart + i)
     }
   },
   async mounted() {
@@ -598,6 +707,10 @@ export default {
     document.removeEventListener('click', this.closeAllDropdowns)
   },
   methods: {
+    // 저장 버튼 클릭 핸들러
+    showSavePopup() {
+      alert('저장 완료')
+    },
     // 모달 관련 메서드
     openRepoModal(repo) {
       this.selectedRepo = repo
@@ -979,7 +1092,10 @@ export default {
         // Load repositories data from the same response
         this.loadRepositoriesFromResponse(response.data)
 
-        // Load tech stack data from total_language_percentage
+        // Load tech language data from total_language_percentage
+        this.loadTechLanguagesData(response.data)
+
+        // Load tech stack data from student_technolog_stack
         this.loadTechStackData(response.data)
 
         // Load team size data from total_contributors_count
@@ -1239,7 +1355,7 @@ export default {
     },
 
     // Method to load tech stack data from API response
-    loadTechStackData(responseData) {
+    loadTechLanguagesData(responseData) {
       try {
         if (responseData && responseData.total_language_percentage) {
           // Handle both object and array formats from API
@@ -1280,6 +1396,33 @@ export default {
           "others": 0
         }
         console.error('Error loading tech stack data:', error)
+      }
+    },
+
+    loadTechStackData(responseData) {
+      try {
+        if (responseData.student_technology_stack) {
+          const techStack = responseData.student_technology_stack
+
+          // Parse if it's a string, otherwise use as is
+          const techStackArray = typeof techStack === 'string' ? JSON.parse(techStack) : techStack
+
+          // Update the techStackDropdowns with the loaded data
+          if (Array.isArray(techStackArray)) {
+            techStackArray.forEach((tech, index) => {
+              if (index < this.techStackDropdowns.length && tech) {
+                this.techStackDropdowns[index].selected = tech
+                // Update available options for other dropdowns
+                this.updateDropdownOptions()
+              }
+            })
+            console.log('Tech stack dropdowns loaded from API:', this.techStackDropdowns)
+          }
+        } else {
+          console.warn('No student_technology_stack data found in API response')
+        }
+      } catch (error) {
+        console.error('Error loading tech stack dropdown data:', error)
       }
     },
 
@@ -1447,6 +1590,8 @@ export default {
         this.sortBy = column
         this.sortDirection = 'asc'
       }
+      // Reset pagination when sorting changes
+      this.resetPagination()
     },
 
     getSortIcon(column) {
@@ -1491,11 +1636,24 @@ export default {
 
     shouldDropUp(repoId) {
       // Simple approach: check if this is one of the last few rows
-      const currentIndex = this.sortedRepositoriesData.findIndex(repo => repo.id === repoId)
-      const totalRows = this.sortedRepositoriesData.length
-      
+      const currentIndex = this.paginatedRepositoriesData.findIndex(repo => repo.id === repoId)
+      const totalRows = this.paginatedRepositoriesData.length
+
       // If it's in the last 3 rows, drop up
       return currentIndex >= totalRows - 3
+    },
+
+    // Pagination methods
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+        this.currentPage = page
+        this.closeCategoryDropdowns()
+      }
+    },
+
+    // Reset pagination when sorting changes
+    resetPagination() {
+      this.currentPage = 1
     }
   }
 }
@@ -1505,7 +1663,7 @@ export default {
 /* Global Styles */
 .e-portfolio {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #FFFFFF;
+  background: linear-gradient(to bottom, #F5F7FA 0%, #F5F7FA 58%, #FFFFFF 58%, #FFFFFF 100%);
   min-height: 100vh;
   width: 1920px;
   margin: 0 auto;
@@ -1557,7 +1715,7 @@ export default {
 }
 
 .profile-card {
-  background: #FAFBFD;
+  background: #FFFFFF;
   border: 1px solid #E8EDF8;
   border-radius: 20px;
   padding: 30px;
@@ -1592,24 +1750,32 @@ export default {
   gap: 16px;
 }
 
-.tech-stack-card {
-  background: #FAFBFD;
+/* Combined Tech Stack and Skills Card */
+.combined-tech-skills-card {
+  background: #FFFFFF;
   border: 1px solid #E8EDF8;
   border-radius: 20px;
-  padding: 30px 50px;
-  height: 280px;
-  position: relative
+  padding: 50px 50px 30px 50px; /* 상단 패딩 증가 */
+  height: 440px; /* Same height as profile card */
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
 }
 
-/* Skills Card - MOVED AND UPDATED */
-.skills-card {
-  background: #FAFBFD;
-  border: 1px solid #E8EDF8;
-  border-radius: 20px;
-  padding: 1px 15px;
-  height: 142px;
+/* Tech Stack Section within combined card */
+.combined-tech-skills-card .tech-stack-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Skills Section within combined card */
+.combined-tech-skills-card .skills-section {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
+  height: 142px;
 }
 
 .profile-info {
@@ -1666,11 +1832,12 @@ export default {
   color: #910024;
 }
 
-/* Tech Stack */
-.tech-stack-card {
+/* Tech Stack - Updated for combined card */
+.tech-stack-dropdown-section {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  flex: 1;
 }
 
 .section-title {
@@ -1753,17 +1920,12 @@ export default {
   margin: 0px 0px 0px;
 }
 
-.tech-stack-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  flex: 1;
-}
+/* Tech stack section styles are now handled by the combined card */
 
 .tech-column-title {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
-  color: #616161;
+  color: #262626;
   margin: 0;
 }
 
@@ -1892,9 +2054,9 @@ export default {
   background: #a8a8a8;
 }
 
-/* Skills Section */
+/* Skills Section - Updated for combined card */
 .skills-section {
-  margin-bottom: 40px;
+  margin-bottom: 0; /* No margin needed in combined card */
 }
 
 .section-header {
@@ -1911,63 +2073,176 @@ export default {
   margin: 0;
 }
 
+/* Skills Stats Container */
+.skills-stats-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .skills-stats {
   display: flex;
-  width: 100%;
+  flex-direction: row;
   align-items: center;
-  height: 100%;
+  padding: 16px 26px;
+  gap: 0px;
+  width: 100%;
+  max-width: 750px; /* 전체 너비를 조정하여 더 균형잡힌 레이아웃 */
+  height: 102px;
+  background: #FAFBFD;
+  border: 1px solid #E8EDF8;
+  border-radius: 10px;
+  box-sizing: border-box;
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  border-right: 1px solid #E8EDF8;
-  padding: 20px 10px;
-  text-align: center;
-  min-height: 80px;
+  align-items: center;
+  padding: 0px 10px;
+  gap: 8px;
+  height: 58px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+  position: relative;
 }
 
+/* 각 항목별 너비 조정 */
 .stat-item:nth-child(1) {
-  flex: 2.5; /* 추가 / 삭제 커밋 라인 수 - longest text */
+  width: 210px; /* 추가/삭제 커밋 라인 수 - 가장 넓게 */
 }
 
 .stat-item:nth-child(2) {
-  flex: 2; /* 이슈 생성 / 닫은 수 - medium text */
+  width: 170px; /* 이슈 생성/닫은 수 - 적당히 */
 }
 
 .stat-item:nth-child(3) {
-  flex: 1.5; /* PR 생성 수 - short text */
+  width: 130px; /* PR 생성 수 - 기본 */
 }
 
-.stat-item:nth-child(4) {
-  flex: 2; /* 오픈 소스 프로젝트 - medium text */
+  .stat-item:nth-child(4) {
+    width: 180px; /* 오픈소스 프로젝트 - 한 줄로 표시되도록 넓게 */
+  }
+
+.stat-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 70px;
+  background: #E8EDF8;
 }
 
-.stat-item:last-child {
-  border-right: none;
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
 }
 
-.stat-item h4 {
-  font-size: 16px;
+.stat-title {
+  width: 100%;
+  height: auto;
+  font-family: 'Pretendard';
+  font-style: normal;
   font-weight: 500;
+  font-size: 16px;
+  line-height: 1.2;
   color: #616161;
-  margin: 0 0 26px 0;
   text-align: center;
-  line-height: 1.3;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+  margin: 0;
 }
 
-.stat-item p {
-  font-size: 16px;
+.stat-value {
+  width: 100%;
+  height: auto;
+  font-family: 'Pretendard';
+  font-style: normal;
   font-weight: 500;
+  font-size: 16px;
+  line-height: 1.2;
   color: #262626;
+  text-align: center;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
   margin: 0;
+}
+
+.stat-divider {
+  display: none; /* 기존 구분선 제거 */
 }
 
 /* Activity Section */
 .activity-section {
   margin-bottom: 40px;
+}
+
+/* Activity Section Header */
+.activity-section-header {
+  margin-bottom: 30px;
+}
+
+.activity-header-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0px;
+  gap: 8px;
+  width: 160px;
+  height: 28px;
+}
+
+.activity-icon {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+  position: relative;
+}
+
+.activity-icon::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 8.33% !important;
+  right: 8.33% !important;
+  top: 12.5% !important;
+  bottom: 12.5% !important;
+  border: 2px solid #262626 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+.activity-title {
+  width: 124px;
+  height: 26px;
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 26px;
+  letter-spacing: -0.004em;
+  color: #262626;
+  margin: 0;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
 }
 
 .activity-charts {
@@ -1978,7 +2253,7 @@ export default {
 }
 
 .chart-card {
-  background: #FFFBFB;
+  background: #FFFFFF;
   border-radius: 20px;
   padding: 30px 40px;
   height: 347px;
@@ -2002,6 +2277,28 @@ export default {
   font-weight: 600;
   color: #262626;
   margin: 0;
+}
+
+/* Chart Title Text Style */
+.chart-title-text {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 24px;
+  color: #E40052;
+  margin: 0;
+}
+
+/* Override for chart title text in section header */
+.section-header .chart-title-text {
+  font-family: 'Pretendard' !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  font-size: 20px !important;
+  line-height: 24px !important;
+  color: #E40052 !important;
+  margin: 0 !important;
 }
 
 /* UPDATED: Enhanced chart toggle styling
@@ -2126,7 +2423,7 @@ export default {
 
 /* Time Pattern */
 .time-pattern-card {
-  background: #FFFBFB;
+  background: #FFFFFF;
   border-radius: 20px;
   padding: 30px 40px;
   width: 1280px;
@@ -2136,6 +2433,9 @@ export default {
 /* Projects Section */
 .projects-section {
   margin-bottom: 40px;
+  background: #FFFFFF;
+  padding: 30px;
+  border-radius: 20px;
 }
 
 .projects-table {
@@ -2653,5 +2953,117 @@ export default {
 
 .repo-name-clickable:hover {
   color: #910024;
+}
+
+/* Pagination Styles */
+.pagination-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  margin-top: 20px;
+  border-top: 1px solid #E8EDF8;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #616161;
+  font-weight: 500;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #616161;
+  background: #FFFFFF;
+  border: 1px solid #E8EDF8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.pagination-btn:hover:not(.disabled) {
+  background: #F8F9FA;
+  border-color: #CB385C;
+  color: #CB385C;
+}
+
+.pagination-btn.disabled {
+  color: #CDCDCD;
+  cursor: not-allowed;
+  background: #F8F9FA;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 4px;
+  margin: 0 8px;
+}
+
+.page-number {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #616161;
+  background: #FFFFFF;
+  border: 1px solid #E8EDF8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-number:hover {
+  background: #F8F9FA;
+  border-color: #CB385C;
+  color: #CB385C;
+}
+
+.page-number.active {
+  background: #CB385C;
+  border-color: #CB385C;
+  color: #FFFFFF;
+}
+
+.page-number.active:hover {
+  background: #910024;
+  border-color: #910024;
+}
+
+/* Responsive Pagination */
+@media (max-width: 768px) {
+  .pagination-section {
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pagination-btn {
+    min-width: 60px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .page-number {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
 }
 </style>

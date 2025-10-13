@@ -18,6 +18,11 @@
         </a>
       </div>
       
+      <!-- 저장 버튼 -->
+      <button class="modal-save-btn" @click="saveChanges">
+        변경사항 저장
+      </button>
+      
       <!-- 닫기 버튼 -->
       <button class="modal-close-btn" @click="closeModal">
         <div class="close-icon"></div>
@@ -62,9 +67,28 @@
           </div>
         </div>
         
+        <!-- 프로젝트 메모 섹션 -->
+        <div class="section">
+          <h3 class="section-title">프로젝트 소개</h3>
+          <div class="memo-box">
+            <textarea 
+              v-model="projectMemo"
+              class="memo-textarea"
+              placeholder="프로젝트에 대한 소개를 입력하세요..."
+              @input="adjustTextareaHeight"
+              ref="memoTextarea"
+            ></textarea>
+          </div>
+        </div>
+        
         <!-- 프로젝트 요약 섹션 -->
         <div class="section">
-          <h3 class="section-title">프로젝트 요약</h3>
+          <div class="section-header">
+            <h3 class="section-title">프로젝트 요약</h3>
+            <div class="readme-icon" title="README가 없습니다">
+              <span class="readme-question">?</span>
+            </div>
+          </div>
           <div class="summary-box">
             <div v-if="parsedSummary" class="summary-content">
               <!-- 프로젝트 개요 (현재 JSON 스키마 기준) -->
@@ -220,7 +244,8 @@ export default {
   data() {
     return {
   languageChart: null,
-  showLanguagePanel: false
+  showLanguagePanel: false,
+  projectMemo: ''
     }
   },
   computed: {
@@ -414,6 +439,12 @@ export default {
     closeModal() {
       this.$emit('close')
     },
+    
+    saveChanges() {
+      console.log('Save changes clicked')
+      // TODO: 실제 저장 로직 구현
+      // 예: this.$emit('save', { memo: this.projectMemo })
+    },
     toggleLanguagePanel() {
       this.showLanguagePanel = !this.showLanguagePanel
     },
@@ -512,6 +543,17 @@ export default {
         this.languageChart.data.datasets[0].backgroundColor = chartData.map(item => item.color)
         this.languageChart.update()
       }
+    },
+    
+    adjustTextareaHeight() {
+      this.$nextTick(() => {
+        const textarea = this.$refs.memoTextarea
+        if (textarea) {
+          // 높이를 초기화하고 스크롤 높이에 맞춰 조정
+          textarea.style.height = 'auto'
+          textarea.style.height = Math.max(60, textarea.scrollHeight) + 'px'
+        }
+      })
     }
   },
   
@@ -520,6 +562,7 @@ export default {
       if (newVal) {
         this.$nextTick(() => {
           this.createLanguageChart()
+          this.adjustTextareaHeight()
         })
       } else {
         // 모달이 닫힐 때 차트 정리
@@ -527,8 +570,8 @@ export default {
           this.languageChart.destroy()
           this.languageChart = null
         }
-  // 언어 팝오버 닫기
-  this.showLanguagePanel = false
+        // 언어 팝오버 닫기
+        this.showLanguagePanel = false
       }
     },
     
@@ -651,6 +694,33 @@ export default {
   font-size: 16px;
 }
 
+/* 저장 버튼 */
+.modal-save-btn {
+  position: absolute;
+  right: 90px;
+  top: 40px;
+  background: #FCFCFC;
+  border: 1px solid #CB385C;
+  border-radius: 30px;
+  padding: 5px 17px;
+  font-size: 14px;
+  color: #CB385C;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 113px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Pretendard';
+  font-weight: 500;
+}
+
+.modal-save-btn:hover {
+  background: #CB385C;
+  color: #FCFCFC;
+}
+
 /* 닫기 버튼 */
 .modal-close-btn {
   position: absolute;
@@ -738,6 +808,12 @@ export default {
   gap: 15px;
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .section-title {
   font-family: 'Pretendard';
   font-style: normal;
@@ -746,6 +822,77 @@ export default {
   line-height: 21px;
   color: #262626;
   margin: 0;
+}
+
+/* README 아이콘 */
+.readme-icon {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  background: #FFD700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.readme-icon:hover {
+  background: #FFC107;
+  transform: scale(1.1);
+}
+
+.readme-question {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 17px;
+  color: #FFFFFF;
+  text-align: center;
+}
+
+/* README 툴팁 */
+.readme-icon::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  margin-bottom: 5px;
+}
+
+.readme-icon::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #333333;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  margin-bottom: -5px;
+}
+
+.readme-icon:hover::after,
+.readme-icon:hover::before {
+  opacity: 1;
+  visibility: visible;
 }
 
 .project-details-title {
@@ -908,6 +1055,61 @@ export default {
 
 .info-table::after {
   top: 55px;
+}
+
+/* 프로젝트 소개 */
+.memo-box {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 25px 35px;
+  gap: 10px;
+  width: 100%;
+  min-height: 110px;
+  background: #FAFBFD;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.memo-textarea {
+  width: 100%;
+  min-height: 60px;
+  max-height: 300px;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 18px;
+  color: #616161;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.memo-textarea::placeholder {
+  color: #949494;
+  font-style: italic;
+}
+
+.memo-textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.memo-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.memo-textarea::-webkit-scrollbar-thumb {
+  background: #CB385C;
+  border-radius: 3px;
+}
+
+.memo-textarea::-webkit-scrollbar-thumb:hover {
+  background: #A02D4A;
 }
 
 /* 프로젝트 요약 */

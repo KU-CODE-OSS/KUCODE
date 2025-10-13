@@ -2027,7 +2027,7 @@ class GetRepoSummaryAPIView(APIView):
 # Save repo introduction per Repository
 # ---------------------------------------------
 @csrf_exempt
-def save_repo_introduction(request):
+def update_repo_introduction(request):
     try:
         if request.method != 'POST':
             return JsonResponse({"status": "Error", "message": "Only POST method is allowed"}, status=405)
