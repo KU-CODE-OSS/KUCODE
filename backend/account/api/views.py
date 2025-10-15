@@ -1494,14 +1494,14 @@ def update_student_introduction(request):
         except Student.DoesNotExist:
             return JsonResponse({"status": "Error", "message": "account_student not found for given student id"}, status=404)
 
-        account_student.introduction = introduction or ''
+        account_student.account_introduction = introduction or ''
         account_student.save()
 
         return JsonResponse({
             "status": "OK",
             "message": "introduction updated",
             "student_id": account_student.id,
-            "introduction": account_student.introduction,
+            "introduction": account_student.account_introduction,
         })
 
     except Exception as e:
