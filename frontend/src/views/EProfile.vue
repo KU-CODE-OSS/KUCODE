@@ -14,17 +14,17 @@
           <div class="profile-header">
             <div class="profile-picture-placeholder"></div>
             <div class="profile-info">
-              <h2 class="profile-name">최다영 님</h2>
+              <h2 class="profile-name">{{ user.name || 'N/A' }} 님</h2>
               <div class="profile-details">
                 <div class="detail-item">
                   <i class="icon-location"></i>
                   <div class="detail-content">
-                    <span>고려대학교 컴퓨터학과</span>
+                    <span>{{ user.university || '' }} {{ user.department || '' }}</span>
                   </div>
                 </div>
                 <div class="detail-item">
                   <i class="icon-mail"></i>
-                  <span>joyyoj1@korea.ac.kr</span>
+                  <span>{{ user.email || 'N/A' }}</span>
                 </div>
               </div>
             </div>
@@ -257,13 +257,9 @@
               Repository
               <i :class="getSortIcon('name')"></i>
             </span>
-            <span class="sortable-header" @click="sortByColumn('star_count')">
-              Stars
-              <i :class="getSortIcon('star_count')"></i>
-            </span>
-            <span class="sortable-header" @click="sortByColumn('fork_count')">
-              Forks
-              <i :class="getSortIcon('fork_count')"></i>
+            <span class="sortable-header" @click="sortByColumn('type')">
+              Type
+              <i :class="getSortIcon('type')"></i>
             </span>
             <span class="sortable-header" @click="sortByColumn('commit_count')">
               Commits
@@ -276,6 +272,14 @@
             <span class="sortable-header" @click="sortByColumn('total_issue_count')">
               Issues
               <i :class="getSortIcon('total_issue_count')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('star_count')">
+              Stars
+              <i :class="getSortIcon('star_count')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('fork_count')">
+              Forks
+              <i :class="getSortIcon('fork_count')"></i>
             </span>
             <span>Language</span>
             <span class="sortable-header" @click="sortByColumn('contributors_count')">
@@ -336,11 +340,12 @@
             class="repo-name-clickable"
             @click="openRepoModal(repo)"
           >{{ repo.name || 'N/A' }}</span>
+          <span>{{ getRepoType(repo) }}</span>
+          <span>{{ getRepoCommits(repo)?.toLocaleString() || '0' }}</span>
+          <span>{{ getRepoPRs(repo)?.toLocaleString() || '0' }}</span>
+          <span>{{ getRepoIssues(repo)?.toLocaleString() || '0' }}</span>
           <span>{{ repo.star_count?.toLocaleString() || '0' }}</span>
           <span>{{ repo.fork_count?.toLocaleString() || '0' }}</span>
-          <span>{{ repo.commit_count?.toLocaleString() || '0' }}</span>
-          <span>{{ repo.pr_count?.toLocaleString() || '0' }}</span>
-          <span>{{ repo.total_issue_count?.toLocaleString() || '0' }}</span>
           <span :title="repo.language || 'N/A'">{{ repo.language || 'N/A' }}</span>
           <span>{{ repo.contributors_count?.toLocaleString() || '0' }}</span>
         </div>
@@ -455,10 +460,10 @@ export default {
   data() {
     return {
       user: {
-        name: '김이진',
+        name: '최다영',
         university: '고려대학교',
         department: '컴퓨터공학과',
-        email: 'abcde123@korea.ac.kr',
+        email: 'joyyoj1@korea.ac.kr',
         introduction: ''
       },
       techStack: {
@@ -466,9 +471,9 @@ export default {
         frameworks: []
       },
       stats: {
-        commitLines: { added: 1200, deleted: 500 },
-        issues: { created: 45, closed: 20 },
-        pullRequests: 120,
+        commitLines: { added: 0, deleted: 0 },
+        issues: { created: 0, closed: 0 },
+        pullRequests: 0,
         openSourceContributions: 0
       },
       // Tech Stack Chart Data
@@ -614,8 +619,26 @@ export default {
           // String comparison for repository names
           aVal = (aVal || '').toString().toLowerCase()
           bVal = (bVal || '').toString().toLowerCase()
-        } else if (['star_count', 'fork_count', 'commit_count', 'pr_count', 'total_issue_count', 'contributors_count'].includes(this.sortBy)) {
-          // Numeric comparison
+        } else if (this.sortBy === 'type') {
+          // Sort type: Owner first, then Contributor
+          aVal = this.getRepoType(a)
+          bVal = this.getRepoType(b)
+          aVal = aVal === 'Owner' ? 0 : aVal === 'Contributor' ? 1 : 2
+          bVal = bVal === 'Owner' ? 0 : bVal === 'Contributor' ? 1 : 2
+        } else if (this.sortBy === 'commit_count') {
+          // Use calculated commit count
+          aVal = this.getRepoCommits(a)
+          bVal = this.getRepoCommits(b)
+        } else if (this.sortBy === 'pr_count') {
+          // Use calculated PR count
+          aVal = this.getRepoPRs(a)
+          bVal = this.getRepoPRs(b)
+        } else if (this.sortBy === 'total_issue_count') {
+          // Use calculated issue count
+          aVal = this.getRepoIssues(a)
+          bVal = this.getRepoIssues(b)
+        } else if (['star_count', 'fork_count', 'contributors_count'].includes(this.sortBy)) {
+          // Numeric comparison for other fields
           aVal = parseInt(aVal) || 0
           bVal = parseInt(bVal) || 0
         }
@@ -1106,176 +1129,19 @@ export default {
 
       } catch (error) {
         console.error('히트맵 데이터 로드 실패:', error)
-        // 에러 시 기본 데이터 설정 (선택사항)
+        // 에러 시 빈 데이터 설정
         this.heatmapData = {
           Mon: {}, Tue: {}, Wed: {}, Thu: {}, Fri: {}, Sat: {}, Sun: {}
         }
-
-        this.repositoriesData = [
-          {
-            id: "822988405",
-            name: "20241R0136COSE48000",
-            category: "산학캡스톤디자인",
-            url: "https://github.com/dlwls423/20241R0136COSE48000",
-            student_id: "2020320088",
-            owner_github_id: "dlwls423",
-            created_at: "2024-07-02T08:07:03Z",
-            updated_at: "2024-07-02T08:07:03Z",
-            fork_count: 0,
-            star_count: 0,
-            commit_count: 276,
-            total_issue_count: 0,
-            pr_count: 0,
-            language: "Java, CSS, JavaScript, HTML",
-            language_percentages: {
-                "others": 0
-            },
-            contributors_count: 0,
-            contributors_list: [],
-            license: null,
-            has_readme: false,
-            description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
-            release_version: null,
-            is_course: true,
-          },
-
-          {
-            "id": "738312382",
-            "name": "value-together",
-            "is_course": false,
-            "category": "-",
-            "url": "https://github.com/dlwls423/value-together",
-            "student_id": "2020320088",
-            "owner_github_id": "dlwls423",
-            "created_at": "2024-01-03T00:04:04Z",
-            "updated_at": "2024-01-03T00:04:04Z",
-            "fork_count": 0,
-            "star_count": 0,
-            "commit_count": 739,
-            "total_issue_count": 0,
-            "pr_count": 0,
-            "language": "Java, Dockerfile",
-            "language_percentages": {
-                "Java": 99.9,
-                "Dockerfile": 0.1,
-                "others": 0
-            },
-            "contributors_count": 5,
-            "contributors_list": [
-                [
-                    "이예진",
-                    "컴퓨터학과",
-                    "2020320088",
-                    "dlwls423"
-                ]
-            ],
-            "license": null,
-            "has_readme": true,
-            "description": "가치 있는일을 같이 진행하자! 일정 공유 어플리케이션! ",
-            "release_version": null,
-            "monthly_commits": [],
-          },
-          {
-            "id": "725163550",
-            "name": "hobby-bungae",
-            "is_course": false,
-            "category": "-",
-            "url": "https://github.com/dlwls423/hobby-bungae",
-            "student_id": "2020320088",
-            "owner_github_id": "dlwls423",
-            "created_at": "2023-11-29T15:11:21Z",
-            "updated_at": "2023-11-29T15:11:21Z",
-            "fork_count": 0,
-            "star_count": 0,
-            "commit_count": 165,
-            "total_issue_count": 0,
-            "pr_count": 0,
-            "language": "Java",
-            "language_percentages": {
-                "Java": 100,
-                "others": 0
-            },
-            "contributors_count": 4,
-            "contributors_list": [
-                [
-                    "이예진",
-                    "컴퓨터학과",
-                    "2020320088",
-                    "dlwls423"
-                ]
-            ],
-            "license": null,
-            "has_readme": true,
-            "description": "스파르타 내일배움캠프 Spring 3기 - 스프링 숙련 주차 팀 과제 : HabbyMate",
-            "release_version": null,
-            "monthly_commits": [],
-          },
-          {
-            id: "822988409",
-            name: "20241R0136COSE48000",
-            category: "산학캡스톤",
-            url: "https://github.com/dlwls423/20241R0136COSE48000",
-            student_id: "2020320088",
-            owner_github_id: "dlwls423",
-            created_at: "2024-07-02T08:07:03Z",
-            updated_at: "2024-07-02T08:07:03Z",
-            fork_count: 0,
-            star_count: 0,
-            commit_count: 276,
-            total_issue_count: 0,
-            pr_count: 0,
-            language: "Java, CSS, JavaScript, HTML",
-            language_percentages: {
-                "others": 0
-            },
-            contributors_count: 0,
-            contributors_list: [],
-            license: null,
-            has_readme: false,
-            description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
-            release_version: null,
-            is_course: true,
-          },
-        ]
-
-        this.techStackData = {
-          "Java": 70,
-          "HTML": 13.5,
-          "JavaScript": 10.9,
-          "CSS": 5.5,
-          "C": 0.1,
-          "others": 0
-        }
-
-        const total_contributors_count = {
-            "0": 1,
-            "1": 13,
-            "2": 0,
-            "3": 0,
-            "4": 4,
-            "5+": 2
-        }
-
+        this.repositoriesData = []
+        this.techStackData = []
         this.teamSizeData = {
-          labels: ['1인', '2인', '3인', '4인', '5인 이상'],
-          data: [13, 0, 0, 4, 2]
-        }
-
-        const total_stats = {
-          "total_commits": 3555,
-          "added_lines": 509673,
-          "deleted_lines": 174331,
-          "total_changed_lines": 684004,
-          "total_open_issues": 3,
-          "total_closed_issues": 1,
-          "total_open_prs": 0,
-          "total_closed_prs": 3,
-          "total_stars": 3,
-          "total_forks": 0
+          labels: [],
+          data: []
         }
         this.stats = {
-          commitLines: {added: 0, deleted: 0},
-          issues: {created: 0, closed: 0},
+          commitLines: { added: 0, deleted: 0 },
+          issues: { created: 0, closed: 0 },
           pullRequests: 0,
           openSourceContributions: 0
         }
@@ -1387,14 +1253,7 @@ export default {
           console.warn('No total_language_percentage data found in API response')
         }
       } catch (error) {
-        this.techStackData = {
-          "Java": 70,
-          "HTML": 13.5,
-          "JavaScript": 10.9,
-          "CSS": 5.5,
-          "C": 0.1,
-          "others": 0
-        }
+        this.techStackData = []
         console.error('Error loading tech stack data:', error)
       }
     },
@@ -1528,18 +1387,23 @@ export default {
         if (responseData && responseData.total_stats) {
           // Process the total_stats data
           const totalStats = responseData.total_stats
+          
+          // Calculate total repositories count
+          const totalRepoCount = Array.isArray(responseData.repositories) 
+            ? responseData.repositories.length 
+            : (responseData.repositories ? 1 : 0)
 
           this.stats = {
             commitLines: {
-              added: parseInt(totalStats.added_lines) || 0, 
-              deleted: parseInt(totalStats.deleted_lines) || 0
+              added: parseInt(totalStats.owner_added_lines) || 0, 
+              deleted: parseInt(totalStats.owner_deleted_lines) || 0
             },
             issues: {
-              created: parseInt(totalStats.total_open_issues) || 0, 
-              closed: parseInt(totalStats.total_closed_issues) || 0
+              created: parseInt(totalStats.owner_open_issue_count) || 0, 
+              closed: parseInt(totalStats.owner_closed_issue_count) || 0
             },
-            pullRequests: parseInt(totalStats.total_closed_prs) || 0,
-            openSourceContributions: 0 // Keep as 0 as in your example
+            pullRequests: parseInt(totalStats.owner_open_pr_count) || 0,
+            openSourceContributions: totalRepoCount
           }
 
           console.log('Stats data loaded from API:', this.stats)
@@ -1564,7 +1428,8 @@ export default {
             ? responseData.repositories 
             : [responseData.repositories]
         } else {
-          this.repositoriesData = []
+          // Keep existing test data if no API data (don't clear it)
+          console.log('No repository data from API, keeping existing data')
         }
         
         console.log('Repository data processed:', this.repositoriesData)
@@ -1599,6 +1464,43 @@ export default {
         return 'icon-sort-default'
       }
       return this.sortDirection === 'asc' ? 'icon-sort-up' : 'icon-sort-down'
+    },
+
+    // Repository type, commits, PRs, issues calculation methods
+    getRepoType(repo) {
+      if (repo.is_owner) {
+        return 'Owner'
+      } else if (repo.is_contributor) {
+        return 'Contributor'
+      }
+      return 'N/A'
+    },
+
+    getRepoCommits(repo) {
+      if (repo.is_owner) {
+        return repo.user_commit_count || 0
+      } else if (repo.is_contributor) {
+        return repo.user_commit_count || 0
+      }
+      return 0
+    },
+
+    getRepoPRs(repo) {
+      if (repo.is_owner || repo.is_contributor) {
+        const openPRs = repo.owner_open_pr_count || 0
+        const closedPRs = repo.owner_closed_pr_count || 0
+        return openPRs + closedPRs
+      }
+      return 0
+    },
+
+    getRepoIssues(repo) {
+      if (repo.is_owner) {
+        return repo.owner_issue_count || 0
+      } else if (repo.is_contributor) {
+        return repo.owner_issue_count || 0
+      }
+      return 0
     },
 
     // Category dropdown methods
@@ -2446,31 +2348,33 @@ export default {
   width: 1280px;
   
   /* Column width variables - easily adjustable */
-  --col-category: 130px;
-  --col-repository: 220px;
-  --col-stars: 90px;
-  --col-forks: 90px;
-  --col-commits: 100px;
-  --col-prs: 80px;
-  --col-issues: 90px;
-  --col-language: 130px;
-  --col-contributors: 130px;
+  --col-category: 120px;
+  --col-repository: 180px;
+  --col-type: 100px;
+  --col-commits: 90px;
+  --col-prs: 70px;
+  --col-issues: 80px;
+  --col-stars: 80px;
+  --col-forks: 80px;
+  --col-language: 120px;
+  --col-contributors: 110px;
 }
 
 .table-header {
   background: #F8F9FA;
   display: grid;
   grid-template-columns: 
-    var(--col-category, 90px)
+    var(--col-category, 120px)
     var(--col-repository, 180px) 
-    var(--col-stars, 70px) 
-    var(--col-forks, 70px) 
-    var(--col-commits, 80px) 
-    var(--col-prs, 60px) 
-    var(--col-issues, 70px) 
-    var(--col-language, 100px) 
+    var(--col-type, 100px)
+    var(--col-commits, 90px) 
+    var(--col-prs, 70px) 
+    var(--col-issues, 80px) 
+    var(--col-stars, 80px) 
+    var(--col-forks, 80px) 
+    var(--col-language, 120px) 
     var(--col-contributors, 110px);
-  gap: 18px;
+  gap: 15px;
   padding: 15px 20px;
   font-size: 16px;
   font-weight: 600;
@@ -2508,16 +2412,17 @@ export default {
 .table-row {
   display: grid;
   grid-template-columns: 
-    var(--col-category, 90px)
+    var(--col-category, 120px)
     var(--col-repository, 180px) 
-    var(--col-stars, 70px) 
-    var(--col-forks, 70px) 
-    var(--col-commits, 80px) 
-    var(--col-prs, 60px) 
-    var(--col-issues, 70px) 
-    var(--col-language, 100px) 
+    var(--col-type, 100px)
+    var(--col-commits, 90px) 
+    var(--col-prs, 70px) 
+    var(--col-issues, 80px) 
+    var(--col-stars, 80px) 
+    var(--col-forks, 80px) 
+    var(--col-language, 120px) 
     var(--col-contributors, 110px);
-  gap: 18px;
+  gap: 15px;
   padding: 12px 20px;
   align-items: center;
   text-align: center;

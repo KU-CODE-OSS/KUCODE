@@ -93,10 +93,10 @@ export default {
       return this.getHeatmapLevel(count)
     },
     getHeatmapLevel(count) {
-      if (count <= 5) return 'level-0'
-      if (count <= 15) return 'level-1'
-      if (count <= 30) return 'level-2'
-      return 'level-3'
+      if (count === 0) return 'level-0'    // 0개
+      if (count <= 10) return 'level-1'    // 1 ~ 10개
+      if (count <= 20) return 'level-2'    // 11 ~ 20개
+      return 'level-3'                     // 21개 이상
     }
   }
 }
