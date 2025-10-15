@@ -36,21 +36,23 @@
           <div class="info-table">
             <!-- 헤더 행 -->
             <div class="table-header">
-              <span>Stars</span>
-              <span>Forks</span>
+              <span>Type</span>
               <span>Commits</span>
               <span>PRs</span>
               <span>Issues</span>
+              <span>Stars</span>
+              <span>Forks</span>
               <span>Languages</span>
               <span>Contributors</span>
             </div>
             <!-- 데이터 행 -->
             <div class="table-data">
+              <span>{{ getRepoType() }}</span>
+              <span>{{ getRepoCommits()?.toLocaleString() || '0' }}</span>
+              <span>{{ getRepoPRs()?.toLocaleString() || '0' }}</span>
+              <span>{{ getRepoIssues()?.toLocaleString() || '0' }}</span>
               <span>{{ repo?.star_count?.toLocaleString() || '0' }}</span>
               <span>{{ repo?.fork_count?.toLocaleString() || '0' }}</span>
-              <span>{{ repo?.commit_count?.toLocaleString() || '0' }}</span>
-              <span>{{ repo?.pr_count?.toLocaleString() || '0' }}</span>
-              <span>{{ repo?.total_issue_count?.toLocaleString() || '0' }}</span>
               <div class="language-cell">
                 <span class="language-preview">{{ topLanguagesPreview }}</span>
                 <button class="link-button" @click.stop="toggleLanguagePanel" v-if="allLanguagesList.length > 0">전체 보기</button>
@@ -554,6 +556,45 @@ export default {
           textarea.style.height = Math.max(60, textarea.scrollHeight) + 'px'
         }
       })
+    },
+
+    // Repository type, commits, PRs, issues calculation methods
+    getRepoType() {
+      if (!this.repo) return 'N/A'
+      if (this.repo.is_owner) {
+        return 'Owner'
+      } else if (this.repo.is_contributor) {
+        return 'Contributor'
+      }
+      return 'N/A'
+    },
+
+    getRepoCommits() {
+      if (!this.repo) return 0
+      if (this.repo.is_owner || this.repo.is_contributor) {
+        return this.repo.user_commit_count || 0
+      }
+      return 0
+    },
+
+    getRepoPRs() {
+      if (!this.repo) return 0
+      if (this.repo.is_owner || this.repo.is_contributor) {
+        const openPRs = this.repo.owner_open_pr_count || 0
+        const closedPRs = this.repo.owner_closed_pr_count || 0
+        return openPRs + closedPRs
+      }
+      return 0
+    },
+
+    getRepoIssues() {
+      if (!this.repo) return 0
+      if (this.repo.is_owner) {
+        return this.repo.owner_issue_count || 0
+      } else if (this.repo.is_contributor) {
+        return this.repo.owner_issue_count || 0
+      }
+      return 0
     }
   },
   
@@ -911,7 +952,7 @@ export default {
 .table-data {
   display: flex;
   align-items: center;
-  gap: 35px;
+  gap: 25px;
   position: absolute;
   width: 100%;
   height: 19px;
@@ -927,7 +968,7 @@ export default {
 
 .table-header span,
 .table-data span {
-  width: 120px;
+  width: 100px;
   height: 19px;
   font-family: 'Pretendard';
   font-style: normal;
