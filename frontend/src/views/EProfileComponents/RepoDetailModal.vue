@@ -176,7 +176,10 @@
               
               <!-- X축 라벨 -->
               <div class="x-axis-labels">
-                <span v-for="month in recentMonths" :key="month">{{ month }}</span>
+                <div v-for="month in recentMonths" :key="month" class="x-axis-label">
+                  <div class="label-month">{{ month.split('-')[1] }}월</div>
+                  <div class="label-year">{{ month.split('-')[0] }}</div>
+                </div>
               </div>
               
               <!-- 범례 -->
@@ -251,15 +254,35 @@ export default {
     }
   },
   computed: {
-    recentMonths() {
-      const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
-      const currentDate = new Date()
-      const currentMonth = currentDate.getMonth()
+    // 가장 최신 월 찾기
+    latestMonth() {
+      if (!this.repo || !this.repo.monthly_commits || this.repo.monthly_commits.length === 0) {
+        // 데이터가 없으면 현재 날짜 사용
+        const now = new Date()
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      }
       
+      // monthly_commits에서 가장 최신 월 찾기
+      const months = this.repo.monthly_commits.map(([month]) => month)
+      return months.sort().reverse()[0] // 내림차순 정렬 후 첫 번째 (가장 최신)
+    },
+    
+    recentMonths() {
+      // 가장 최신 월 기준으로 12개월 전부터 최신 월까지 13개월
+      const [latestYear, latestMonthNum] = this.latestMonth.split('-').map(Number)
       const recentMonths = []
-      for (let i = 11; i >= 0; i--) {
-        const monthIndex = (currentMonth - i + 12) % 12
-        recentMonths.push(months[monthIndex])
+      
+      for (let i = 12; i >= 0; i--) {
+        let year = latestYear
+        let month = latestMonthNum - i
+        
+        // 월이 0 이하로 가면 이전 년도로
+        while (month <= 0) {
+          month += 12
+          year -= 1
+        }
+        
+        recentMonths.push(`${year}-${String(month).padStart(2, '0')}`)
       }
       
       return recentMonths
@@ -275,17 +298,10 @@ export default {
         monthlyDataMap[month] = count
       })
       
-      // 현재 날짜 기준으로 최근 12개월 데이터 생성
-      const currentDate = new Date()
-      const monthlyData = []
-      
-      for (let i = 11; i >= 0; i--) {
-        const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
-        const yearMonth = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}`
-        
-        // API 데이터에서 해당 월의 커밋 수 찾기
-        monthlyData.push(monthlyDataMap[yearMonth] || 0)
-      }
+      // recentMonths 기준으로 데이터 생성
+      const monthlyData = this.recentMonths.map(yearMonth => {
+        return monthlyDataMap[yearMonth] || 0
+      })
       
       return monthlyData
     },
@@ -294,17 +310,27 @@ export default {
     yAxisLabels() {
       const maxValue = Math.max(...this.timelineData, 1)
       
-      // 최대값이 10 이하면 5개 구간, 100 이하면 10개 구간, 그 이상이면 10개 구간
-      let intervals = 5
-      if (maxValue > 10) intervals = 10
-      
-      const labels = []
-      for (let i = intervals; i >= 0; i--) {
-        const value = Math.round((i / intervals) * maxValue)
-        labels.push(value)
+      // 최댓값에 따라 Y축 라벨 생성
+      if (maxValue <= 5) {
+        // 0, 1, 2, 3, 4, 5
+        return [5, 4, 3, 2, 1, 0]
+      } else if (maxValue <= 10) {
+        // 0, 2, 4, 6, 8, 10
+        const step = 2
+        const labels = []
+        for (let i = Math.ceil(maxValue / step) * step; i >= 0; i -= step) {
+          labels.push(i)
+        }
+        return labels
+      } else {
+        // 적당한 간격으로 6개 구간 생성
+        const step = Math.ceil(maxValue / 5)
+        const labels = []
+        for (let i = 5; i >= 0; i--) {
+          labels.push(i * step)
+        }
+        return labels
       }
-      
-      return labels
     },
     
     // 언어 전체 목록 및 프리뷰
@@ -331,10 +357,11 @@ export default {
       const points = []
       const chartWidth = 493
       const chartHeight = 200
-      const maxValue = Math.max(...this.timelineData, 1)
+      // Y축 라벨의 최댓값 사용 (라벨과 차트 일치)
+      const maxValue = this.yAxisLabels[0]
       
       this.timelineData.forEach((value, index) => {
-        const x = (index / 11) * chartWidth // 0~11 인덱스를 0~493으로 매핑
+        const x = (index / 12) * chartWidth // 0~12 인덱스를 0~493으로 매핑 (13개월)
         const y = chartHeight - (value / maxValue) * chartHeight // 값이 클수록 위쪽에 위치
         points.push({ x, y })
       })
@@ -1298,6 +1325,8 @@ export default {
 .timeline-chart {
   width: 600px;
   flex-shrink: 0;
+  min-height: 320px;
+  padding-bottom: 40px;
 }
 
 .language-chart {
@@ -1367,7 +1396,7 @@ export default {
 
 .x-axis-labels {
   position: absolute;
-  bottom: -30px;
+  bottom: -45px;
   left: 67px;
   width: 493px;
   max-width: calc(100% - 67px);
@@ -1376,9 +1405,29 @@ export default {
   font-family: 'Pretendard';
   font-style: normal;
   font-weight: 400;
-  font-size: 14px;
-  line-height: 17px;
   color: #262626;
+}
+
+.x-axis-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+}
+
+.label-month {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: #262626;
+}
+
+.label-year {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 13px;
+  color: #616161;
 }
 
 .chart-legend {
