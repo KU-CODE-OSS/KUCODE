@@ -99,11 +99,20 @@ class ProtectedView(View):
             'user': request.user.username
         })
         
-        
-def studentIdNumber_verification(student_id):
+@csrf_exempt
+# @require_http_methods(["GET"])
+def studentIdNumber_verification(request):
+    student_id = request.GET.get('student_id')
+    student_name = request.GET.get('student_name')
+    
+    if not student_name:
+        return JsonResponse({'error': 'student_name parameter is required'}, status=400)
+    
+    if not student_id:
+        return JsonResponse({'error': 'student_id parameter is required'}, status=400)
+    
     try:
-        access_token = get_kuopenapi_access_token()
-        
+        access_token = settings.KOREAUNIV_OPENAPI_TOKEN
         data = []
         empty_list = []
         
@@ -131,12 +140,12 @@ def studentIdNumber_verification(student_id):
             grad_api_url = "https://kuapi.korea.ac.kr/svc/academic-record/student/undergraduate-gra"  # 실제 API 엔드포인트로 변경
 
             headers = {
-            'AUTH_KEY': access_token
+                'AUTH_KEY': access_token
             }
             
             params = {
-            'client_id': settings.KOREAUNIV_OPENAPI_CLIENT_ID,
-            'std_id' : student_id
+                'client_id': settings.KOREAUNIV_OPENAPI_CLIENT_ID,
+                'std_id' : student_id
             }
             
             # API 호출
@@ -196,13 +205,14 @@ def studentIdNumber_verification(student_id):
             })
  
         if data != []:
-            if data[0].std_id == student_id:
-                return True
-            
+            if (data[0]['STD_ID'] == student_id) & (data[0]['KOR_NM'] == student_name):
+                return JsonResponse({'verified': True})
             else:
-                return False
+                return JsonResponse({'verified': False})
+            
+        else:
+            return JsonResponse({'verified': False})
     
     except Exception as e:
-        print("CHECK HERE DUMBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASS")
         print(e)
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)

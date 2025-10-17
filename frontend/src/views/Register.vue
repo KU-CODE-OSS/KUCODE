@@ -197,60 +197,23 @@ const isFormValid = computed(() => {
 // Handle student ID verification
 const handleStudentIdVerification = async () => {
   try {
-    studentIdVerifying.value = false
+    studentIdVerifying.value = true
     basicInfoError.value = ''
+    studentIdVerified.value = false
 
-    // TODO: Catch up on KU API status -> fix 학번 verification once caught up
-    // const result = await checkStudentIdNumber(studentId)
-    // console.log(result)
+    const result = await checkStudentIdNumber(studentId.value, studentName.value)
 
-    // const undergraduate_url = "https://kuapi.korea.ac.kr/svc/academic-record/student/undergraduate-gra"
-    // const CLIENT_ID = "openSourcePlat"
-    // const ACCESS_TOKEN = "6dff0e00dfc84b1a81a7d6a1b3c66a0d"
+    studentIdVerified.value = result.data.verified
 
-    // // Make API call to verify student ID
-    // const response = await axios.get(undergraduate_url, {
-    //   headers: {'AUTH_KEY': ACCESS_TOKEN},
-    //   params: {
-    //     'client_id': CLIENT_ID,
-    //     'std_id': studentId.value
-    //   },
-    // })
-
-  // --------------------
-  //   // Handle successful verification response
-  //   if (response.data.success) {
-  //     studentIdVerified.value = true
-  //     // Optionally auto-fill verified student name from response
-  //     if (response.data.studentName) {
-  //       studentName.value = response.data.studentName
-  //     }
-  //   } else {
-  //     basicInfoError.value = response.data.error || '학번 인증에 실패했습니다'
-  //   }
-
-  // } catch (error) {
-  //   // Handle API error
-  //   if (error.response) {
-  //     // Server responded with error status
-  //     basicInfoError.value = error.response.data?.message || '학번 인증에 실패했습니다'
-  //   } else if (error.request) {
-  //     // Network error
-  //     basicInfoError.value = '네트워크 오류가 발생했습니다'
-  //   } else {
-  //     // Other error
-  //     basicInfoError.value = '인증 중 오류가 발생했습니다'
-  //   }
-  //   console.error('Student ID verification error:', error)
-  // } finally {
-  //   studentIdVerifying.value = false
+    if (!result.data.verified) {
+        basicInfoError.value = '학번 인증에 실패했습니다'
+    }
   }
-  catch{
-    studentIdVerifying.value = false
-    studentIdVerified.value = true
+  catch(error) {
+      basicInfoError.value = '학번 인증 중 오류가 발생했습니다'
+      console.error('Student ID verification error:', error)
   } finally {
-    studentIdVerifying.value = false
-    studentIdVerified.value = true
+    studentIdVerifying.value = false  // Set to false when done
   }
 
 }

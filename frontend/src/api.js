@@ -81,8 +81,8 @@ function ajax(url, method, { params = {}, data = {}, headers = {} } = {}) {
   });
 }
 
-export function checkStudentIdNumber() {
-  return ajax(ip_for_develop + '/authentication/studentIdNumber_verification', 'get')
+export function checkStudentIdNumber(student_id, student_name) {
+  return ajax(ip_for_develop + '/authentication/studentIdNumber_verification', 'get', {params: {student_id: student_id, student_name: student_name}})
 }
 
 export function updateStudentIntroduction() {
