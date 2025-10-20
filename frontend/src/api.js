@@ -81,16 +81,26 @@ function ajax(url, method, { params = {}, data = {}, headers = {} } = {}) {
   });
 }
 
-export function checkStudentIdNumber() {
-  return ajax(ip_for_develop + '/authentication/studentIdNumber_verification', 'get')
+export function checkStudentIdNumber(student_id, student_name) {
+  return ajax(ip_for_develop + '/authentication/studentIdNumber_verification', 'get', {params: {student_id: student_id, student_name: student_name}})
 }
 
-export function updateStudentIntroduction() {
-  return ajax(ip_for_develop + '/account/update_student_introduction', 'post')
+export function createSignUp(signup_data) {
+  return ajax(ip_for_develop + '/login/signup', 'post', {
+    data: signup_data
+  })
 }
 
-export function updateStudentTechnologyStack() {
-  return ajax(ip_for_develop + '/account/update_student_technology_stack', 'post')
+export function updateStudentIntroduction(uid, data) {
+  return ajax(ip_for_develop + '/account/update_student_introduction', 'post', {
+    data: data
+  })
+}
+
+export function updateStudentTechnologyStack(uid, data) {
+  return ajax(ip_for_develop + '/account/update_student_technology_stack', 'post', {
+    data: data
+  })
 }
 
 export function updateRepoIntroduction() {
