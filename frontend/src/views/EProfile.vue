@@ -447,6 +447,7 @@ import EProfileHeatmap from './EProfileComponents/EProfileHeatmap.vue'
 import RepoDetailModal from './EProfileComponents/RepoDetailModal.vue'
 import { getEProfileHeatmap } from '@/api.js'
 import { processActivityData, processAddedLinesData, estimateCommitLines } from './EProfileComponents/chartUtils/chartUtils.js'
+import { auth } from '../services/firebase'
 
 // Register Chart.js components
 Chart.register(...registerables)
@@ -557,7 +558,7 @@ export default {
       sortBy: '',
       sortDirection: 'asc', // 'asc' or 'desc'
       // githubId: "YeoJune", // 임시 테스트용 GitHub 아이디 - TODO: 실제 로그인된 사용자 ID로 변경 필요
-      student_uuid: 'rcmPR6PxrxcXP7Pmz0D2tZKsifm2',
+      student_uuid: auth.currentUser.uid,
       // Category dropdown state
       categoryDropdownOpen: {},
       categoryOptions: [

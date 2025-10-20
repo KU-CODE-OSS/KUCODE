@@ -85,6 +85,12 @@ export function checkStudentIdNumber(student_id, student_name) {
   return ajax(ip_for_develop + '/authentication/studentIdNumber_verification', 'get', {params: {student_id: student_id, student_name: student_name}})
 }
 
+export function createSignUp(signup_data) {
+  return ajax(ip_for_develop + '/login/signup', 'post', {
+    data: signup_data
+  })
+}
+
 export function updateStudentIntroduction() {
   return ajax(ip_for_develop + '/account/update_student_introduction', 'post')
 }

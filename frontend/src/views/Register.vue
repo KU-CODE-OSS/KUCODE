@@ -56,7 +56,7 @@
             </div>
             <button 
               @click="handleStudentIdVerification"
-              :disabled="!studentId || studentIdVerifying"
+              :disabled="!studentId || studentIdVerifying || studentIdVerified"
               :class="[
                 'verification-button',
                 studentIdVerified ? 'verified' : ''
@@ -156,10 +156,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
+import { createUserWithEmailAndPassword, sendEmailVerification, getAuth, onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../services/firebase'
 import { useAuthStore } from '../stores/auth'
-import { checkStudentIdNumber } from '@/api.js'
+import { checkStudentIdNumber, createSignUp } from '@/api.js'
 import axios from 'axios'
 
 // Form data
@@ -251,7 +251,20 @@ const handleSignUp = async () => {
     )
     
     const firebaseUser = userCredential.user
-    
+    const user = auth.currentUser
+
+    if (user != null) {
+      const signup_data = {
+        'uuid': user.uid,
+        'student_id': studentId.value,
+        'role': 'STUDENT',
+        'name': studentName.value,
+        'email': email.value,
+      }
+
+      await createSignUp(signup_data)
+    }
+
     // Send email verification
     await sendEmailVerification(firebaseUser)
 
