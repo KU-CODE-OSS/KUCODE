@@ -91,12 +91,16 @@ export function createSignUp(signup_data) {
   })
 }
 
-export function updateStudentIntroduction() {
-  return ajax(ip_for_develop + '/account/update_student_introduction', 'post')
+export function updateStudentIntroduction(uid, data) {
+  return ajax(ip_for_develop + '/account/update_student_introduction', 'post', {
+    data: data
+  })
 }
 
-export function updateStudentTechnologyStack() {
-  return ajax(ip_for_develop + '/account/update_student_technology_stack', 'post')
+export function updateStudentTechnologyStack(uid, data) {
+  return ajax(ip_for_develop + '/account/update_student_technology_stack', 'post', {
+    data: data
+  })
 }
 
 export function updateRepoIntroduction() {

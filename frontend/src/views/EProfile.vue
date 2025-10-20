@@ -2,7 +2,7 @@
   <div class="e-portfolio">
     <!-- Save Button -->
       <div class="save-section">
-        <button class="save-btn" @click="showSavePopup">변경사항 저장</button>
+        <button class="save-btn" @click="showProfileSavePopup">변경사항 저장</button>
       </div>
       
     <!-- Main Content -->
@@ -445,7 +445,7 @@
 import { Chart, registerables } from 'chart.js'
 import EProfileHeatmap from './EProfileComponents/EProfileHeatmap.vue'
 import RepoDetailModal from './EProfileComponents/RepoDetailModal.vue'
-import { getEProfileHeatmap } from '@/api.js'
+import { getEProfileHeatmap, updateStudentIntroduction, updateStudentTechnologyStack } from '@/api.js'
 import { processActivityData, processAddedLinesData, estimateCommitLines } from './EProfileComponents/chartUtils/chartUtils.js'
 import { auth } from '../services/firebase'
 
@@ -732,7 +732,8 @@ export default {
   },
   methods: {
     // 저장 버튼 클릭 핸들러
-    showSavePopup() {
+    async showProfileSavePopup() {
+      await this.saveProfileChanges()
       alert('저장 완료')
     },
     // 모달 관련 메서드
@@ -1036,9 +1037,19 @@ export default {
       // Handle profile editing
       console.log('Edit profile clicked');
     },
-    saveChanges() {
-      // Handle saving changes
-      console.log('Save changes clicked');
+    async saveProfileChanges() {
+      try {
+        const student_techStack_dropdown = []
+        this.techStackDropdowns.forEach(dropdown => {
+          student_techStack_dropdown.push(dropdown.selected)
+        })
+
+        await updateStudentIntroduction(auth.currentUser.uid, this.user.introduction)
+        await updateStudentTechnologyStack(auth.currentUser.uid, this.techStackDropdowns)
+      }
+      catch (error) {
+        console.error('Failed to save profile data:', error)
+      }
     },
     async loadActivityChart() {
       try {
