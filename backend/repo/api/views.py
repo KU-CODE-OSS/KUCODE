@@ -2061,9 +2061,9 @@ def update_repo_introduction(request):
             return JsonResponse({"status": "Error", "message": "repository not found"}, status=404)
 
         # 선택: 요청자가 해당 repo의 owner인지 확인 (owner_github_id 매칭)
-        owner_mismatch = account_student.github_id and repo.owner_github_id and (account_student.github_id != repo.owner_github_id)
-        if owner_mismatch:
-            return JsonResponse({"status": "Error", "message": "permission denied: not the repo owner"}, status=403)
+        # owner_mismatch = account_student.github_id and repo.owner_github_id and (account_student.github_id != repo.owner_github_id)
+        # if owner_mismatch:
+        #     return JsonResponse({"status": "Error", "message": "permission denied: not the repo owner"}, status=403)
 
         repo.repo_introduction = project_introduction or ''
         repo.save()

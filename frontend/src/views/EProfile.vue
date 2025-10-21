@@ -1045,7 +1045,7 @@ export default {
         })
 
         await updateStudentIntroduction(auth.currentUser.uid, this.user.introduction)
-        await updateStudentTechnologyStack(auth.currentUser.uid, this.techStackDropdowns)
+        await updateStudentTechnologyStack(auth.currentUser.uid, student_techStack_dropdown)
       }
       catch (error) {
         console.error('Failed to save profile data:', error)
@@ -1123,6 +1123,8 @@ export default {
         const response = await getEProfileHeatmap(this.student_uuid)
         this.heatmapData = response.data.heatmap
         console.log('히트맵 데이터 로드 완료:', this.heatmapData)
+
+        this.user.introduction = response.data.student_introduction
         
         // Load repositories data from the same response
         this.loadRepositoriesFromResponse(response.data)
@@ -1283,8 +1285,6 @@ export default {
             techStackArray.forEach((tech, index) => {
               if (index < this.techStackDropdowns.length && tech) {
                 this.techStackDropdowns[index].selected = tech
-                // Update available options for other dropdowns
-                this.updateDropdownOptions()
               }
             })
             console.log('Tech stack dropdowns loaded from API:', this.techStackDropdowns)

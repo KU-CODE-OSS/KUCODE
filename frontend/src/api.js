@@ -92,17 +92,38 @@ export function createSignUp(signup_data) {
 }
 
 export function updateStudentIntroduction(uid, data) {
+  const body = {
+    uuid: uid,
+    introduction: data
+  }
+
   return ajax(ip_for_develop + '/account/update_student_introduction', 'post', {
-    data: data
+    headers: { 'Content-Type': 'application/json' },
+    data: body
   })
 }
 
 export function updateStudentTechnologyStack(uid, data) {
+  const body = {
+    uuid: uid,
+    technology_stack: data
+  }
+
   return ajax(ip_for_develop + '/account/update_student_technology_stack', 'post', {
-    data: data
+    headers: { 'Content-Type': 'application/json' },
+    data: body
   })
 }
 
-export function updateRepoIntroduction() {
-  return ajax(ip_for_develop + '/repo/update_repo_introduction', 'post')
+export function updateRepoIntroduction(uid, repo_id, data) {
+  const body = {
+    uuid: uid,
+    repo_id: repo_id,
+    project_introduction: data
+  }
+
+  return ajax(ip_for_develop + '/repo/update_repo_introduction', 'post', {
+    headers: { 'Content-Type': 'application/json' },
+    data: body
+  })
 }

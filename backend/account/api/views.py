@@ -1478,7 +1478,6 @@ def update_student_introduction(request):
 
         uuid = body.get('uuid')
         introduction = body.get('introduction', '')
-
         if not uuid:
             return JsonResponse({"status": "Error", "message": "uuid is required"}, status=400)
 
@@ -1542,10 +1541,8 @@ def update_student_technology_stack(request):
             account_student = Student.objects.get(id=login_student.id)
         except Student.DoesNotExist:
             return JsonResponse({"status": "Error", "message": "account_student not found for given student id"}, status=404)
-
-        # 소문자 슬러그화
-        normalized_stack = [s.strip().lower() for s in technology_stack if isinstance(s, str) and s.strip()]
-        account_student.technology_stack = normalized_stack
+        
+        account_student.technology_stack = technology_stack
         account_student.save()
 
         return JsonResponse({

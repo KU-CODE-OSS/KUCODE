@@ -19,7 +19,7 @@
       </div>
       
       <!-- 저장 버튼 -->
-      <button class="modal-save-btn" @click="saveChanges">
+      <button class="modal-save-btn" @click="showProfileSavePopup">
         변경사항 저장
       </button>
       
@@ -230,6 +230,8 @@
 
 <script>
 import { Chart, registerables } from 'chart.js'
+import { updateRepoIntroduction } from '@/api';
+import { auth } from '@/services/firebase';
 
 // Register Chart.js components
 Chart.register(...registerables)
@@ -469,10 +471,9 @@ export default {
       this.$emit('close')
     },
     
-    saveChanges() {
-      console.log('Save changes clicked')
-      // TODO: 실제 저장 로직 구현
-      // 예: this.$emit('save', { memo: this.projectMemo })
+    async showProfileSavePopup() {
+      await updateRepoIntroduction(auth.currentUser.uid, this.repo.id, this.projectMemo)
+      alert('저장 완료')
     },
     toggleLanguagePanel() {
       this.showLanguagePanel = !this.showLanguagePanel
@@ -585,6 +586,12 @@ export default {
       })
     },
 
+    getRepoMemo() {
+      if (!this.repo) return 0
+      this.projectMemo = this.repo.project_introduction
+      return 0
+    },
+
     // Repository type, commits, PRs, issues calculation methods
     getRepoType() {
       if (!this.repo) return 'N/A'
@@ -648,6 +655,7 @@ export default {
         if (this.show && this.languageChart) {
           this.updateLanguageChart()
         }
+        this.getRepoMemo()
       },
       deep: true
     }
