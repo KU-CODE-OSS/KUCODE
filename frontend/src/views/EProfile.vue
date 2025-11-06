@@ -174,7 +174,7 @@
           <!-- Activity Trends Chart -->
             <div class="chart-card">
               <div class="chart-header">
-                <h3 class="chart-title-text">활동 추이</h3>
+                <h3 class="chart-title-text">활동 추이 (최근 6개월)</h3>
               <!-- <div class="chart-toggle">
                 <span 
                   :class="{ 'toggle-active': activityViewMode === 'monthly', 'toggle-inactive': activityViewMode !== 'monthly' }"
@@ -217,7 +217,7 @@
           <!-- Project Team Size Chart -->
             <div class="chart-card">
               <div class="chart-header">
-                <h3 class="chart-title-text">활동 프로젝트 비율</h3>
+                <h3 class="chart-title-text">팀 프로젝트 비율</h3>
               </div>
             <p class="chart-description">{{ teamSizeDescription }}</p>
             
@@ -231,7 +231,7 @@
         <!-- Activity Time Pattern -->
           <div class="time-pattern-card">
             <div class="section-header">
-              <h3 class="chart-title-text">활동 시간대</h3>
+              <h3 class="chart-title-text">활동 시간대 ()</h3>
             </div>
           
           <!-- 히트맵 컴포넌트 -->
