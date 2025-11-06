@@ -6,10 +6,22 @@
       <div class="heatmap-legend-top">
         <span>Less</span>
         <div class="legend-squares">
-          <div class="legend-square level-0"></div>
-          <div class="legend-square level-1"></div>
-          <div class="legend-square level-2"></div>
-          <div class="legend-square level-3"></div>
+          <div 
+            class="legend-square level-0" 
+            :data-tooltip="getLevelRange(0)"
+          ></div>
+          <div 
+            class="legend-square level-1" 
+            :data-tooltip="getLevelRange(1)"
+          ></div>
+          <div 
+            class="legend-square level-2" 
+            :data-tooltip="getLevelRange(2)"
+          ></div>
+          <div 
+            class="legend-square level-3" 
+            :data-tooltip="getLevelRange(3)"
+          ></div>
         </div>
         <span>More</span>
       </div>
@@ -38,7 +50,7 @@
                 :key="hour"
                 :class="getHeatmapCellClass(dayData, hour)"
                 class="heatmap-cell"
-                :title="`${dayData.day} ${hour-1}시: ${getActivityCount(dayData, hour)}개`"
+                :data-tooltip="`(${getActivityCount(dayData, hour)})`"
               ></div>
             </div>
           </div>
@@ -97,6 +109,20 @@ export default {
       if (count <= 10) return 'level-1'    // 1 ~ 10개
       if (count <= 20) return 'level-2'    // 11 ~ 20개
       return 'level-3'                     // 21개 이상
+    },
+    getLevelRange(level) {
+      switch(level) {
+        case 0:
+          return '0개'
+        case 1:
+          return '1~10개'
+        case 2:
+          return '11~20개'
+        case 3:
+          return '21개 이상'
+        default:
+          return ''
+      }
     }
   }
 }
@@ -154,7 +180,7 @@ export default {
 .heatmap-row {
   display: grid;
   grid-template-columns: repeat(24, 1fr);
-  gap: 1px;
+  gap: 2px; /* Increase gap to make cells more separated */
 }
 
 .heatmap-cell {
@@ -163,10 +189,45 @@ export default {
   border-radius: 2px;
   cursor: pointer;
   transition: opacity 0.2s;
+  position: relative;
+  border: 1px solid transparent; /* Ensure cells are visually separated */
+  box-sizing: border-box;
 }
 
 .heatmap-cell:hover {
   opacity: 0.8;
+}
+
+.heatmap-cell:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 5px;
+  padding: 4px 8px;
+  background: #262626;
+  color: #FFFFFF;
+  font-size: 12px;
+  white-space: nowrap;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 1;
+  transition: opacity 0s;
+}
+
+.heatmap-cell:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  margin-bottom: -1px;
+  border: 4px solid transparent;
+  border-top-color: #262626;
+  pointer-events: none;
+  z-index: 1000;
 }
 
 .heatmap-x-labels {
@@ -191,6 +252,40 @@ export default {
   width: 20px;
   height: 20px;
   border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+}
+
+.legend-square:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 5px;
+  padding: 4px 8px;
+  background: #262626;
+  color: #FFFFFF;
+  font-size: 12px;
+  white-space: nowrap;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 1;
+  transition: opacity 0s;
+}
+
+.legend-square:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  margin-bottom: -1px;
+  border: 4px solid transparent;
+  border-top-color: #262626;
+  pointer-events: none;
+  z-index: 1000;
 }
 
 .level-0 { background: rgba(89, 115, 147, 0.04); }

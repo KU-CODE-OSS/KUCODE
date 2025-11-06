@@ -18,9 +18,9 @@
         </a>
       </div>
       
-      <!-- 저장 버튼 -->
-      <button class="modal-save-btn" @click="saveChanges">
-        변경사항 저장
+      <!-- 편집/저장 버튼 -->
+      <button class="modal-save-btn" @click="isEditingRepo ? saveChanges() : toggleEditMode()">
+        {{ isEditingRepo ? '저장' : '편집' }}
       </button>
       
       <!-- 닫기 버튼 -->
@@ -79,6 +79,7 @@
               placeholder="프로젝트에 대한 소개를 입력하세요..."
               @input="adjustTextareaHeight"
               ref="memoTextarea"
+              :disabled="!isEditingRepo"
             ></textarea>
           </div>
         </div>
@@ -230,6 +231,8 @@
 
 <script>
 import { Chart, registerables } from 'chart.js'
+import { updateRepoIntroduction } from '@/api.js'
+import { auth } from '../../services/firebase'
 
 // Register Chart.js components
 Chart.register(...registerables)
@@ -250,7 +253,8 @@ export default {
     return {
   languageChart: null,
   showLanguagePanel: false,
-  projectMemo: ''
+  projectMemo: '',
+  isEditingRepo: false
     }
   },
   computed: {
@@ -466,13 +470,31 @@ export default {
   },
   methods: {
     closeModal() {
+      this.isEditingRepo = false
       this.$emit('close')
     },
     
-    saveChanges() {
-      console.log('Save changes clicked')
-      // TODO: 실제 저장 로직 구현
-      // 예: this.$emit('save', { memo: this.projectMemo })
+    toggleEditMode() {
+      this.isEditingRepo = true
+    },
+    
+    async saveChanges() {
+      try {
+        if (!this.repo || !this.repo.id) {
+          alert('레포지토리 정보가 없습니다.')
+          return
+        }
+        
+        const uuid = auth.currentUser.uid
+        const repo_id = this.repo.id
+        
+        await updateRepoIntroduction(uuid, repo_id, this.projectMemo)
+        this.isEditingRepo = false
+        alert('저장 완료')
+      } catch (error) {
+        console.error('저장 실패:', error)
+        alert('저장에 실패했습니다. 다시 시도해주세요.')
+      }
     },
     toggleLanguagePanel() {
       this.showLanguagePanel = !this.showLanguagePanel
@@ -628,6 +650,13 @@ export default {
   watch: {
     show(newVal) {
       if (newVal) {
+        // 모달이 열릴 때 프로젝트 소개 데이터 로드
+        if (this.repo && this.repo.project_introduction) {
+          this.projectMemo = this.repo.project_introduction
+        } else {
+          this.projectMemo = ''
+        }
+        this.isEditingRepo = false
         this.$nextTick(() => {
           this.createLanguageChart()
           this.adjustTextareaHeight()
@@ -1156,6 +1185,12 @@ export default {
   padding: 0;
   margin: 0;
   overflow-y: auto;
+}
+
+.memo-textarea:disabled {
+  background: #F5F7FA;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .memo-textarea::placeholder {
