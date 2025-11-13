@@ -18,9 +18,9 @@
         </a>
       </div>
       
-      <!-- 저장 버튼 -->
-      <button class="modal-save-btn" @click="saveChanges">
-        변경사항 저장
+      <!-- 편집/저장 버튼 -->
+      <button class="modal-save-btn" @click="isEditingRepo ? saveChanges() : toggleEditMode()">
+        {{ isEditingRepo ? '저장' : '편집' }}
       </button>
       
       <!-- 닫기 버튼 -->
@@ -36,21 +36,23 @@
           <div class="info-table">
             <!-- 헤더 행 -->
             <div class="table-header">
-              <span>Stars</span>
-              <span>Forks</span>
+              <span>Type</span>
               <span>Commits</span>
               <span>PRs</span>
               <span>Issues</span>
+              <span>Stars</span>
+              <span>Forks</span>
               <span>Languages</span>
               <span>Contributors</span>
             </div>
             <!-- 데이터 행 -->
             <div class="table-data">
+              <span>{{ getRepoType() }}</span>
+              <span>{{ getRepoCommits()?.toLocaleString() || '0' }}</span>
+              <span>{{ getRepoPRs()?.toLocaleString() || '0' }}</span>
+              <span>{{ getRepoIssues()?.toLocaleString() || '0' }}</span>
               <span>{{ repo?.star_count?.toLocaleString() || '0' }}</span>
               <span>{{ repo?.fork_count?.toLocaleString() || '0' }}</span>
-              <span>{{ repo?.commit_count?.toLocaleString() || '0' }}</span>
-              <span>{{ repo?.pr_count?.toLocaleString() || '0' }}</span>
-              <span>{{ repo?.total_issue_count?.toLocaleString() || '0' }}</span>
               <div class="language-cell">
                 <span class="language-preview">{{ topLanguagesPreview }}</span>
                 <button class="link-button" @click.stop="toggleLanguagePanel" v-if="allLanguagesList.length > 0">전체 보기</button>
@@ -69,14 +71,15 @@
         
         <!-- 프로젝트 메모 섹션 -->
         <div class="section">
-          <h3 class="section-title">프로젝트 메모</h3>
+          <h3 class="section-title">프로젝트 소개</h3>
           <div class="memo-box">
             <textarea 
               v-model="projectMemo"
               class="memo-textarea"
-              placeholder="프로젝트에 대한 메모를 입력하세요..."
+              placeholder="프로젝트에 대한 소개를 입력하세요..."
               @input="adjustTextareaHeight"
               ref="memoTextarea"
+              :disabled="!isEditingRepo"
             ></textarea>
           </div>
         </div>
@@ -174,7 +177,10 @@
               
               <!-- X축 라벨 -->
               <div class="x-axis-labels">
-                <span v-for="month in recentMonths" :key="month">{{ month }}</span>
+                <div v-for="month in recentMonths" :key="month" class="x-axis-label">
+                  <div class="label-month">{{ month.split('-')[1] }}월</div>
+                  <div class="label-year">{{ month.split('-')[0] }}</div>
+                </div>
               </div>
               
               <!-- 범례 -->
@@ -225,6 +231,8 @@
 
 <script>
 import { Chart, registerables } from 'chart.js'
+import { updateRepoIntroduction } from '@/api.js'
+import { auth } from '../../services/firebase'
 
 // Register Chart.js components
 Chart.register(...registerables)
@@ -245,19 +253,40 @@ export default {
     return {
   languageChart: null,
   showLanguagePanel: false,
-  projectMemo: ''
+  projectMemo: '',
+  isEditingRepo: false
     }
   },
   computed: {
-    recentMonths() {
-      const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
-      const currentDate = new Date()
-      const currentMonth = currentDate.getMonth()
+    // 가장 최신 월 찾기
+    latestMonth() {
+      if (!this.repo || !this.repo.monthly_commits || this.repo.monthly_commits.length === 0) {
+        // 데이터가 없으면 현재 날짜 사용
+        const now = new Date()
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      }
       
+      // monthly_commits에서 가장 최신 월 찾기
+      const months = this.repo.monthly_commits.map(([month]) => month)
+      return months.sort().reverse()[0] // 내림차순 정렬 후 첫 번째 (가장 최신)
+    },
+    
+    recentMonths() {
+      // 가장 최신 월 기준으로 12개월 전부터 최신 월까지 13개월
+      const [latestYear, latestMonthNum] = this.latestMonth.split('-').map(Number)
       const recentMonths = []
-      for (let i = 11; i >= 0; i--) {
-        const monthIndex = (currentMonth - i + 12) % 12
-        recentMonths.push(months[monthIndex])
+      
+      for (let i = 12; i >= 0; i--) {
+        let year = latestYear
+        let month = latestMonthNum - i
+        
+        // 월이 0 이하로 가면 이전 년도로
+        while (month <= 0) {
+          month += 12
+          year -= 1
+        }
+        
+        recentMonths.push(`${year}-${String(month).padStart(2, '0')}`)
       }
       
       return recentMonths
@@ -273,17 +302,10 @@ export default {
         monthlyDataMap[month] = count
       })
       
-      // 현재 날짜 기준으로 최근 12개월 데이터 생성
-      const currentDate = new Date()
-      const monthlyData = []
-      
-      for (let i = 11; i >= 0; i--) {
-        const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
-        const yearMonth = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}`
-        
-        // API 데이터에서 해당 월의 커밋 수 찾기
-        monthlyData.push(monthlyDataMap[yearMonth] || 0)
-      }
+      // recentMonths 기준으로 데이터 생성
+      const monthlyData = this.recentMonths.map(yearMonth => {
+        return monthlyDataMap[yearMonth] || 0
+      })
       
       return monthlyData
     },
@@ -292,17 +314,27 @@ export default {
     yAxisLabels() {
       const maxValue = Math.max(...this.timelineData, 1)
       
-      // 최대값이 10 이하면 5개 구간, 100 이하면 10개 구간, 그 이상이면 10개 구간
-      let intervals = 5
-      if (maxValue > 10) intervals = 10
-      
-      const labels = []
-      for (let i = intervals; i >= 0; i--) {
-        const value = Math.round((i / intervals) * maxValue)
-        labels.push(value)
+      // 최댓값에 따라 Y축 라벨 생성
+      if (maxValue <= 5) {
+        // 0, 1, 2, 3, 4, 5
+        return [5, 4, 3, 2, 1, 0]
+      } else if (maxValue <= 10) {
+        // 0, 2, 4, 6, 8, 10
+        const step = 2
+        const labels = []
+        for (let i = Math.ceil(maxValue / step) * step; i >= 0; i -= step) {
+          labels.push(i)
+        }
+        return labels
+      } else {
+        // 적당한 간격으로 6개 구간 생성
+        const step = Math.ceil(maxValue / 5)
+        const labels = []
+        for (let i = 5; i >= 0; i--) {
+          labels.push(i * step)
+        }
+        return labels
       }
-      
-      return labels
     },
     
     // 언어 전체 목록 및 프리뷰
@@ -329,10 +361,11 @@ export default {
       const points = []
       const chartWidth = 493
       const chartHeight = 200
-      const maxValue = Math.max(...this.timelineData, 1)
+      // Y축 라벨의 최댓값 사용 (라벨과 차트 일치)
+      const maxValue = this.yAxisLabels[0]
       
       this.timelineData.forEach((value, index) => {
-        const x = (index / 11) * chartWidth // 0~11 인덱스를 0~493으로 매핑
+        const x = (index / 12) * chartWidth // 0~12 인덱스를 0~493으로 매핑 (13개월)
         const y = chartHeight - (value / maxValue) * chartHeight // 값이 클수록 위쪽에 위치
         points.push({ x, y })
       })
@@ -437,13 +470,31 @@ export default {
   },
   methods: {
     closeModal() {
+      this.isEditingRepo = false
       this.$emit('close')
     },
     
-    saveChanges() {
-      console.log('Save changes clicked')
-      // TODO: 실제 저장 로직 구현
-      // 예: this.$emit('save', { memo: this.projectMemo })
+    toggleEditMode() {
+      this.isEditingRepo = true
+    },
+    
+    async saveChanges() {
+      try {
+        if (!this.repo || !this.repo.id) {
+          alert('레포지토리 정보가 없습니다.')
+          return
+        }
+        
+        const uuid = auth.currentUser.uid
+        const repo_id = this.repo.id
+        
+        await updateRepoIntroduction(uuid, repo_id, this.projectMemo)
+        this.isEditingRepo = false
+        alert('저장 완료')
+      } catch (error) {
+        console.error('저장 실패:', error)
+        alert('저장에 실패했습니다. 다시 시도해주세요.')
+      }
     },
     toggleLanguagePanel() {
       this.showLanguagePanel = !this.showLanguagePanel
@@ -554,12 +605,58 @@ export default {
           textarea.style.height = Math.max(60, textarea.scrollHeight) + 'px'
         }
       })
+    },
+
+    // Repository type, commits, PRs, issues calculation methods
+    getRepoType() {
+      if (!this.repo) return 'N/A'
+      if (this.repo.is_owner) {
+        return 'Owner'
+      } else if (this.repo.is_contributor) {
+        return 'Contributor'
+      }
+      return 'N/A'
+    },
+
+    getRepoCommits() {
+      if (!this.repo) return 0
+      if (this.repo.is_owner || this.repo.is_contributor) {
+        return this.repo.user_commit_count || 0
+      }
+      return 0
+    },
+
+    getRepoPRs() {
+      if (!this.repo) return 0
+      if (this.repo.is_owner || this.repo.is_contributor) {
+        const openPRs = this.repo.owner_open_pr_count || 0
+        const closedPRs = this.repo.owner_closed_pr_count || 0
+        return openPRs + closedPRs
+      }
+      return 0
+    },
+
+    getRepoIssues() {
+      if (!this.repo) return 0
+      if (this.repo.is_owner) {
+        return this.repo.owner_issue_count || 0
+      } else if (this.repo.is_contributor) {
+        return this.repo.owner_issue_count || 0
+      }
+      return 0
     }
   },
   
   watch: {
     show(newVal) {
       if (newVal) {
+        // 모달이 열릴 때 프로젝트 소개 데이터 로드
+        if (this.repo && this.repo.project_introduction) {
+          this.projectMemo = this.repo.project_introduction
+        } else {
+          this.projectMemo = ''
+        }
+        this.isEditingRepo = false
         this.$nextTick(() => {
           this.createLanguageChart()
           this.adjustTextareaHeight()
@@ -911,7 +1008,7 @@ export default {
 .table-data {
   display: flex;
   align-items: center;
-  gap: 35px;
+  gap: 25px;
   position: absolute;
   width: 100%;
   height: 19px;
@@ -927,7 +1024,7 @@ export default {
 
 .table-header span,
 .table-data span {
-  width: 120px;
+  width: 100px;
   height: 19px;
   font-family: 'Pretendard';
   font-style: normal;
@@ -1057,7 +1154,7 @@ export default {
   top: 55px;
 }
 
-/* 프로젝트 메모 */
+/* 프로젝트 소개 */
 .memo-box {
   display: flex;
   justify-content: flex-start;
@@ -1088,6 +1185,12 @@ export default {
   padding: 0;
   margin: 0;
   overflow-y: auto;
+}
+
+.memo-textarea:disabled {
+  background: #F5F7FA;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .memo-textarea::placeholder {
@@ -1257,6 +1360,8 @@ export default {
 .timeline-chart {
   width: 600px;
   flex-shrink: 0;
+  min-height: 320px;
+  padding-bottom: 40px;
 }
 
 .language-chart {
@@ -1326,7 +1431,7 @@ export default {
 
 .x-axis-labels {
   position: absolute;
-  bottom: -30px;
+  bottom: -45px;
   left: 67px;
   width: 493px;
   max-width: calc(100% - 67px);
@@ -1335,9 +1440,29 @@ export default {
   font-family: 'Pretendard';
   font-style: normal;
   font-weight: 400;
-  font-size: 14px;
-  line-height: 17px;
   color: #262626;
+}
+
+.x-axis-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+}
+
+.label-month {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: #262626;
+}
+
+.label-year {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 13px;
+  color: #616161;
 }
 
 .chart-legend {

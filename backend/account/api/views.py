@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from account.models import User,Student
+from login.models import Student as LoginStudent
 from course.models import Course, Course_registration, Course_project
 from repo.models import Repo_commit, Repo_pr ,Repo_issue, Repository,Repo_contributor
 from django.db.models import Sum,Count
@@ -1460,3 +1461,99 @@ def student_course_read_excel(request):
     )
     response["Content-Disposition"] = 'attachment; filename="students_data.xlsx"'
     return response
+
+# ========================================
+# Profile Update Endpoints
+# ========================================
+@csrf_exempt
+def update_student_introduction(request):
+    try:
+        if request.method != 'POST':
+            return JsonResponse({"status": "Error", "message": "POST method required"}, status=405)
+
+        try:
+            body = json.loads(request.body.decode('utf-8') or '{}')
+        except Exception:
+            body = {}
+
+        uuid = body.get('uuid')
+        introduction = body.get('introduction', '')
+
+        if not uuid:
+            return JsonResponse({"status": "Error", "message": "uuid is required"}, status=400)
+
+        # login_student에서 uuid로 학번(id) 찾기
+        try:
+            login_student = LoginStudent.objects.get(member_id=uuid)
+        except LoginStudent.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": "login_student not found for given uuid"}, status=404)
+
+        # account_student 갱신
+        try:
+            account_student = Student.objects.get(id=login_student.id)
+        except Student.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": "account_student not found for given student id"}, status=404)
+
+        account_student.account_introduction = introduction or ''
+        account_student.save()
+
+        return JsonResponse({
+            "status": "OK",
+            "message": "introduction updated",
+            "student_id": account_student.id,
+            "introduction": account_student.account_introduction,
+        })
+
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+
+@csrf_exempt
+def update_student_technology_stack(request):
+    try:
+        if request.method != 'POST':
+            return JsonResponse({"status": "Error", "message": "POST method required"}, status=405)
+
+        try:
+            body = json.loads(request.body.decode('utf-8') or '{}')
+        except Exception:
+            body = {}
+
+        uuid = body.get('uuid')
+        technology_stack = body.get('technology_stack')
+
+        if not uuid:
+            return JsonResponse({"status": "Error", "message": "uuid is required"}, status=400)
+
+        # technology_stack 유효성 검사: 문자열 리스트만 허용
+        if technology_stack is None:
+            technology_stack = []
+        if not isinstance(technology_stack, list) or not all(isinstance(x, str) for x in technology_stack):
+            return JsonResponse({"status": "Error", "message": "technology_stack must be a list of strings"}, status=400)
+
+        # login_student에서 uuid로 학번(id) 찾기
+        try:
+            login_student = LoginStudent.objects.get(member_id=uuid)
+        except LoginStudent.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": "login_student not found for given uuid"}, status=404)
+
+        # account_student 갱신
+        try:
+            account_student = Student.objects.get(id=login_student.id)
+        except Student.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": "account_student not found for given student id"}, status=404)
+
+        # 소문자 슬러그화
+        normalized_stack = [s.strip().lower() for s in technology_stack if isinstance(s, str) and s.strip()]
+        account_student.technology_stack = normalized_stack
+        account_student.save()
+
+        return JsonResponse({
+            "status": "OK",
+            "message": "technology_stack updated",
+            "student_id": account_student.id,
+            "technology_stack": account_student.technology_stack,
+        })
+
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)

@@ -80,3 +80,34 @@ function ajax(url, method, { params = {}, data = {}, headers = {} } = {}) {
     });
   });
 }
+
+export function checkStudentIdNumber(student_id, student_name) {
+  return ajax(ip_for_develop + '/authentication/studentIdNumber_verification', 'get', {params: {student_id: student_id, student_name: student_name}})
+}
+
+export function createSignUp(signup_data) {
+  return ajax(ip_for_develop + '/login/signup', 'post', {
+    data: signup_data
+  })
+}
+
+export function updateStudentIntroduction(uuid, introduction) {
+  return ajax(ip_for_develop + '/account/update_student_introduction', 'post', {
+    data: { uuid, introduction },
+    headers: { 'Content-Type': 'application/json' }
+  })
+}
+
+export function updateStudentTechnologyStack(uuid, technology_stack) {
+  return ajax(ip_for_develop + '/account/update_student_technology_stack', 'post', {
+    data: { uuid, technology_stack },
+    headers: { 'Content-Type': 'application/json' }
+  })
+}
+
+export function updateRepoIntroduction(uuid, repo_id, project_introduction) {
+  return ajax(ip_for_develop + '/repo/update_repo_introduction', 'post', {
+    data: { uuid, repo_id, project_introduction },
+    headers: { 'Content-Type': 'application/json' }
+  })
+}

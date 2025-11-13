@@ -12,5 +12,8 @@ urlpatterns = [
 
     #admin_login
     path("admin_login", views.admin_login, name="admin_login"),
+    
+    #signup
+    path("signup", views.signup, name="signup"),
 
 ]

@@ -1329,7 +1329,10 @@ def repo_account_read_db(request):
             student = Student.objects.get(id=student_id)
             github_id = student.github_id
             # github_id로 Repository 조회
-            repo_list = Repository.objects.filter(owner_github_id=github_id)
+            owner_repo_list = Repository.objects.filter(owner_github_id=github_id)
+            contributor_repo_list = Repository.objects.filter(contributors__icontains=github_id)
+            owner_contributor_repo_list = owner_repo_list | contributor_repo_list
+            
             # 전체 언어 비율 처리
             if isinstance(student.total_language_percentage, dict) and student.total_language_percentage:
                 sorted_total_language_percentages = sorted(student.total_language_percentage.items(), key=itemgetter(1), reverse=True)
@@ -1346,42 +1349,76 @@ def repo_account_read_db(request):
         except Exception as e:
             return JsonResponse({"status": "Error", "message": f"Error resolving uuid to github_id: {str(e)}"}, status=500)
         
-        if not repo_list:
-            return JsonResponse({"status": "Error", "message": f"No repositories found for github_id: {github_id}"}, status=404)
+        if not owner_repo_list:
+            return JsonResponse({"status": "Error", "message": f"No user repositories found for github_id: {github_id}"}, status=404)
+        elif not contributor_repo_list:
+            return JsonResponse({"status": "Error", "message": f"No contributed repositories found for github_id: {github_id}"}, status=404)
 
-        repo_ids = [r.id for r in repo_list]
+        owner_repo_ids = [r.id for r in owner_repo_list]
+        contributor_repo_ids = [r.id for r in contributor_repo_list]
         today = datetime.now()
         one_year_ago = today - timedelta(days=365)
 
         # 지난 1년간의 커밋 기록을 한 번만 조회
-        all_commits = Repo_commit.objects.filter(repo_id__in=repo_ids)
-        
+        all_commits = Repo_commit.objects.filter(repo_id__in=owner_repo_ids + contributor_repo_ids)
+        owner_all_commits = Repo_commit.objects.filter(repo_id__in=owner_repo_ids, author_github_id=github_id)
+        contributor_all_commits = Repo_commit.objects.filter(repo_id__in=contributor_repo_ids, author_github_id=github_id)
+        owner_contributor_all_commits = Repo_commit.objects.filter(repo_id__in=owner_repo_ids + contributor_repo_ids, author_github_id=github_id)
         # 모든 기간 커밋 통계 계산
-        commit_total_data = all_commits.aggregate(
+        all_commit_total_data = all_commits.aggregate(
+            added_lines=Sum('added_lines'),
+            deleted_lines=Sum('deleted_lines'),
+            total_commits=Count('id')
+        )
+        owner_commit_total_data = owner_all_commits.aggregate(
+            added_lines=Sum('added_lines'),
+            deleted_lines=Sum('deleted_lines'),
+            total_commits=Count('id')
+        )
+        contributor_commit_total_data = contributor_all_commits.aggregate(
             added_lines=Sum('added_lines'),
             deleted_lines=Sum('deleted_lines'),
             total_commits=Count('id')
         )
         total_stats = {
-            'total_commits': commit_total_data.get('total_commits', 0) or 0,
-            'added_lines': commit_total_data.get('added_lines', 0) or 0,
-            'deleted_lines': commit_total_data.get('deleted_lines', 0) or 0,
-            'total_changed_lines': (commit_total_data.get('added_lines', 0) or 0) + (commit_total_data.get('deleted_lines', 0) or 0),
+            'all_total_commits': all_commit_total_data.get('total_commits', 0) or 0,
+            'all_added_lines': all_commit_total_data.get('added_lines', 0) or 0,
+            'all_deleted_lines': all_commit_total_data.get('deleted_lines', 0) or 0,
+            'all_total_changed_lines': (all_commit_total_data.get('added_lines', 0) or 0) + (all_commit_total_data.get('deleted_lines', 0) or 0),
+            'owner_total_commits': owner_commit_total_data.get('total_commits', 0) or 0,
+            'owner_added_lines': owner_commit_total_data.get('added_lines', 0) or 0,
+            'owner_deleted_lines': owner_commit_total_data.get('deleted_lines', 0) or 0,
+            'owner_total_changed_lines': (owner_commit_total_data.get('added_lines', 0) or 0) + (owner_commit_total_data.get('deleted_lines', 0) or 0),
+            'contributor_total_commits': contributor_commit_total_data.get('total_commits', 0) or 0,
+            'contributor_added_lines': contributor_commit_total_data.get('added_lines', 0) or 0,
+            'contributor_deleted_lines': contributor_commit_total_data.get('deleted_lines', 0) or 0,
+            'contributor_total_changed_lines': (contributor_commit_total_data.get('added_lines', 0) or 0) + (contributor_commit_total_data.get('deleted_lines', 0) or 0),
         }
 
+        # 이슈, PR 등 리포지토리 관련 통계는 기존과 동일하게 repo_list를 순회하며 계산
+        total_open_issue_count = 0
+        total_closed_issue_count = 0
+        owner_open_issue_count = 0
+        owner_closed_issue_count = 0
+        total_open_pr_count = 0
+        total_closed_pr_count = 0
+        owner_open_pr_count = 0
+        owner_closed_pr_count = 0
+        total_star_count = 0
+        total_fork_count = 0
 
         monthly_commit_counts = {}
         monthly_added_lines = {}
         monthly_deleted_lines = {}
         monthly_changed_lines = {}
-        repo_monthly_commits = {repo.id: {} for repo in repo_list}
+        repo_monthly_commits = {repo.id: {} for repo in owner_contributor_repo_list}
 
         # 히트맵 데이터 초기화
         days_of_week = {0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun'}
         heatmap_data = {day: {str(hour): 0 for hour in range(24)} for day in days_of_week.values()}
         
         # 조회된 커밋 데이터셋을 한 번만 순회하며 모든 통계 데이터를 동시에 집계
-        for commit in all_commits:
+        for commit in owner_contributor_all_commits:
             try:
                 commit_datetime = datetime.strptime(commit.last_update, '%Y-%m-%dT%H:%M:%SZ')
             except (ValueError, TypeError):
@@ -1407,9 +1444,9 @@ def repo_account_read_db(request):
                 heatmap_data[day_name][str(hour)] += 1
 
         # repo_monthly_commits 별도 처리: 각 레포지토리별 마지막 커밋 날짜 기준으로 1년 전까지 계산
-        for repo in repo_list:
+        for repo in owner_contributor_repo_list:
             # 해당 레포지토리의 커밋들만 필터링
-            repo_commits = [commit for commit in all_commits if commit.repo.id == repo.id]
+            repo_commits = [commit for commit in all_commits if commit.repo.id == repo.id and commit.author_github_id == github_id]
             
             if not repo_commits:
                 continue
@@ -1447,31 +1484,33 @@ def repo_account_read_db(request):
         sorted_deleted_lines = sorted(monthly_deleted_lines.items())
         sorted_changed_lines = sorted(monthly_changed_lines.items())
 
-        # 이슈, PR 등 리포지토리 관련 통계는 기존과 동일하게 repo_list를 순회하며 계산
-        total_open_issue_count = sum(repo.open_issue_count for repo in repo_list)
-        total_closed_issue_count = sum(repo.closed_issue_count for repo in repo_list)
-        total_open_pr_count = sum(repo.open_pr_count for repo in repo_list)
-        total_closed_pr_count = sum(repo.closed_pr_count for repo in repo_list)
-        total_star_count = sum(repo.star_count for repo in repo_list)
-        total_fork_count = sum(repo.fork_count for repo in repo_list)
-
-        total_stats.update({
-            'total_open_issues': total_open_issue_count,
-            'total_closed_issues': total_closed_issue_count,
-            'total_open_prs': total_open_pr_count,
-            'total_closed_prs': total_closed_pr_count,
-            'total_stars': total_star_count,
-            'total_forks': total_fork_count,
-        })
-
         total_contributors_count = {'1':0, '2':0, '3':0, '4':0, '5+':0}
 
         data =[]
-        for r in repo_list:
+        for r in owner_contributor_repo_list:
             
-            pr_count = Repo_pr.objects.filter(repo=r).count()
+            repo_user_commit_count = Repo_commit.objects.filter(repo=r, author_github_id=github_id).count()
+            repo_total_open_pr_count = Repo_pr.objects.filter(repo=r, state='open').count()
+            repo_total_closed_pr_count = Repo_pr.objects.filter(repo=r, state='closed').count()
+            repo_owner_open_pr_count = Repo_pr.objects.filter(repo=r, requester_id=github_id, state='open').count()
+            repo_owner_closed_pr_count = Repo_pr.objects.filter(repo=r, requester_id=github_id, state='closed').count()
+            repo_total_open_issue_count = Repo_issue.objects.filter(repo=r, state='open').count()
+            repo_total_closed_issue_count = Repo_issue.objects.filter(repo=r, state='closed').count()
+            repo_owner_open_issue_count = Repo_issue.objects.filter(repo=r, publisher_github_id=github_id, state='open').count()
+            repo_owner_closed_issue_count = Repo_issue.objects.filter(repo=r, publisher_github_id=github_id, state='closed').count()
             contributors_list = r.contributors.split(",")
             contributors_count = len(contributors_list)
+
+            total_open_pr_count += repo_total_open_pr_count
+            total_closed_pr_count += repo_total_closed_pr_count
+            owner_open_pr_count += repo_owner_open_pr_count
+            owner_closed_pr_count += repo_owner_closed_pr_count
+            total_open_issue_count += repo_total_open_issue_count
+            total_closed_issue_count += repo_total_closed_issue_count
+            owner_open_issue_count += repo_owner_open_issue_count
+            owner_closed_issue_count += repo_owner_closed_issue_count
+            total_star_count += r.star_count
+            total_fork_count += r.fork_count
 
             if all(value.strip() == '' for value in contributors_list): # contributors 없을 시
                 contributors_count = 0  
@@ -1521,6 +1560,8 @@ def repo_account_read_db(request):
             # Send raw summary as stored (full JSON string/dict)
 
             repo_info = {
+            'is_owner': r in owner_repo_list,
+            'is_contributor': r in contributor_repo_list,
             'id': r.id,
             'name': r.name,
             'is_course': r.is_course,
@@ -1532,9 +1573,12 @@ def repo_account_read_db(request):
             'updated_at': r.updated_at,
             'fork_count': r.fork_count,
             'star_count': r.star_count,
-            'commit_count': r.commit_count,
-            'total_issue_count': int(r.open_issue_count) + int(r.closed_issue_count),
-            "pr_count":pr_count,
+            'total_commit_count': r.commit_count,
+            'user_commit_count': repo_user_commit_count,
+            'total_issue_count': int(repo_total_open_issue_count) + int(repo_total_closed_issue_count),
+            'owner_issue_count': int(repo_owner_open_issue_count) + int(repo_owner_closed_issue_count),
+            'total_pr_count': int(repo_total_open_pr_count) + int(repo_total_closed_pr_count),
+            'owner_pr_count': int(repo_owner_open_pr_count) + int(repo_owner_closed_pr_count),
             'language': r.language,
             'language_percentages': top_5_language_percentages,
             'contributors_count': contributors_count,
@@ -1542,13 +1586,27 @@ def repo_account_read_db(request):
             'license': r.license,
             'has_readme': r.has_readme,
             'description': r.description,
+            'project_introduction': r.repo_introduction or "",
             'release_version': r.release_version,
             'summary': r.summary,
             'monthly_commits': repo_monthly_commit_data
             }
             
             data.append(repo_info)
-    
+
+        total_stats.update({
+            'total_open_issue_count': total_open_issue_count,
+            'total_closed_issue_count': total_closed_issue_count,
+            'owner_open_issue_count': owner_open_issue_count,
+            'owner_closed_issue_count': owner_closed_issue_count,
+            'total_open_pr_count': total_open_pr_count,
+            'total_closed_pr_count': total_closed_pr_count,
+            'owner_open_pr_count': owner_open_pr_count,
+            'owner_closed_pr_count': owner_closed_pr_count,
+            'total_star_count': total_star_count,
+            'total_fork_count': total_fork_count,
+        })
+
         response_data = {
             'repositories': data,
             'total_language_percentage': top_5_total_language_percentages,
@@ -1561,6 +1619,8 @@ def repo_account_read_db(request):
                 'changed_lines': sorted_changed_lines
             },
             'heatmap': heatmap_data,
+            'student_introduction': student.account_introduction or "",
+            'student_technology_stack': student.technology_stack or [],
         }
 
         return JsonResponse(response_data, safe=False)
@@ -1962,3 +2022,58 @@ class GetRepoSummaryAPIView(APIView):
             "bullet_description": frontend_data.get("key_functionalities"),
             "tech_stack": frontend_data.get("tech_stack"),
         }, status=status.HTTP_200_OK)
+
+# ---------------------------------------------
+# Save repo introduction per Repository
+# ---------------------------------------------
+@csrf_exempt
+def update_repo_introduction(request):
+    try:
+        if request.method != 'POST':
+            return JsonResponse({"status": "Error", "message": "Only POST method is allowed"}, status=405)
+
+        try:
+            body = json.loads(request.body.decode('utf-8') or '{}')
+        except Exception:
+            body = {}
+
+        uuid = body.get('uuid')
+        repo_id = body.get('repo_id')
+        project_introduction = body.get('project_introduction', '')
+
+        if not uuid:
+            return JsonResponse({"status": "Error", "message": "uuid is required"}, status=400)
+        if not repo_id:
+            return JsonResponse({"status": "Error", "message": "repo_id is required"}, status=400)
+
+        # uuid → login_student → account_student 검증 (소유자 확인용)
+        try:
+            login_student = LoginStudent.objects.get(member_id=uuid)
+            account_student = Student.objects.get(id=login_student.id)
+        except LoginStudent.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": "login_student not found for given uuid"}, status=404)
+        except Student.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": "account_student not found for given student id"}, status=404)
+
+        try:
+            repo = Repository.objects.get(id=repo_id)
+        except Repository.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": "repository not found"}, status=404)
+
+        # 선택: 요청자가 해당 repo의 owner인지 확인 (owner_github_id 매칭)
+        owner_mismatch = account_student.github_id and repo.owner_github_id and (account_student.github_id != repo.owner_github_id)
+        if owner_mismatch:
+            return JsonResponse({"status": "Error", "message": "permission denied: not the repo owner"}, status=403)
+
+        repo.repo_introduction = project_introduction or ''
+        repo.save()
+
+        return JsonResponse({
+            "status": "OK",
+            "message": "project_introduction saved",
+            "repo_id": repo.id,
+            "project_introduction": repo.repo_introduction,
+        })
+
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)

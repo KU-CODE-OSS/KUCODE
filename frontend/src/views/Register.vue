@@ -56,7 +56,7 @@
             </div>
             <button 
               @click="handleStudentIdVerification"
-              :disabled="!studentId || studentIdVerifying"
+              :disabled="!studentId || studentIdVerifying || studentIdVerified"
               :class="[
                 'verification-button',
                 studentIdVerified ? 'verified' : ''
@@ -156,9 +156,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
+import { createUserWithEmailAndPassword, sendEmailVerification, getAuth, onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../services/firebase'
 import { useAuthStore } from '../stores/auth'
+import { checkStudentIdNumber, createSignUp } from '@/api.js'
+import axios from 'axios'
 
 // Form data
 const studentId = ref('')
@@ -197,35 +199,23 @@ const handleStudentIdVerification = async () => {
   try {
     studentIdVerifying.value = true
     basicInfoError.value = ''
-    
-    // TODO: Replace with actual student ID verification service
-    // This is where you would integrate with your university's student verification API
-    // Example: const response = await verifyStudentId(studentId.value)
-    
-    // Simulate verification API call (remove this in production)
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // Demo validation - replace with real verification service
-    if (studentId.value && studentId.value.length >= 0) {
-      studentIdVerified.value = true
-    } else {
-      basicInfoError.value = '유효하지 않은 학번입니다'
+    studentIdVerified.value = false
+
+    const result = await checkStudentIdNumber(studentId.value, studentName.value)
+
+    studentIdVerified.value = result.data.verified
+
+    if (!result.data.verified) {
+        basicInfoError.value = '학번 인증에 실패했습니다'
     }
-    
-    // TODO: In real implementation, handle verification response:
-    // if (response.success) {
-    //   studentIdVerified.value = true
-    //   // Optionally auto-fill verified student name from response
-    //   // studentName.value = response.studentName
-    // } else {
-    //   basicInfoError.value = response.error || '학번 인증에 실패했습니다'
-    // }
-    
-  } catch (error) {
-    basicInfoError.value = '인증 중 오류가 발생했습니다'
-  } finally {
-    studentIdVerifying.value = false
   }
+  catch(error) {
+      basicInfoError.value = '학번 인증 중 오류가 발생했습니다'
+      console.error('Student ID verification error:', error)
+  } finally {
+    studentIdVerifying.value = false  // Set to false when done
+  }
+
 }
 
 // Handle sign up
@@ -261,7 +251,20 @@ const handleSignUp = async () => {
     )
     
     const firebaseUser = userCredential.user
-    
+    const user = auth.currentUser
+
+    if (user != null) {
+      const signup_data = {
+        'uuid': user.uid,
+        'student_id': studentId.value,
+        'role': 'STUDENT',
+        'name': studentName.value,
+        'email': email.value,
+      }
+
+      await createSignUp(signup_data)
+    }
+
     // Send email verification
     await sendEmailVerification(firebaseUser)
 

@@ -1,8 +1,10 @@
 <template>
   <div class="e-portfolio">
-    <!-- Save Button -->
+    <!-- Edit/Save Button -->
       <div class="save-section">
-        <button class="save-btn">변경사항 저장</button>
+        <button class="save-btn" @click="isEditingProfile ? saveProfile() : toggleEditMode()">
+          {{ isEditingProfile ? '저장' : '편집' }}
+        </button>
       </div>
       
     <!-- Main Content -->
@@ -14,17 +16,29 @@
           <div class="profile-header">
             <div class="profile-picture-placeholder"></div>
             <div class="profile-info">
-              <h2 class="profile-name">최다영 님</h2>
+              <h2 class="profile-name">{{ user.name || 'N/A' }} 님</h2>
               <div class="profile-details">
                 <div class="detail-item">
                   <i class="icon-location"></i>
                   <div class="detail-content">
-                    <span>고려대학교 컴퓨터학과</span>
+                    <span>{{ user.university || '' }} {{ user.department || '' }}</span>
                   </div>
                 </div>
                 <div class="detail-item">
+                  <i class="icon-github"></i>
+                  <a 
+                    v-if="user.github_id"
+                    :href="`https://github.com/${user.github_id}`" 
+                    target="_blank" 
+                    class="github-link"
+                  >
+                    {{ user.github_id }}
+                  </a>
+                  <span v-else class="github-link">GitHub ID 없음</span>
+                </div>
+                <div class="detail-item">
                   <i class="icon-mail"></i>
-                  <span>joyyoj1@korea.ac.kr</span>
+                  <span>{{ user.email || 'N/A' }}</span>
                 </div>
               </div>
             </div>
@@ -40,82 +54,82 @@
               v-model="user.introduction"
               class="intro-input"
               placeholder="자신을 소개해 주세요..."
-              rows="4"
+              rows="8"
               maxlength="150"
+              :disabled="!isEditingProfile"
             ></textarea>
             <div class="intro-counter">
               {{ user.introduction.length }}/150
             </div>
           </div>
-          
-          <button class="edit-profile-btn">프로필 편집</button>
         </div>
 
         <!-- Right Column Container -->
         <div class="right-column">
-          <!-- Tech Stack Section -->
-          <div class="tech-stack-card">
-            <h3 class="section-title">나의 기술 스택</h3>
-            
-            <!-- Horizontal Layout Container -->
-            <div class="tech-stack-content">
-              <!-- Left Section: Main Languages -->
-              <div class="main-languages-section">
-                <h4 class="tech-column-title">주요 사용 언어</h4>
-                
-                <!-- Chart and Legend Container -->
-                <div class="chart-and-legend">
-                  <div class="chart-container">
-                    <!-- Chart.js Donut Chart -->
-                    <canvas ref="techStackChart" width="120" height="120"></canvas>
-                  </div>
-                  <div class="chart-legend">
-                    <div 
-                      v-for="(lang, index) in convertTechStackDataForChart()" 
-                      :key="lang.name"
-                      class="legend-item"
-                    >
+          <!-- Combined Tech Stack and Skills Section -->
+          <div class="combined-tech-skills-card">
+            <!-- Tech Stack Section -->
+            <div class="tech-stack-section">
+              <!-- Horizontal Layout Container -->
+              <div class="tech-stack-content">
+                <!-- Left Section: Main Languages -->
+                <div class="main-languages-section">
+                  <h4 class="tech-column-title">주요 사용 언어</h4>
+                  
+                  <!-- Chart and Legend Container -->
+                  <div class="chart-and-legend">
+                    <div class="chart-container">
+                      <!-- Chart.js Donut Chart -->
+                      <canvas ref="techStackChart" width="120" height="120"></canvas>
+                    </div>
+                    <div class="chart-legend">
                       <div 
-                        class="legend-color" 
-                        :style="{ background: lang.color }"
-                      ></div>
-                      <span>{{ lang.name }} ({{ lang.percentage }}%)</span>
+                        v-for="(lang, index) in convertTechStackDataForChart()" 
+                        :key="lang.name"
+                        class="legend-item"
+                      >
+                        <div 
+                          class="legend-color" 
+                          :style="{ background: lang.color }"
+                        ></div>
+                        <span>{{ lang.name }} ({{ lang.percentage }}%)</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Vertical Divider -->
-              <div class="vertical-divider"></div>
+                <!-- Vertical Divider -->
+                <div class="vertical-divider"></div>
 
-              <!-- Right Section: Tech Stack -->
-              <div class="tech-stack-section">
-                <h4 class="tech-column-title">주요 기술 스택</h4>
-                <div class="tech-dropdowns">
-                  <div 
-                    v-for="(dropdown, index) in techStackDropdowns" 
-                    :key="index"
-                    class="tech-dropdown-container"
-                  >
+                <!-- Right Section: Tech Stack -->
+                <div class="tech-stack-dropdown-section">
+                  <h4 class="tech-column-title">주요 기술 스택</h4>
+                  <div class="tech-dropdowns">
                     <div 
-                      class="tech-dropdown"
-                      :class="{ 'dropdown-open': dropdown.isOpen }"
-                      @click.stop="toggleDropdown(index)"
+                      v-for="(dropdown, index) in techStackDropdowns" 
+                      :key="index"
+                      class="tech-dropdown-container"
                     >
-                      <div class="dropdown-selected">
-                        <i :class="getIconClass(dropdown.selected)"></i>
-                        <span>{{ dropdown.selected || '선택하세요' }}</span>
-                        <i class="icon-arrow-down" :class="{ 'rotated': dropdown.isOpen }"></i>
-                      </div>
-                      <div v-if="dropdown.isOpen" class="dropdown-options">
-                        <div 
-                          v-for="option in dropdown.options" 
-                          :key="option"
-                          class="dropdown-option"
-                          @click.stop="selectOption(index, option)"
-                        >
-                          <i :class="getIconClass(option)"></i>
-                          <span>{{ option }}</span>
+                      <div 
+                        class="tech-dropdown"
+                        :class="{ 'dropdown-open': dropdown.isOpen, 'dropdown-disabled': !isEditingProfile }"
+                        @click.stop="isEditingProfile ? toggleDropdown(index) : null"
+                      >
+                        <div class="dropdown-selected">
+                          <i :class="getIconClass(dropdown.selected)"></i>
+                          <span>{{ dropdown.selected || '선택하세요' }}</span>
+                          <i class="icon-arrow-down" :class="{ 'rotated': dropdown.isOpen }"></i>
+                        </div>
+                        <div v-if="dropdown.isOpen" class="dropdown-options">
+                          <div 
+                            v-for="option in dropdown.options" 
+                            :key="option"
+                            class="dropdown-option"
+                            @click.stop="selectOption(index, option)"
+                          >
+                            <i :class="getIconClass(option)"></i>
+                            <span>{{ option }}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -123,26 +137,36 @@
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Skills Section - MOVED HERE -->
-          <div class="skills-card">
-            <div class="skills-stats">
-              <div class="stat-item">
-                <h4><div class="section-subtitle">개발 생산성</div>(추가·삭제 라인 수)</h4>
-                <p>{{ stats.commitLines.added.toLocaleString() }} / {{ stats.commitLines.deleted.toLocaleString() }}</p>
-              </div>
-              <div class="stat-item">
-                <h4><div class="section-subtitle">문제 해결력</div>(생성·해결 이슈)</h4>
-                <p>{{ stats.issues.created }} / {{ stats.issues.closed }}</p>
-              </div>
-              <div class="stat-item">
-                <h4><div class="section-subtitle">협업 능력</div>(PR 생성)</h4>
-                <p>{{ stats.pullRequests }}개</p>
-              </div>
-              <div class="stat-item">
-                <h4><div class="section-subtitle">오픈소스 기여 역량</div>(참여 오픈소스)</h4>
-                <p>{{ stats.openSourceContributions }}개</p>
+            <!-- Skills Section -->
+            <div class="skills-section">
+              <div class="skills-stats-container">
+                <div class="skills-stats">
+                  <div class="stat-item">
+                    <div class="stat-content">
+                      <div class="stat-title">추가 / 삭제 커밋 라인 수</div>
+                      <div class="stat-value">{{ stats.commitLines.added.toLocaleString() }} / {{ stats.commitLines.deleted.toLocaleString() }}</div>
+                    </div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-content">
+                      <div class="stat-title">이슈 생성 / 닫은 수</div>
+                      <div class="stat-value">{{ stats.issues.created }} / {{ stats.issues.closed }}</div>
+                    </div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-content">
+                      <div class="stat-title">PR 생성 수</div>
+                      <div class="stat-value">{{ stats.pullRequests }}개</div>
+                    </div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-content">
+                      <div class="stat-title">오픈소스 프로젝트</div>
+                      <div class="stat-value">{{ stats.openSourceContributions }}개</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -151,14 +175,19 @@
 
       <!-- Activity Section -->
       <section class="activity-section">
+        <!-- Activity Section Header -->
+        <div class="activity-section-header">
+          <div class="activity-header-content">
+            <i class="icon-activity"></i>
+            <h2 class="activity-title">개발 활동 패턴</h2>
+          </div>
+        </div>
+        
         <div class="activity-charts">
           <!-- Activity Trends Chart -->
-          <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-title">
-                <i class="icon-activity"></i>
-                <h3>활동 추이</h3>
-              </div>
+            <div class="chart-card">
+              <div class="chart-header">
+                <h3 class="chart-title-text">활동 추이</h3>
               <!-- <div class="chart-toggle">
                 <span 
                   :class="{ 'toggle-active': activityViewMode === 'monthly', 'toggle-inactive': activityViewMode !== 'monthly' }"
@@ -199,10 +228,10 @@
           </div>
 
           <!-- Project Team Size Chart -->
-          <div class="chart-card">
-            <div class="chart-header">
-              <h3>활동 프로젝트 인원 비율</h3>
-            </div>
+            <div class="chart-card">
+              <div class="chart-header">
+                <h3 class="chart-title-text">팀 프로젝트 비율</h3>
+              </div>
             <p class="chart-description">{{ teamSizeDescription }}</p>
             
             <!-- Bar Chart Area -->
@@ -213,11 +242,10 @@
         </div>
 
         <!-- Activity Time Pattern -->
-        <div class="time-pattern-card">
-          <div class="section-header">
-            <i class="icon-activity"></i>
-            <h3>활동 시간대</h3>
-          </div>
+          <div class="time-pattern-card">
+            <div class="section-header">
+              <h3 class="chart-title-text">활동 시간대</h3>
+            </div>
           
           <!-- 히트맵 컴포넌트 -->
           <EProfileHeatmap :heatmapData="heatmapData" />
@@ -228,7 +256,7 @@
       <section class="projects-section">
         <div class="section-header">
           <i class="icon-archive"></i>
-          <h3>나의 프로젝트</h3>
+          <h3 class="chart-title-text projects-title">나의 프로젝트</h3>
         </div>
         
         <!-- Projects Table -->
@@ -242,13 +270,9 @@
               Repository
               <i :class="getSortIcon('name')"></i>
             </span>
-            <span class="sortable-header" @click="sortByColumn('star_count')">
-              Stars
-              <i :class="getSortIcon('star_count')"></i>
-            </span>
-            <span class="sortable-header" @click="sortByColumn('fork_count')">
-              Forks
-              <i :class="getSortIcon('fork_count')"></i>
+            <span class="sortable-header" @click="sortByColumn('type')">
+              Owner
+              <i :class="getSortIcon('type')"></i>
             </span>
             <span class="sortable-header" @click="sortByColumn('commit_count')">
               Commits
@@ -262,6 +286,14 @@
               Issues
               <i :class="getSortIcon('total_issue_count')"></i>
             </span>
+            <span class="sortable-header" @click="sortByColumn('star_count')">
+              Stars
+              <i :class="getSortIcon('star_count')"></i>
+            </span>
+            <span class="sortable-header" @click="sortByColumn('fork_count')">
+              Forks
+              <i :class="getSortIcon('fork_count')"></i>
+            </span>
             <span>Language</span>
             <span class="sortable-header" @click="sortByColumn('contributors_count')">
               Contributors
@@ -270,7 +302,7 @@
           </div>
           
           <!-- Replace the static table rows with dynamic data -->
-          <div class="table-row" v-for="repo in sortedRepositoriesData" :key="repo.id">
+          <div class="table-row" v-for="repo in paginatedRepositoriesData" :key="repo.id">
           <div 
             class="category-column"
             :class="{ 
@@ -287,9 +319,10 @@
               class="category-dropdown"
               :class="{ 
                 'dropdown-open': categoryDropdownOpen[repo.id],
-                'dropdown-up': shouldDropUp(repo.id)
+                'dropdown-up': shouldDropUp(repo.id),
+                'dropdown-disabled': !isEditingProfile
               }"
-              @click.stop="toggleCategoryDropdown(repo.id)"
+              @click.stop="isEditingProfile ? toggleCategoryDropdown(repo.id) : null"
               :ref="`categoryDropdown_${repo.id}`"
             >
               <div class="category-dropdown-selected">
@@ -297,7 +330,7 @@
                 <i class="icon-arrow-down" :class="{ 'rotated': categoryDropdownOpen[repo.id] }"></i>
               </div>
               <div 
-                v-if="categoryDropdownOpen[repo.id]" 
+                v-if="categoryDropdownOpen[repo.id] && isEditingProfile" 
                 class="category-dropdown-options"
                 :class="{ 'options-up': shouldDropUp(repo.id) }"
               >
@@ -321,11 +354,12 @@
             class="repo-name-clickable"
             @click="openRepoModal(repo)"
           >{{ repo.name || 'N/A' }}</span>
+          <span>{{ getRepoType(repo) }}</span>
+          <span>{{ getRepoCommits(repo)?.toLocaleString() || '0' }}</span>
+          <span>{{ getRepoPRs(repo)?.toLocaleString() || '0' }}</span>
+          <span>{{ getRepoIssues(repo)?.toLocaleString() || '0' }}</span>
           <span>{{ repo.star_count?.toLocaleString() || '0' }}</span>
           <span>{{ repo.fork_count?.toLocaleString() || '0' }}</span>
-          <span>{{ repo.commit_count?.toLocaleString() || '0' }}</span>
-          <span>{{ repo.pr_count?.toLocaleString() || '0' }}</span>
-          <span>{{ repo.total_issue_count?.toLocaleString() || '0' }}</span>
           <span :title="repo.language || 'N/A'">{{ repo.language || 'N/A' }}</span>
           <span>{{ repo.contributors_count?.toLocaleString() || '0' }}</span>
         </div>
@@ -351,15 +385,72 @@
             </div>
           </div>
         </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-section" v-if="totalPages > 1">
+          <div class="pagination-info">
+            {{ paginationInfo.start }}-{{ paginationInfo.end }} / {{ paginationInfo.total }}개 프로젝트
+          </div>
+
+          <div class="pagination-controls">
+            <button
+              class="pagination-btn"
+              :class="{ 'disabled': currentPage === 1 }"
+              @click="goToPage(1)"
+              :disabled="currentPage === 1"
+            >
+              첫 페이지
+            </button>
+
+            <button
+              class="pagination-btn"
+              :class="{ 'disabled': currentPage === 1 }"
+              @click="goToPage(currentPage - 1)"
+              :disabled="currentPage === 1"
+            >
+              이전
+            </button>
+
+            <div class="page-numbers">
+              <button
+                v-for="page in visiblePages"
+                :key="page"
+                class="page-number"
+                :class="{ 'active': page === currentPage }"
+                @click="goToPage(page)"
+              >
+                {{ page }}
+              </button>
+            </div>
+
+            <button
+              class="pagination-btn"
+              :class="{ 'disabled': currentPage === totalPages }"
+              @click="goToPage(currentPage + 1)"
+              :disabled="currentPage === totalPages"
+            >
+              다음
+            </button>
+
+            <button
+              class="pagination-btn"
+              :class="{ 'disabled': currentPage === totalPages }"
+              @click="goToPage(totalPages)"
+              :disabled="currentPage === totalPages"
+            >
+              마지막 페이지
+            </button>
+          </div>
+        </div>
       </section>
 
     </main>
     
     <!-- 프로젝트 상세 모달 -->
-    <RepoDetailModal 
-      :show="showRepoModal" 
-      :repo="selectedRepo" 
-      @close="closeRepoModal" 
+    <RepoDetailModal
+      :show="showRepoModal"
+      :repo="selectedRepo"
+      @close="closeRepoModal"
     />
   </div>
 </template>
@@ -368,8 +459,9 @@
 import { Chart, registerables } from 'chart.js'
 import EProfileHeatmap from './EProfileComponents/EProfileHeatmap.vue'
 import RepoDetailModal from './EProfileComponents/RepoDetailModal.vue'
-import { getEProfileHeatmap } from '@/api.js'
+import { getEProfileHeatmap, updateStudentIntroduction, updateStudentTechnologyStack } from '@/api.js'
 import { processActivityData, processAddedLinesData, estimateCommitLines } from './EProfileComponents/chartUtils/chartUtils.js'
+import { auth } from '../services/firebase'
 
 // Register Chart.js components
 Chart.register(...registerables)
@@ -383,20 +475,21 @@ export default {
   data() {
     return {
       user: {
-        name: '김이진',
+        name: '최다영',
         university: '고려대학교',
         department: '컴퓨터공학과',
-        email: 'abcde123@korea.ac.kr',
+        email: 'joyyoj1@korea.ac.kr',
+        github_id: '',
         introduction: ''
       },
       techStack: {
-        languages: ['Python', 'C++', 'JavaScript'],
-        frameworks: ['Django', 'React', 'Vue.js']
+        languages: [],
+        frameworks: []
       },
       stats: {
-        commitLines: { added: 1200, deleted: 500 },
-        issues: { created: 45, closed: 20 },
-        pullRequests: 120,
+        commitLines: { added: 0, deleted: 0 },
+        issues: { created: 0, closed: 0 },
+        pullRequests: 0,
         openSourceContributions: 0
       },
       // Tech Stack Chart Data
@@ -448,27 +541,27 @@ export default {
       'Redis', 'Docker', 'Kubernetes', 'AWS', 'Google Cloud', 'Azure'],
       techStackDropdowns: [
         {
-          selected: 'Python',
+          selected: '',
           isOpen: false,
           options: []
         },
         {
-          selected: 'JavaScript',
+          selected: '',
           isOpen: false,
           options: []
         },
         {
-          selected: 'Go',
+          selected: '',
           isOpen: false,
           options: []
         },
         {
-          selected: 'Rust',
+          selected: '',
           isOpen: false,
           options: []
         },
         {
-          selected: 'Kubernetes',
+          selected: '',
           isOpen: false,
           options: []
         }
@@ -480,7 +573,7 @@ export default {
       sortBy: '',
       sortDirection: 'asc', // 'asc' or 'desc'
       // githubId: "YeoJune", // 임시 테스트용 GitHub 아이디 - TODO: 실제 로그인된 사용자 ID로 변경 필요
-      student_uuid: 'rcmPR6PxrxcXP7Pmz0D2tZKsifm2',
+      student_uuid: auth.currentUser.uid,
       // Category dropdown state
       categoryDropdownOpen: {},
       categoryOptions: [
@@ -500,7 +593,12 @@ export default {
         '분산시스템',
         '컴퓨터그래픽스',
         '사이버보안'
-      ]
+      ],
+      // Pagination properties
+      currentPage: 1,
+      itemsPerPage: 10,
+      // Edit mode state
+      isEditingProfile: false
     }
   },
   computed: {
@@ -525,11 +623,11 @@ export default {
       if (!this.sortBy) {
         return this.repositoriesData
       }
-      
+
       const sorted = [...this.repositoriesData].sort((a, b) => {
         let aVal = a[this.sortBy]
         let bVal = b[this.sortBy]
-        
+
         // Handle different data types
         if (this.sortBy === 'category') {
           // Sort category: course projects first, then autonomous
@@ -539,20 +637,106 @@ export default {
           // String comparison for repository names
           aVal = (aVal || '').toString().toLowerCase()
           bVal = (bVal || '').toString().toLowerCase()
-        } else if (['star_count', 'fork_count', 'commit_count', 'pr_count', 'total_issue_count', 'contributors_count'].includes(this.sortBy)) {
-          // Numeric comparison
+        } else if (this.sortBy === 'type') {
+          // Sort type: Owner (displayed as '-') first, then Contributor (owner_github_id) alphabetically
+          const aType = this.getRepoType(a)
+          const bType = this.getRepoType(b)
+          
+          // Owner는 '-'로 표시되므로 가장 앞에 정렬 (priority 0)
+          // Contributor는 owner_github_id로 정렬 (priority 1, value는 lowercase)
+          // N/A는 마지막 (priority 2)
+          let aPriority, bPriority, aValue, bValue
+          
+          if (aType === '-') {
+            aPriority = 0
+            aValue = ''
+          } else if (aType === 'N/A') {
+            aPriority = 2
+            aValue = ''
+          } else {
+            aPriority = 1
+            aValue = aType.toLowerCase()
+          }
+          
+          if (bType === '-') {
+            bPriority = 0
+            bValue = ''
+          } else if (bType === 'N/A') {
+            bPriority = 2
+            bValue = ''
+          } else {
+            bPriority = 1
+            bValue = bType.toLowerCase()
+          }
+          
+          // priority로 먼저 정렬, 같은 priority면 value로 정렬
+          if (aPriority !== bPriority) {
+            aVal = aPriority
+            bVal = bPriority
+          } else {
+            aVal = aValue
+            bVal = bValue
+          }
+        } else if (this.sortBy === 'commit_count') {
+          // Use calculated commit count
+          aVal = this.getRepoCommits(a)
+          bVal = this.getRepoCommits(b)
+        } else if (this.sortBy === 'pr_count') {
+          // Use calculated PR count
+          aVal = this.getRepoPRs(a)
+          bVal = this.getRepoPRs(b)
+        } else if (this.sortBy === 'total_issue_count') {
+          // Use calculated issue count
+          aVal = this.getRepoIssues(a)
+          bVal = this.getRepoIssues(b)
+        } else if (['star_count', 'fork_count', 'contributors_count'].includes(this.sortBy)) {
+          // Numeric comparison for other fields
           aVal = parseInt(aVal) || 0
           bVal = parseInt(bVal) || 0
         }
-        
+
         if (this.sortDirection === 'asc') {
           return aVal > bVal ? 1 : aVal < bVal ? -1 : 0
         } else {
           return aVal < bVal ? 1 : aVal > bVal ? -1 : 0
         }
       })
-      
+
       return sorted
+    },
+
+    // Pagination computed properties
+    totalPages() {
+      return Math.ceil(this.sortedRepositoriesData.length / this.itemsPerPage)
+    },
+
+    paginatedRepositoriesData() {
+      const start = (this.currentPage - 1) * this.itemsPerPage
+      const end = start + this.itemsPerPage
+      return this.sortedRepositoriesData.slice(start, end)
+    },
+
+    paginationInfo() {
+      const start = (this.currentPage - 1) * this.itemsPerPage + 1
+      const end = Math.min(this.currentPage * this.itemsPerPage, this.sortedRepositoriesData.length)
+      const total = this.sortedRepositoriesData.length
+      return { start, end, total }
+    },
+
+    visiblePages() {
+      const maxVisible = 5
+      const totalPages = this.totalPages
+      const currentPage = this.currentPage
+
+      if (totalPages <= maxVisible) {
+        return Array.from({ length: totalPages }, (_, i) => i + 1)
+      }
+
+      const start = Math.max(1, currentPage - Math.floor(maxVisible / 2))
+      const end = Math.min(totalPages, start + maxVisible - 1)
+      const adjustedStart = Math.max(1, end - maxVisible + 1)
+
+      return Array.from({ length: end - adjustedStart + 1 }, (_, i) => adjustedStart + i)
     }
   },
   async mounted() {
@@ -598,6 +782,21 @@ export default {
     document.removeEventListener('click', this.closeAllDropdowns)
   },
   methods: {
+    // 편집 모드 토글
+    toggleEditMode() {
+      this.isEditingProfile = true
+    },
+    // 저장 버튼 클릭 핸들러
+    async saveProfile() {
+      try {
+        await this.saveProfileChanges()
+        this.isEditingProfile = false
+        alert('저장 완료')
+      } catch (error) {
+        console.error('저장 실패:', error)
+        alert('저장에 실패했습니다. 다시 시도해주세요.')
+      }
+    },
     // 모달 관련 메서드
     openRepoModal(repo) {
       this.selectedRepo = repo
@@ -899,9 +1098,28 @@ export default {
       // Handle profile editing
       console.log('Edit profile clicked');
     },
-    saveChanges() {
-      // Handle saving changes
-      console.log('Save changes clicked');
+    async saveProfileChanges() {
+      try {
+        const uuid = auth.currentUser.uid
+        
+        // 기술 스택 배열 생성 (선택된 값만)
+        const technology_stack = []
+        this.techStackDropdowns.forEach(dropdown => {
+          if (dropdown.selected) {
+            technology_stack.push(dropdown.selected)
+          }
+        })
+
+        // 나의 소개 저장
+        await updateStudentIntroduction(uuid, this.user.introduction)
+        
+        // 기술 스택 저장 (배열로 직접 전송)
+        await updateStudentTechnologyStack(uuid, technology_stack)
+      }
+      catch (error) {
+        console.error('Failed to save profile data:', error)
+        throw error
+      }
     },
     async loadActivityChart() {
       try {
@@ -976,10 +1194,16 @@ export default {
         this.heatmapData = response.data.heatmap
         console.log('히트맵 데이터 로드 완료:', this.heatmapData)
         
+        // Load user data from API response
+        this.loadUserData(response.data)
+        
         // Load repositories data from the same response
         this.loadRepositoriesFromResponse(response.data)
 
-        // Load tech stack data from total_language_percentage
+        // Load tech language data from total_language_percentage
+        this.loadTechLanguagesData(response.data)
+
+        // Load tech stack data from student_technolog_stack
         this.loadTechStackData(response.data)
 
         // Load team size data from total_contributors_count
@@ -990,176 +1214,19 @@ export default {
 
       } catch (error) {
         console.error('히트맵 데이터 로드 실패:', error)
-        // 에러 시 기본 데이터 설정 (선택사항)
+        // 에러 시 빈 데이터 설정
         this.heatmapData = {
           Mon: {}, Tue: {}, Wed: {}, Thu: {}, Fri: {}, Sat: {}, Sun: {}
         }
-
-        this.repositoriesData = [
-          {
-            id: "822988405",
-            name: "20241R0136COSE48000",
-            category: "산학캡스톤디자인",
-            url: "https://github.com/dlwls423/20241R0136COSE48000",
-            student_id: "2020320088",
-            owner_github_id: "dlwls423",
-            created_at: "2024-07-02T08:07:03Z",
-            updated_at: "2024-07-02T08:07:03Z",
-            fork_count: 0,
-            star_count: 0,
-            commit_count: 276,
-            total_issue_count: 0,
-            pr_count: 0,
-            language: "Java, CSS, JavaScript, HTML",
-            language_percentages: {
-                "others": 0
-            },
-            contributors_count: 0,
-            contributors_list: [],
-            license: null,
-            has_readme: false,
-            description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
-            release_version: null,
-            is_course: true,
-          },
-
-          {
-            "id": "738312382",
-            "name": "value-together",
-            "is_course": false,
-            "category": "-",
-            "url": "https://github.com/dlwls423/value-together",
-            "student_id": "2020320088",
-            "owner_github_id": "dlwls423",
-            "created_at": "2024-01-03T00:04:04Z",
-            "updated_at": "2024-01-03T00:04:04Z",
-            "fork_count": 0,
-            "star_count": 0,
-            "commit_count": 739,
-            "total_issue_count": 0,
-            "pr_count": 0,
-            "language": "Java, Dockerfile",
-            "language_percentages": {
-                "Java": 99.9,
-                "Dockerfile": 0.1,
-                "others": 0
-            },
-            "contributors_count": 5,
-            "contributors_list": [
-                [
-                    "이예진",
-                    "컴퓨터학과",
-                    "2020320088",
-                    "dlwls423"
-                ]
-            ],
-            "license": null,
-            "has_readme": true,
-            "description": "가치 있는일을 같이 진행하자! 일정 공유 어플리케이션! ",
-            "release_version": null,
-            "monthly_commits": [],
-          },
-          {
-            "id": "725163550",
-            "name": "hobby-bungae",
-            "is_course": false,
-            "category": "-",
-            "url": "https://github.com/dlwls423/hobby-bungae",
-            "student_id": "2020320088",
-            "owner_github_id": "dlwls423",
-            "created_at": "2023-11-29T15:11:21Z",
-            "updated_at": "2023-11-29T15:11:21Z",
-            "fork_count": 0,
-            "star_count": 0,
-            "commit_count": 165,
-            "total_issue_count": 0,
-            "pr_count": 0,
-            "language": "Java",
-            "language_percentages": {
-                "Java": 100,
-                "others": 0
-            },
-            "contributors_count": 4,
-            "contributors_list": [
-                [
-                    "이예진",
-                    "컴퓨터학과",
-                    "2020320088",
-                    "dlwls423"
-                ]
-            ],
-            "license": null,
-            "has_readme": true,
-            "description": "스파르타 내일배움캠프 Spring 3기 - 스프링 숙련 주차 팀 과제 : HabbyMate",
-            "release_version": null,
-            "monthly_commits": [],
-          },
-          {
-            id: "822988409",
-            name: "20241R0136COSE48000",
-            category: "산학캡스톤",
-            url: "https://github.com/dlwls423/20241R0136COSE48000",
-            student_id: "2020320088",
-            owner_github_id: "dlwls423",
-            created_at: "2024-07-02T08:07:03Z",
-            updated_at: "2024-07-02T08:07:03Z",
-            fork_count: 0,
-            star_count: 0,
-            commit_count: 276,
-            total_issue_count: 0,
-            pr_count: 0,
-            language: "Java, CSS, JavaScript, HTML",
-            language_percentages: {
-                "others": 0
-            },
-            contributors_count: 0,
-            contributors_list: [],
-            license: null,
-            has_readme: false,
-            description: "산학캡스톤디자인 2024-1, 머니머지 BE 레포지토리",
-            release_version: null,
-            is_course: true,
-          },
-        ]
-
-        this.techStackData = {
-          "Java": 70,
-          "HTML": 13.5,
-          "JavaScript": 10.9,
-          "CSS": 5.5,
-          "C": 0.1,
-          "others": 0
-        }
-
-        const total_contributors_count = {
-            "0": 1,
-            "1": 13,
-            "2": 0,
-            "3": 0,
-            "4": 4,
-            "5+": 2
-        }
-
+        this.repositoriesData = []
+        this.techStackData = []
         this.teamSizeData = {
-          labels: ['1인', '2인', '3인', '4인', '5인 이상'],
-          data: [13, 0, 0, 4, 2]
-        }
-
-        const total_stats = {
-          "total_commits": 3555,
-          "added_lines": 509673,
-          "deleted_lines": 174331,
-          "total_changed_lines": 684004,
-          "total_open_issues": 3,
-          "total_closed_issues": 1,
-          "total_open_prs": 0,
-          "total_closed_prs": 3,
-          "total_stars": 3,
-          "total_forks": 0
+          labels: [],
+          data: []
         }
         this.stats = {
-          commitLines: {added: 0, deleted: 0},
-          issues: {created: 0, closed: 0},
+          commitLines: { added: 0, deleted: 0 },
+          issues: { created: 0, closed: 0 },
           pullRequests: 0,
           openSourceContributions: 0
         }
@@ -1239,7 +1306,7 @@ export default {
     },
 
     // Method to load tech stack data from API response
-    loadTechStackData(responseData) {
+    loadTechLanguagesData(responseData) {
       try {
         if (responseData && responseData.total_language_percentage) {
           // Handle both object and array formats from API
@@ -1271,15 +1338,33 @@ export default {
           console.warn('No total_language_percentage data found in API response')
         }
       } catch (error) {
-        this.techStackData = {
-          "Java": 70,
-          "HTML": 13.5,
-          "JavaScript": 10.9,
-          "CSS": 5.5,
-          "C": 0.1,
-          "others": 0
-        }
+        this.techStackData = []
         console.error('Error loading tech stack data:', error)
+      }
+    },
+
+    loadTechStackData(responseData) {
+      try {
+        if (responseData.student_technology_stack) {
+          const techStack = responseData.student_technology_stack
+
+          // Parse if it's a string, otherwise use as is
+          const techStackArray = typeof techStack === 'string' ? JSON.parse(techStack) : techStack
+
+          // Update the techStackDropdowns with the loaded data
+          if (Array.isArray(techStackArray)) {
+            techStackArray.forEach((tech, index) => {
+              if (index < this.techStackDropdowns.length && tech) {
+                this.techStackDropdowns[index].selected = tech
+              }
+            })
+            console.log('Tech stack dropdowns loaded from API:', this.techStackDropdowns)
+          }
+        } else {
+          console.warn('No student_technology_stack data found in API response')
+        }
+      } catch (error) {
+        console.error('Error loading tech stack dropdown data:', error)
       }
     },
 
@@ -1385,18 +1470,23 @@ export default {
         if (responseData && responseData.total_stats) {
           // Process the total_stats data
           const totalStats = responseData.total_stats
+          
+          // Calculate total repositories count
+          const totalRepoCount = Array.isArray(responseData.repositories) 
+            ? responseData.repositories.length 
+            : (responseData.repositories ? 1 : 0)
 
           this.stats = {
             commitLines: {
-              added: parseInt(totalStats.added_lines) || 0, 
-              deleted: parseInt(totalStats.deleted_lines) || 0
+              added: parseInt(totalStats.owner_added_lines) || 0, 
+              deleted: parseInt(totalStats.owner_deleted_lines) || 0
             },
             issues: {
-              created: parseInt(totalStats.total_open_issues) || 0, 
-              closed: parseInt(totalStats.total_closed_issues) || 0
+              created: parseInt(totalStats.owner_open_issue_count) || 0, 
+              closed: parseInt(totalStats.owner_closed_issue_count) || 0
             },
-            pullRequests: parseInt(totalStats.total_closed_prs) || 0,
-            openSourceContributions: 0 // Keep as 0 as in your example
+            pullRequests: parseInt(totalStats.owner_open_pr_count) || 0,
+            openSourceContributions: totalRepoCount
           }
 
           console.log('Stats data loaded from API:', this.stats)
@@ -1405,6 +1495,39 @@ export default {
         }
       } catch (error) {
         console.error('Error loading stats data:', error)
+      }
+    },
+
+    // Load user data from API response
+    loadUserData(responseData) {
+      try {
+        // API 응답에서 student 정보가 직접 포함되어 있지 않을 수 있으므로
+        // repositories 데이터에서 owner_github_id를 추출하거나
+        // 다른 방식으로 github_id를 가져와야 할 수 있습니다
+        
+        // 일단 responseData에 github_id가 있는지 확인
+        if (responseData && responseData.github_id) {
+          this.user.github_id = responseData.github_id
+        }
+        
+        // repositories에서 첫 번째 레포의 owner_github_id를 사용 (임시)
+        if (responseData && responseData.repositories && responseData.repositories.length > 0) {
+          const firstRepo = responseData.repositories[0]
+          // 현재 사용자가 owner인 경우에만 github_id 사용
+          if (firstRepo.is_owner && firstRepo.owner_github_id) {
+            this.user.github_id = firstRepo.owner_github_id
+          }
+        }
+        
+        // student_introduction이 있으면 업데이트
+        if (responseData && responseData.student_introduction) {
+          this.user.introduction = responseData.student_introduction
+        }
+        
+        console.log('User data loaded from API:', this.user)
+        console.log('Full API response:', responseData)
+      } catch (error) {
+        console.error('Error loading user data:', error)
       }
     },
 
@@ -1421,7 +1544,8 @@ export default {
             ? responseData.repositories 
             : [responseData.repositories]
         } else {
-          this.repositoriesData = []
+          // Keep existing test data if no API data (don't clear it)
+          console.log('No repository data from API, keeping existing data')
         }
         
         console.log('Repository data processed:', this.repositoriesData)
@@ -1447,6 +1571,8 @@ export default {
         this.sortBy = column
         this.sortDirection = 'asc'
       }
+      // Reset pagination when sorting changes
+      this.resetPagination()
     },
 
     getSortIcon(column) {
@@ -1454,6 +1580,43 @@ export default {
         return 'icon-sort-default'
       }
       return this.sortDirection === 'asc' ? 'icon-sort-up' : 'icon-sort-down'
+    },
+
+    // Repository type, commits, PRs, issues calculation methods
+    getRepoType(repo) {
+      if (repo.is_owner) {
+        return '-'
+      } else if (repo.is_contributor) {
+        return repo.owner_github_id || 'N/A'
+      }
+      return 'N/A'
+    },
+
+    getRepoCommits(repo) {
+      if (repo.is_owner) {
+        return repo.user_commit_count || 0
+      } else if (repo.is_contributor) {
+        return repo.user_commit_count || 0
+      }
+      return 0
+    },
+
+    getRepoPRs(repo) {
+      if (repo.is_owner || repo.is_contributor) {
+        const openPRs = repo.owner_open_pr_count || 0
+        const closedPRs = repo.owner_closed_pr_count || 0
+        return openPRs + closedPRs
+      }
+      return 0
+    },
+
+    getRepoIssues(repo) {
+      if (repo.is_owner) {
+        return repo.owner_issue_count || 0
+      } else if (repo.is_contributor) {
+        return repo.owner_issue_count || 0
+      }
+      return 0
     },
 
     // Category dropdown methods
@@ -1491,11 +1654,24 @@ export default {
 
     shouldDropUp(repoId) {
       // Simple approach: check if this is one of the last few rows
-      const currentIndex = this.sortedRepositoriesData.findIndex(repo => repo.id === repoId)
-      const totalRows = this.sortedRepositoriesData.length
-      
+      const currentIndex = this.paginatedRepositoriesData.findIndex(repo => repo.id === repoId)
+      const totalRows = this.paginatedRepositoriesData.length
+
       // If it's in the last 3 rows, drop up
       return currentIndex >= totalRows - 3
+    },
+
+    // Pagination methods
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+        this.currentPage = page
+        this.closeCategoryDropdowns()
+      }
+    },
+
+    // Reset pagination when sorting changes
+    resetPagination() {
+      this.currentPage = 1
     }
   }
 }
@@ -1505,19 +1681,22 @@ export default {
 /* Global Styles */
 .e-portfolio {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #FFFFFF;
+  background: linear-gradient(to bottom, #F5F7FA 0%, #F5F7FA 55%, #FFFFFF 61%, #FFFFFF 100%);
   min-height: 100vh;
-  width: 1920px;
+  width: 100%;
+  max-width: 1920px;
   margin: 0 auto;
   padding-top: 150px; /* Proper spacing from navigation bar */
+  box-sizing: border-box;
 }
 
 /* Save Section */
 .save-section {
   display: flex;
   justify-content: flex-end;
-  padding: 0 320px; /* Align with content area */
+  padding: 0 calc((100% - 1280px) / 2 + 20px);
   margin-bottom: 30px; /* Space before main content */
+  box-sizing: border-box;
 }
 
 .save-btn {
@@ -1529,11 +1708,12 @@ export default {
   color: #CB385C;
   cursor: pointer;
   transition: all 0.3s ease;
-  width: 113px;
+  min-width: 113px;
   height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .save-btn:hover {
@@ -1543,45 +1723,53 @@ export default {
 
 /* Main Content */
 .main-content {
-  width: 1280px;
+  width: 100%;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 20px;
+  box-sizing: border-box;
 }
 
 /* Profile Section */
 .profile-section {
   display: grid;
-  grid-template-columns: 415px 848px;
-  gap: 16px;
-  margin-bottom: 40px;
+  grid-template-columns: 1fr 2fr;
+  gap: 1rem; /* 16px */
+  margin-bottom: 2.5rem; /* 40px */
+  align-items: stretch; /* Ensure both cards have same height */
 }
 
 .profile-card {
-  background: #FAFBFD;
+  background: #FFFFFF;
   border: 1px solid #E8EDF8;
-  border-radius: 20px;
-  padding: 30px;
-  height: 440px; /* Updated height */
+  border-radius: 1.25rem; /* 20px */
+  padding: 1.875rem; /* 30px */
+  min-height: 27.5rem; /* 440px */
+  height: 100%; /* Match grid item height to align bottoms */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Profile Header Layout - NEW */
 .profile-header {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 1rem; /* 16px */
+  margin-bottom: 1.25rem; /* 20px */
+  flex-shrink: 0;
 }
 
 /* Profile Picture Placeholder - NEW */
 .profile-picture-placeholder {
-  width: 94px;
-  height: 94px;
+  width: 5.875rem; /* 94px */
+  height: 5.875rem; /* 94px */
   /* background-color: #E2E7F0; */
   background-image: url('@/assets/emblem_school_transparent.gif') ;
   background-repeat: no-repeat;
   background-position: center;
   background-size: 70%;
-  border-radius: 10px;
+  border-radius: 0.625rem; /* 10px */
   flex-shrink: 0;
 }
 
@@ -1589,27 +1777,37 @@ export default {
 .right-column {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem; /* 16px */
 }
 
-.tech-stack-card {
-  background: #FAFBFD;
+/* Combined Tech Stack and Skills Card */
+.combined-tech-skills-card {
+  background: #FFFFFF;
   border: 1px solid #E8EDF8;
-  border-radius: 20px;
-  padding: 30px 50px;
-  height: 280px;
-  position: relative
+  border-radius: 1.25rem; /* 20px */
+  padding: 3.125rem 3.125rem 1.875rem 3.125rem; /* 50px 50px 30px 50px */
+  min-height: 27.5rem; /* 440px */
+  height: 100%; /* Match grid item height to align bottoms */
+  display: flex;
+  flex-direction: column;
+  gap: 1.875rem; /* 30px */
+  box-sizing: border-box;
 }
 
-/* Skills Card - MOVED AND UPDATED */
-.skills-card {
-  background: #FAFBFD;
-  border: 1px solid #E8EDF8;
-  border-radius: 20px;
-  padding: 1px 15px;
-  height: 142px;
+/* Tech Stack Section within combined card */
+.combined-tech-skills-card .tech-stack-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Skills Section within combined card */
+.combined-tech-skills-card .skills-section {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
+  height: 142px;
 }
 
 .profile-info {
@@ -1629,7 +1827,7 @@ export default {
 .profile-details {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 3px;
 }
 
 .detail-item {
@@ -1643,6 +1841,17 @@ export default {
 .detail-content {
   display: flex;
   gap: 16px;
+}
+
+.github-link {
+  color: #262626;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.github-link:hover {
+  color: #262626;
+  text-decoration: underline;
 }
 
 .edit-profile-btn {
@@ -1666,11 +1875,12 @@ export default {
   color: #910024;
 }
 
-/* Tech Stack */
-.tech-stack-card {
+/* Tech Stack - Updated for combined card */
+.tech-stack-dropdown-section {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  flex: 1;
 }
 
 .section-title {
@@ -1753,17 +1963,12 @@ export default {
   margin: 0px 0px 0px;
 }
 
-.tech-stack-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  flex: 1;
-}
+/* Tech stack section styles are now handled by the combined card */
 
 .tech-column-title {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
-  color: #616161;
+  color: #262626;
   margin: 0;
 }
 
@@ -1813,6 +2018,15 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   position: relative;
   z-index: 1;
+}
+
+.tech-dropdown.dropdown-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.tech-dropdown.dropdown-disabled .dropdown-selected:hover {
+  background: transparent;
 }
 
 .dropdown-selected {
@@ -1892,9 +2106,9 @@ export default {
   background: #a8a8a8;
 }
 
-/* Skills Section */
+/* Skills Section - Updated for combined card */
 .skills-section {
-  margin-bottom: 40px;
+  margin-bottom: 0; /* No margin needed in combined card */
 }
 
 .section-header {
@@ -1911,58 +2125,116 @@ export default {
   margin: 0;
 }
 
+/* Skills Stats Container */
+.skills-stats-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .skills-stats {
   display: flex;
-  width: 100%;
+  flex-direction: row;
   align-items: center;
-  height: 100%;
+  padding: 16px 26px;
+  gap: 0px;
+  width: 100%;
+  max-width: 750px; /* 전체 너비를 조정하여 더 균형잡힌 레이아웃 */
+  height: 102px;
+  background: #FAFBFD;
+  border: 1px solid #E8EDF8;
+  border-radius: 10px;
+  box-sizing: border-box;
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  border-right: 1px solid #E8EDF8;
-  padding: 20px 10px;
-  text-align: center;
-  min-height: 80px;
+  align-items: center;
+  padding: 0px 10px;
+  gap: 8px;
+  height: 58px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+  position: relative;
 }
 
+/* 각 항목별 너비 조정 */
 .stat-item:nth-child(1) {
-  flex: 2.5; /* 추가 / 삭제 커밋 라인 수 - longest text */
+  width: 210px; /* 추가/삭제 커밋 라인 수 - 가장 넓게 */
 }
 
 .stat-item:nth-child(2) {
-  flex: 2; /* 이슈 생성 / 닫은 수 - medium text */
+  width: 170px; /* 이슈 생성/닫은 수 - 적당히 */
 }
 
 .stat-item:nth-child(3) {
-  flex: 1.5; /* PR 생성 수 - short text */
+  width: 130px; /* PR 생성 수 - 기본 */
 }
 
-.stat-item:nth-child(4) {
-  flex: 2; /* 오픈 소스 프로젝트 - medium text */
+  .stat-item:nth-child(4) {
+    width: 180px; /* 오픈소스 프로젝트 - 한 줄로 표시되도록 넓게 */
+  }
+
+.stat-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 70px;
+  background: #E8EDF8;
 }
 
-.stat-item:last-child {
-  border-right: none;
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
 }
 
-.stat-item h4 {
-  font-size: 16px;
+.stat-title {
+  width: 100%;
+  height: auto;
+  font-family: 'Pretendard';
+  font-style: normal;
   font-weight: 500;
+  font-size: 16px;
+  line-height: 1.2;
   color: #616161;
-  margin: 0 0 26px 0;
   text-align: center;
-  line-height: 1.3;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+  margin: 0;
 }
 
-.stat-item p {
-  font-size: 16px;
+.stat-value {
+  width: 100%;
+  height: auto;
+  font-family: 'Pretendard';
+  font-style: normal;
   font-weight: 500;
+  font-size: 16px;
+  line-height: 1.2;
   color: #262626;
+  text-align: center;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
   margin: 0;
+}
+
+.stat-divider {
+  display: none; /* 기존 구분선 제거 */
 }
 
 /* Activity Section */
@@ -1970,25 +2242,86 @@ export default {
   margin-bottom: 40px;
 }
 
-.activity-charts {
-  display: grid;
-  grid-template-columns: 632px 632px;
-  gap: 16px;
+/* Activity Section Header */
+.activity-section-header {
   margin-bottom: 30px;
 }
 
+.activity-header-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0px;
+  gap: 8px;
+  width: 160px;
+  height: 28px;
+}
+
+.activity-icon {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+  position: relative;
+}
+
+.activity-icon::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 8.33% !important;
+  right: 8.33% !important;
+  top: 12.5% !important;
+  bottom: 12.5% !important;
+  border: 2px solid #262626 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+.activity-title {
+  width: 124px;
+  height: 26px;
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 26px;
+  letter-spacing: -0.004em;
+  color: #262626;
+  margin: 0;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
+}
+
+.activity-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem; /* 16px */
+  margin-bottom: 1.875rem; /* 30px */
+  align-items: stretch; /* Ensure both cards have same height */
+}
+
 .chart-card {
-  background: #FFFBFB;
-  border-radius: 20px;
-  padding: 30px 40px;
-  height: 347px;
+  background: #FFFFFF;
+  border-radius: 1.25rem; /* 20px */
+  padding: 1.875rem 2.5rem; /* 30px 40px */
+  min-height: 21.6875rem; /* 347px */
+  height: 100%; /* Match grid item height */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem; /* 20px */
+  flex-shrink: 0;
 }
 
 .chart-title {
@@ -2002,6 +2335,28 @@ export default {
   font-weight: 600;
   color: #262626;
   margin: 0;
+}
+
+/* Chart Title Text Style */
+.chart-title-text {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 24px;
+  color: #E40052;
+  margin: 0;
+}
+
+/* Override for chart title text in section header */
+.section-header .chart-title-text {
+  font-family: 'Pretendard' !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  font-size: 20px !important;
+  line-height: 24px !important;
+  color: #E40052 !important;
+  margin: 0 !important;
 }
 
 /* UPDATED: Enhanced chart toggle styling
@@ -2051,9 +2406,10 @@ export default {
 /* UPDATED: Enhanced legend positioning */
 .chart-legend-horizontal {
   display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: 1.25rem; /* 20px */
+  margin-bottom: 1.25rem; /* 20px */
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .legend-dot {
@@ -2065,9 +2421,10 @@ export default {
 /* NEW: Activity Chart Specific Styles */
 .activity-chart-container {
   position: relative;
-  height: 200px;
+  flex: 1; /* Take remaining space in chart-card */
+  min-height: 12.5rem; /* 200px */
   width: 100%;
-  margin-top: 10px;
+  margin-top: 0.625rem; /* 10px */
 }
 
 .activity-chart-container canvas {
@@ -2114,9 +2471,10 @@ export default {
 
 .team-size-chart-container {
   position: relative;
-  height: 200px;
+  flex: 1; /* Take remaining space in chart-card */
+  min-height: 12.5rem; /* 200px */
   width: 100%;
-  margin-top: 20px;
+  margin-top: 1.25rem; /* 20px */
 }
 
 .team-size-chart-container canvas {
@@ -2126,51 +2484,86 @@ export default {
 
 /* Time Pattern */
 .time-pattern-card {
-  background: #FFFBFB;
-  border-radius: 20px;
-  padding: 30px 40px;
-  width: 1280px;
-  height: 304px;
+  background: #FFFFFF;
+  border-radius: 1.25rem; /* 20px */
+  padding: 1.875rem 2.5rem; /* 30px 40px */
+  width: 100%;
+  max-width: 80rem; /* 1280px */
+  min-height: 19rem; /* 304px */
+  height: auto;
+  box-sizing: border-box;
+  margin-left: 0;
+  margin-right: auto;
 }
 
 /* Projects Section */
 .projects-section {
-  margin-bottom: 40px;
+  margin-bottom: 3.5rem; /* 56px */
+  background: #FFFFFF;
+  padding: 1.875rem 2.5rem; /* 30px 40px - match time-pattern-card */
+  border-radius: 1.25rem; /* 20px */
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%; /* Extend to full width of main-content */
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.projects-section .section-header {
+  margin-bottom: 1.875rem; /* 30px - match time-pattern-card */
+  padding-left: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem; /* 10px */
+}
+
+.projects-section .section-header .icon-archive {
+  color: #262626;
+  font-size: 1.25rem; /* 20px - match chart-title-text */
+}
+
+.projects-section .section-header .projects-title {
+  color: #262626 !important; /* Override chart-title-text default color */
+  font-size: 20px !important; /* Match chart-title-text (활동 시간대) */
+  line-height: 24px !important; /* Match chart-title-text */
 }
 
 .projects-table {
   background: #FFFFFF;
-  border-radius: 10px;
+  border-radius: 0.625rem; /* 10px */
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  width: 1280px;
+  width: 100%;
+  box-sizing: border-box;
   
   /* Column width variables - easily adjustable */
-  --col-category: 130px;
-  --col-repository: 220px;
-  --col-stars: 90px;
-  --col-forks: 90px;
-  --col-commits: 100px;
-  --col-prs: 80px;
-  --col-issues: 90px;
-  --col-language: 130px;
-  --col-contributors: 130px;
+  --col-category: 120px;
+  --col-repository: 180px;
+  --col-type: 100px;
+  --col-commits: 90px;
+  --col-prs: 70px;
+  --col-issues: 80px;
+  --col-stars: 80px;
+  --col-forks: 80px;
+  --col-language: 120px;
+  --col-contributors: 110px;
 }
 
 .table-header {
   background: #F8F9FA;
   display: grid;
   grid-template-columns: 
-    var(--col-category, 90px)
+    var(--col-category, 120px)
     var(--col-repository, 180px) 
-    var(--col-stars, 70px) 
-    var(--col-forks, 70px) 
-    var(--col-commits, 80px) 
-    var(--col-prs, 60px) 
-    var(--col-issues, 70px) 
-    var(--col-language, 100px) 
+    var(--col-type, 100px)
+    var(--col-commits, 90px) 
+    var(--col-prs, 70px) 
+    var(--col-issues, 80px) 
+    var(--col-stars, 80px) 
+    var(--col-forks, 80px) 
+    var(--col-language, 120px) 
     var(--col-contributors, 110px);
-  gap: 18px;
+  gap: 15px;
   padding: 15px 20px;
   font-size: 16px;
   font-weight: 600;
@@ -2208,16 +2601,17 @@ export default {
 .table-row {
   display: grid;
   grid-template-columns: 
-    var(--col-category, 90px)
+    var(--col-category, 120px)
     var(--col-repository, 180px) 
-    var(--col-stars, 70px) 
-    var(--col-forks, 70px) 
-    var(--col-commits, 80px) 
-    var(--col-prs, 60px) 
-    var(--col-issues, 70px) 
-    var(--col-language, 100px) 
+    var(--col-type, 100px)
+    var(--col-commits, 90px) 
+    var(--col-prs, 70px) 
+    var(--col-issues, 80px) 
+    var(--col-stars, 80px) 
+    var(--col-forks, 80px) 
+    var(--col-language, 120px) 
     var(--col-contributors, 110px);
-  gap: 18px;
+  gap: 15px;
   padding: 12px 20px;
   align-items: center;
   text-align: center;
@@ -2278,6 +2672,15 @@ export default {
 .category-dropdown {
   position: relative;
   cursor: pointer;
+}
+
+.category-dropdown.dropdown-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.category-dropdown.dropdown-disabled .category-dropdown-selected:hover {
+  background: #F8F9FA;
 }
 
 .category-dropdown-selected {
@@ -2383,6 +2786,7 @@ export default {
 .icon-activity,
 .icon-archive,
 .icon-link,
+.icon-github,
 .icon-react,
 .icon-python,
 .icon-kotlin,
@@ -2407,6 +2811,15 @@ export default {
   height: 18px;
   background: url('@/assets/icons/icon_mail.svg') no-repeat center;
   background-size: contain;
+}
+
+.icon-github {
+  width: 18px;
+  height: 18px;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23616161"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>') no-repeat center;
+  background-size: contain;
+  flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .icon-message {
@@ -2531,7 +2944,11 @@ export default {
 
 /* Profile Introduction Styles - EDITABLE */
 .profile-intro {
-  margin: 20px 0 30px 0;
+  margin: 0.625rem 0 0 0; /* 10px top margin only, bottom handled by flex */
+  flex: 1; /* Take remaining space to push content to top */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow flex item to shrink */
 }
 
 .intro-header {
@@ -2549,14 +2966,15 @@ export default {
 
 .intro-input {
   width: 100%;
-  min-height: 60px;
-  padding: 12px 16px;
-  font-size: 14px;
+  flex: 1; /* Take remaining space in profile-intro */
+  min-height: 3.75rem; /* 60px */
+  padding: 0.75rem 1rem; /* 12px 16px */
+  font-size: 0.875rem; /* 14px */
   line-height: 140%;
   color: #717989;
   background: #FFFFFF;
   border: 1px solid #E8EDF8;
-  border-radius: 8px;
+  border-radius: 0.5rem; /* 8px */
   resize: vertical;
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
   transition: border-color 0.3s ease;
@@ -2569,6 +2987,12 @@ export default {
   box-shadow: 0 0 0 2px rgba(203, 56, 92, 0.1);
 }
 
+.intro-input:disabled {
+  background: #F5F7FA;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .intro-input::placeholder {
   color: #CDCDCD;
 }
@@ -2576,9 +3000,10 @@ export default {
 .intro-counter {
   display: flex;
   justify-content: flex-end;
-  margin-top: 5px;
-  font-size: 12px;
+  margin-top: 0.125rem; /* 2px */
+  font-size: 0.75rem; /* 12px */
   color: #949494;
+  flex-shrink: 0; /* Prevent counter from shrinking */
 }
 
 /* Responsive Design */
@@ -2589,7 +3014,7 @@ export default {
   }
   
   .save-section {
-    padding: 0 calc((100% - 1280px) / 2);
+    padding: 0 calc((100% - min(1280px, 100% - 40px)) / 2 + 20px);
   }
   
   .time-pattern-card,
@@ -2617,6 +3042,10 @@ export default {
     grid-template-columns: repeat(6, 1fr);
     font-size: 14px;
   }
+  
+  .save-section {
+    padding: 0 20px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -2624,9 +3053,17 @@ export default {
     padding-top: 100px;
   }
   
-  .main-content {
-    width: 100%;
+  .save-section {
     padding: 0 15px;
+  }
+  
+  .main-content {
+    padding: 0 15px;
+  }
+  
+  .profile-card,
+  .combined-tech-skills-card {
+    padding: 20px;
   }
   
   .save-section {
@@ -2653,5 +3090,117 @@ export default {
 
 .repo-name-clickable:hover {
   color: #910024;
+}
+
+/* Pagination Styles */
+.pagination-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  margin-top: 20px;
+  border-top: 1px solid #E8EDF8;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #616161;
+  font-weight: 500;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #616161;
+  background: #FFFFFF;
+  border: 1px solid #E8EDF8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.pagination-btn:hover:not(.disabled) {
+  background: #F8F9FA;
+  border-color: #CB385C;
+  color: #CB385C;
+}
+
+.pagination-btn.disabled {
+  color: #CDCDCD;
+  cursor: not-allowed;
+  background: #F8F9FA;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 4px;
+  margin: 0 8px;
+}
+
+.page-number {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #616161;
+  background: #FFFFFF;
+  border: 1px solid #E8EDF8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-number:hover {
+  background: #F8F9FA;
+  border-color: #CB385C;
+  color: #CB385C;
+}
+
+.page-number.active {
+  background: #CB385C;
+  border-color: #CB385C;
+  color: #FFFFFF;
+}
+
+.page-number.active:hover {
+  background: #910024;
+  border-color: #910024;
+}
+
+/* Responsive Pagination */
+@media (max-width: 768px) {
+  .pagination-section {
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pagination-btn {
+    min-width: 60px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .page-number {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
 }
 </style>
