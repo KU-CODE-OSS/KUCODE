@@ -1110,8 +1110,11 @@ export default {
           }
         })
 
-        await updateStudentIntroduction(auth.currentUser.uid, this.user.introduction)
-        await updateStudentTechnologyStack(auth.currentUser.uid, student_techStack_dropdown)
+        // 나의 소개 저장
+        await updateStudentIntroduction(uuid, this.user.introduction)
+        
+        // 기술 스택 저장 (배열로 직접 전송)
+        await updateStudentTechnologyStack(uuid, technology_stack)
       }
       catch (error) {
         console.error('Failed to save profile data:', error)
@@ -1192,6 +1195,9 @@ export default {
         console.log('히트맵 데이터 로드 완료:', this.heatmapData)
 
         this.user.introduction = response.data.student_introduction
+        
+        // Load user data from API response
+        this.loadUserData(response.data)
         
         // Load user data from API response
         this.loadUserData(response.data)

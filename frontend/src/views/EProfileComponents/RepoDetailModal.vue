@@ -19,7 +19,7 @@
       </div>
       
       <!-- 편집/저장 버튼 -->
-      <button class="modal-save-btn" @click="isEditingRepo ? showProfileSavePopup() : toggleEditMode()">
+      <button class="modal-save-btn" @click="isEditingRepo ? saveChanges() : toggleEditMode()">
         {{ isEditingRepo ? '저장' : '편집' }}
       </button>
       
@@ -231,8 +231,8 @@
 
 <script>
 import { Chart, registerables } from 'chart.js'
-import { updateRepoIntroduction } from '@/api';
-import { auth } from '@/services/firebase';
+import { updateRepoIntroduction } from '@/api.js'
+import { auth } from '../../services/firebase'
 
 // Register Chart.js components
 Chart.register(...registerables)
