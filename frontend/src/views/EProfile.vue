@@ -1,8 +1,10 @@
 <template>
   <div class="e-portfolio">
-    <!-- Save Button -->
+    <!-- Edit/Save Button -->
       <div class="save-section">
-        <button class="save-btn" @click="showProfileSavePopup">변경사항 저장</button>
+        <button class="save-btn" @click="isEditingProfile ? saveProfile() : toggleEditMode()">
+          {{ isEditingProfile ? '저장' : '편집' }}
+        </button>
       </div>
       
     <!-- Main Content -->
@@ -23,6 +25,18 @@
                   </div>
                 </div>
                 <div class="detail-item">
+                  <i class="icon-github"></i>
+                  <a 
+                    v-if="user.github_id"
+                    :href="`https://github.com/${user.github_id}`" 
+                    target="_blank" 
+                    class="github-link"
+                  >
+                    {{ user.github_id }}
+                  </a>
+                  <span v-else class="github-link">GitHub ID 없음</span>
+                </div>
+                <div class="detail-item">
                   <i class="icon-mail"></i>
                   <span>{{ user.email || 'N/A' }}</span>
                 </div>
@@ -40,15 +54,14 @@
               v-model="user.introduction"
               class="intro-input"
               placeholder="자신을 소개해 주세요..."
-              rows="4"
+              rows="8"
               maxlength="150"
+              :disabled="!isEditingProfile"
             ></textarea>
             <div class="intro-counter">
               {{ user.introduction.length }}/150
             </div>
           </div>
-          
-          <button class="edit-profile-btn">프로필 편집</button>
         </div>
 
         <!-- Right Column Container -->
@@ -99,8 +112,8 @@
                     >
                       <div 
                         class="tech-dropdown"
-                        :class="{ 'dropdown-open': dropdown.isOpen }"
-                        @click.stop="toggleDropdown(index)"
+                        :class="{ 'dropdown-open': dropdown.isOpen, 'dropdown-disabled': !isEditingProfile }"
+                        @click.stop="isEditingProfile ? toggleDropdown(index) : null"
                       >
                         <div class="dropdown-selected">
                           <i :class="getIconClass(dropdown.selected)"></i>
@@ -243,7 +256,7 @@
       <section class="projects-section">
         <div class="section-header">
           <i class="icon-archive"></i>
-          <h3>나의 프로젝트</h3>
+          <h3 class="chart-title-text projects-title">나의 프로젝트</h3>
         </div>
         
         <!-- Projects Table -->
@@ -258,7 +271,7 @@
               <i :class="getSortIcon('name')"></i>
             </span>
             <span class="sortable-header" @click="sortByColumn('type')">
-              Type
+              Owner
               <i :class="getSortIcon('type')"></i>
             </span>
             <span class="sortable-header" @click="sortByColumn('commit_count')">
@@ -306,9 +319,10 @@
               class="category-dropdown"
               :class="{ 
                 'dropdown-open': categoryDropdownOpen[repo.id],
-                'dropdown-up': shouldDropUp(repo.id)
+                'dropdown-up': shouldDropUp(repo.id),
+                'dropdown-disabled': !isEditingProfile
               }"
-              @click.stop="toggleCategoryDropdown(repo.id)"
+              @click.stop="isEditingProfile ? toggleCategoryDropdown(repo.id) : null"
               :ref="`categoryDropdown_${repo.id}`"
             >
               <div class="category-dropdown-selected">
@@ -316,7 +330,7 @@
                 <i class="icon-arrow-down" :class="{ 'rotated': categoryDropdownOpen[repo.id] }"></i>
               </div>
               <div 
-                v-if="categoryDropdownOpen[repo.id]" 
+                v-if="categoryDropdownOpen[repo.id] && isEditingProfile" 
                 class="category-dropdown-options"
                 :class="{ 'options-up': shouldDropUp(repo.id) }"
               >
@@ -465,6 +479,7 @@ export default {
         university: '고려대학교',
         department: '컴퓨터공학과',
         email: 'joyyoj1@korea.ac.kr',
+        github_id: '',
         introduction: ''
       },
       techStack: {
@@ -581,7 +596,9 @@ export default {
       ],
       // Pagination properties
       currentPage: 1,
-      itemsPerPage: 10
+      itemsPerPage: 10,
+      // Edit mode state
+      isEditingProfile: false
     }
   },
   computed: {
@@ -621,11 +638,45 @@ export default {
           aVal = (aVal || '').toString().toLowerCase()
           bVal = (bVal || '').toString().toLowerCase()
         } else if (this.sortBy === 'type') {
-          // Sort type: Owner first, then Contributor
-          aVal = this.getRepoType(a)
-          bVal = this.getRepoType(b)
-          aVal = aVal === 'Owner' ? 0 : aVal === 'Contributor' ? 1 : 2
-          bVal = bVal === 'Owner' ? 0 : bVal === 'Contributor' ? 1 : 2
+          // Sort type: Owner (displayed as '-') first, then Contributor (owner_github_id) alphabetically
+          const aType = this.getRepoType(a)
+          const bType = this.getRepoType(b)
+          
+          // Owner는 '-'로 표시되므로 가장 앞에 정렬 (priority 0)
+          // Contributor는 owner_github_id로 정렬 (priority 1, value는 lowercase)
+          // N/A는 마지막 (priority 2)
+          let aPriority, bPriority, aValue, bValue
+          
+          if (aType === '-') {
+            aPriority = 0
+            aValue = ''
+          } else if (aType === 'N/A') {
+            aPriority = 2
+            aValue = ''
+          } else {
+            aPriority = 1
+            aValue = aType.toLowerCase()
+          }
+          
+          if (bType === '-') {
+            bPriority = 0
+            bValue = ''
+          } else if (bType === 'N/A') {
+            bPriority = 2
+            bValue = ''
+          } else {
+            bPriority = 1
+            bValue = bType.toLowerCase()
+          }
+          
+          // priority로 먼저 정렬, 같은 priority면 value로 정렬
+          if (aPriority !== bPriority) {
+            aVal = aPriority
+            bVal = bPriority
+          } else {
+            aVal = aValue
+            bVal = bValue
+          }
         } else if (this.sortBy === 'commit_count') {
           // Use calculated commit count
           aVal = this.getRepoCommits(a)
@@ -731,10 +782,20 @@ export default {
     document.removeEventListener('click', this.closeAllDropdowns)
   },
   methods: {
+    // 편집 모드 토글
+    toggleEditMode() {
+      this.isEditingProfile = true
+    },
     // 저장 버튼 클릭 핸들러
-    async showProfileSavePopup() {
-      await this.saveProfileChanges()
-      alert('저장 완료')
+    async saveProfile() {
+      try {
+        await this.saveProfileChanges()
+        this.isEditingProfile = false
+        alert('저장 완료')
+      } catch (error) {
+        console.error('저장 실패:', error)
+        alert('저장에 실패했습니다. 다시 시도해주세요.')
+      }
     },
     // 모달 관련 메서드
     openRepoModal(repo) {
@@ -1039,9 +1100,14 @@ export default {
     },
     async saveProfileChanges() {
       try {
-        const student_techStack_dropdown = []
+        const uuid = auth.currentUser.uid
+        
+        // 기술 스택 배열 생성 (선택된 값만)
+        const technology_stack = []
         this.techStackDropdowns.forEach(dropdown => {
-          student_techStack_dropdown.push(dropdown.selected)
+          if (dropdown.selected) {
+            technology_stack.push(dropdown.selected)
+          }
         })
 
         await updateStudentIntroduction(auth.currentUser.uid, this.user.introduction)
@@ -1049,6 +1115,7 @@ export default {
       }
       catch (error) {
         console.error('Failed to save profile data:', error)
+        throw error
       }
     },
     async loadActivityChart() {
@@ -1125,6 +1192,9 @@ export default {
         console.log('히트맵 데이터 로드 완료:', this.heatmapData)
 
         this.user.introduction = response.data.student_introduction
+        
+        // Load user data from API response
+        this.loadUserData(response.data)
         
         // Load repositories data from the same response
         this.loadRepositoriesFromResponse(response.data)
@@ -1427,6 +1497,39 @@ export default {
       }
     },
 
+    // Load user data from API response
+    loadUserData(responseData) {
+      try {
+        // API 응답에서 student 정보가 직접 포함되어 있지 않을 수 있으므로
+        // repositories 데이터에서 owner_github_id를 추출하거나
+        // 다른 방식으로 github_id를 가져와야 할 수 있습니다
+        
+        // 일단 responseData에 github_id가 있는지 확인
+        if (responseData && responseData.github_id) {
+          this.user.github_id = responseData.github_id
+        }
+        
+        // repositories에서 첫 번째 레포의 owner_github_id를 사용 (임시)
+        if (responseData && responseData.repositories && responseData.repositories.length > 0) {
+          const firstRepo = responseData.repositories[0]
+          // 현재 사용자가 owner인 경우에만 github_id 사용
+          if (firstRepo.is_owner && firstRepo.owner_github_id) {
+            this.user.github_id = firstRepo.owner_github_id
+          }
+        }
+        
+        // student_introduction이 있으면 업데이트
+        if (responseData && responseData.student_introduction) {
+          this.user.introduction = responseData.student_introduction
+        }
+        
+        console.log('User data loaded from API:', this.user)
+        console.log('Full API response:', responseData)
+      } catch (error) {
+        console.error('Error loading user data:', error)
+      }
+    },
+
     // Add these methods to your methods object
     loadRepositoriesFromResponse(responseData) {
       try {
@@ -1481,9 +1584,9 @@ export default {
     // Repository type, commits, PRs, issues calculation methods
     getRepoType(repo) {
       if (repo.is_owner) {
-        return 'Owner'
+        return '-'
       } else if (repo.is_contributor) {
-        return 'Contributor'
+        return repo.owner_github_id || 'N/A'
       }
       return 'N/A'
     },
@@ -1577,19 +1680,22 @@ export default {
 /* Global Styles */
 .e-portfolio {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: linear-gradient(to bottom, #F5F7FA 0%, #F5F7FA 58%, #FFFFFF 58%, #FFFFFF 100%);
+  background: linear-gradient(to bottom, #F5F7FA 0%, #F5F7FA 55%, #FFFFFF 61%, #FFFFFF 100%);
   min-height: 100vh;
-  width: 1920px;
+  width: 100%;
+  max-width: 1920px;
   margin: 0 auto;
   padding-top: 150px; /* Proper spacing from navigation bar */
+  box-sizing: border-box;
 }
 
 /* Save Section */
 .save-section {
   display: flex;
   justify-content: flex-end;
-  padding: 0 320px; /* Align with content area */
+  padding: 0 calc((100% - 1280px) / 2 + 20px);
   margin-bottom: 30px; /* Space before main content */
+  box-sizing: border-box;
 }
 
 .save-btn {
@@ -1601,11 +1707,12 @@ export default {
   color: #CB385C;
   cursor: pointer;
   transition: all 0.3s ease;
-  width: 113px;
+  min-width: 113px;
   height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .save-btn:hover {
@@ -1615,45 +1722,53 @@ export default {
 
 /* Main Content */
 .main-content {
-  width: 1280px;
+  width: 100%;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 20px;
+  box-sizing: border-box;
 }
 
 /* Profile Section */
 .profile-section {
   display: grid;
-  grid-template-columns: 415px 848px;
-  gap: 16px;
-  margin-bottom: 40px;
+  grid-template-columns: 1fr 2fr;
+  gap: 1rem; /* 16px */
+  margin-bottom: 2.5rem; /* 40px */
+  align-items: stretch; /* Ensure both cards have same height */
 }
 
 .profile-card {
   background: #FFFFFF;
   border: 1px solid #E8EDF8;
-  border-radius: 20px;
-  padding: 30px;
-  height: 440px; /* Updated height */
+  border-radius: 1.25rem; /* 20px */
+  padding: 1.875rem; /* 30px */
+  min-height: 27.5rem; /* 440px */
+  height: 100%; /* Match grid item height to align bottoms */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Profile Header Layout - NEW */
 .profile-header {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 1rem; /* 16px */
+  margin-bottom: 1.25rem; /* 20px */
+  flex-shrink: 0;
 }
 
 /* Profile Picture Placeholder - NEW */
 .profile-picture-placeholder {
-  width: 94px;
-  height: 94px;
+  width: 5.875rem; /* 94px */
+  height: 5.875rem; /* 94px */
   /* background-color: #E2E7F0; */
   background-image: url('@/assets/emblem_school_transparent.gif') ;
   background-repeat: no-repeat;
   background-position: center;
   background-size: 70%;
-  border-radius: 10px;
+  border-radius: 0.625rem; /* 10px */
   flex-shrink: 0;
 }
 
@@ -1661,19 +1776,21 @@ export default {
 .right-column {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem; /* 16px */
 }
 
 /* Combined Tech Stack and Skills Card */
 .combined-tech-skills-card {
   background: #FFFFFF;
   border: 1px solid #E8EDF8;
-  border-radius: 20px;
-  padding: 50px 50px 30px 50px; /* 상단 패딩 증가 */
-  height: 440px; /* Same height as profile card */
+  border-radius: 1.25rem; /* 20px */
+  padding: 3.125rem 3.125rem 1.875rem 3.125rem; /* 50px 50px 30px 50px */
+  min-height: 27.5rem; /* 440px */
+  height: 100%; /* Match grid item height to align bottoms */
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 1.875rem; /* 30px */
+  box-sizing: border-box;
 }
 
 /* Tech Stack Section within combined card */
@@ -1709,7 +1826,7 @@ export default {
 .profile-details {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 3px;
 }
 
 .detail-item {
@@ -1723,6 +1840,17 @@ export default {
 .detail-content {
   display: flex;
   gap: 16px;
+}
+
+.github-link {
+  color: #262626;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.github-link:hover {
+  color: #262626;
+  text-decoration: underline;
 }
 
 .edit-profile-btn {
@@ -1889,6 +2017,15 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   position: relative;
   z-index: 1;
+}
+
+.tech-dropdown.dropdown-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.tech-dropdown.dropdown-disabled .dropdown-selected:hover {
+  background: transparent;
 }
 
 .dropdown-selected {
@@ -2161,23 +2298,29 @@ export default {
 
 .activity-charts {
   display: grid;
-  grid-template-columns: 632px 632px;
-  gap: 16px;
-  margin-bottom: 30px;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem; /* 16px */
+  margin-bottom: 1.875rem; /* 30px */
+  align-items: stretch; /* Ensure both cards have same height */
 }
 
 .chart-card {
   background: #FFFFFF;
-  border-radius: 20px;
-  padding: 30px 40px;
-  height: 347px;
+  border-radius: 1.25rem; /* 20px */
+  padding: 1.875rem 2.5rem; /* 30px 40px */
+  min-height: 21.6875rem; /* 347px */
+  height: 100%; /* Match grid item height */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem; /* 20px */
+  flex-shrink: 0;
 }
 
 .chart-title {
@@ -2262,9 +2405,10 @@ export default {
 /* UPDATED: Enhanced legend positioning */
 .chart-legend-horizontal {
   display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: 1.25rem; /* 20px */
+  margin-bottom: 1.25rem; /* 20px */
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .legend-dot {
@@ -2276,9 +2420,10 @@ export default {
 /* NEW: Activity Chart Specific Styles */
 .activity-chart-container {
   position: relative;
-  height: 200px;
+  flex: 1; /* Take remaining space in chart-card */
+  min-height: 12.5rem; /* 200px */
   width: 100%;
-  margin-top: 10px;
+  margin-top: 0.625rem; /* 10px */
 }
 
 .activity-chart-container canvas {
@@ -2325,9 +2470,10 @@ export default {
 
 .team-size-chart-container {
   position: relative;
-  height: 200px;
+  flex: 1; /* Take remaining space in chart-card */
+  min-height: 12.5rem; /* 200px */
   width: 100%;
-  margin-top: 20px;
+  margin-top: 1.25rem; /* 20px */
 }
 
 .team-size-chart-container canvas {
@@ -2338,26 +2484,56 @@ export default {
 /* Time Pattern */
 .time-pattern-card {
   background: #FFFFFF;
-  border-radius: 20px;
-  padding: 30px 40px;
-  width: 1280px;
-  height: 304px;
+  border-radius: 1.25rem; /* 20px */
+  padding: 1.875rem 2.5rem; /* 30px 40px */
+  width: 100%;
+  max-width: 80rem; /* 1280px */
+  min-height: 19rem; /* 304px */
+  height: auto;
+  box-sizing: border-box;
+  margin-left: 0;
+  margin-right: auto;
 }
 
 /* Projects Section */
 .projects-section {
-  margin-bottom: 40px;
+  margin-bottom: 3.5rem; /* 56px */
   background: #FFFFFF;
-  padding: 30px;
-  border-radius: 20px;
+  padding: 1.875rem 2.5rem; /* 30px 40px - match time-pattern-card */
+  border-radius: 1.25rem; /* 20px */
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%; /* Extend to full width of main-content */
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.projects-section .section-header {
+  margin-bottom: 1.875rem; /* 30px - match time-pattern-card */
+  padding-left: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem; /* 10px */
+}
+
+.projects-section .section-header .icon-archive {
+  color: #262626;
+  font-size: 1.25rem; /* 20px - match chart-title-text */
+}
+
+.projects-section .section-header .projects-title {
+  color: #262626 !important; /* Override chart-title-text default color */
+  font-size: 20px !important; /* Match chart-title-text (활동 시간대) */
+  line-height: 24px !important; /* Match chart-title-text */
 }
 
 .projects-table {
   background: #FFFFFF;
-  border-radius: 10px;
+  border-radius: 0.625rem; /* 10px */
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  width: 1280px;
+  width: 100%;
+  box-sizing: border-box;
   
   /* Column width variables - easily adjustable */
   --col-category: 120px;
@@ -2497,6 +2673,15 @@ export default {
   cursor: pointer;
 }
 
+.category-dropdown.dropdown-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.category-dropdown.dropdown-disabled .category-dropdown-selected:hover {
+  background: #F8F9FA;
+}
+
 .category-dropdown-selected {
   padding: 3px 8px;
   border-radius: 6px;
@@ -2600,6 +2785,7 @@ export default {
 .icon-activity,
 .icon-archive,
 .icon-link,
+.icon-github,
 .icon-react,
 .icon-python,
 .icon-kotlin,
@@ -2624,6 +2810,15 @@ export default {
   height: 18px;
   background: url('@/assets/icons/icon_mail.svg') no-repeat center;
   background-size: contain;
+}
+
+.icon-github {
+  width: 18px;
+  height: 18px;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23616161"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>') no-repeat center;
+  background-size: contain;
+  flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .icon-message {
@@ -2748,7 +2943,11 @@ export default {
 
 /* Profile Introduction Styles - EDITABLE */
 .profile-intro {
-  margin: 20px 0 30px 0;
+  margin: 0.625rem 0 0 0; /* 10px top margin only, bottom handled by flex */
+  flex: 1; /* Take remaining space to push content to top */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow flex item to shrink */
 }
 
 .intro-header {
@@ -2766,14 +2965,15 @@ export default {
 
 .intro-input {
   width: 100%;
-  min-height: 60px;
-  padding: 12px 16px;
-  font-size: 14px;
+  flex: 1; /* Take remaining space in profile-intro */
+  min-height: 3.75rem; /* 60px */
+  padding: 0.75rem 1rem; /* 12px 16px */
+  font-size: 0.875rem; /* 14px */
   line-height: 140%;
   color: #717989;
   background: #FFFFFF;
   border: 1px solid #E8EDF8;
-  border-radius: 8px;
+  border-radius: 0.5rem; /* 8px */
   resize: vertical;
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
   transition: border-color 0.3s ease;
@@ -2786,6 +2986,12 @@ export default {
   box-shadow: 0 0 0 2px rgba(203, 56, 92, 0.1);
 }
 
+.intro-input:disabled {
+  background: #F5F7FA;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .intro-input::placeholder {
   color: #CDCDCD;
 }
@@ -2793,9 +2999,10 @@ export default {
 .intro-counter {
   display: flex;
   justify-content: flex-end;
-  margin-top: 5px;
-  font-size: 12px;
+  margin-top: 0.125rem; /* 2px */
+  font-size: 0.75rem; /* 12px */
   color: #949494;
+  flex-shrink: 0; /* Prevent counter from shrinking */
 }
 
 /* Responsive Design */
@@ -2806,7 +3013,7 @@ export default {
   }
   
   .save-section {
-    padding: 0 calc((100% - 1280px) / 2);
+    padding: 0 calc((100% - min(1280px, 100% - 40px)) / 2 + 20px);
   }
   
   .time-pattern-card,
@@ -2834,6 +3041,10 @@ export default {
     grid-template-columns: repeat(6, 1fr);
     font-size: 14px;
   }
+  
+  .save-section {
+    padding: 0 20px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -2841,9 +3052,17 @@ export default {
     padding-top: 100px;
   }
   
-  .main-content {
-    width: 100%;
+  .save-section {
     padding: 0 15px;
+  }
+  
+  .main-content {
+    padding: 0 15px;
+  }
+  
+  .profile-card,
+  .combined-tech-skills-card {
+    padding: 20px;
   }
   
   .save-section {
