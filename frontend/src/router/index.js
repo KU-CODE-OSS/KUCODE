@@ -1,6 +1,7 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
-import Dashboard from '@/views/Dashboard.vue';
+import BoardList from '@/views/Board/BoardList.vue';
+import Board from '@/views/Board.vue';
 import Information from '@/views/Information.vue';
 import Statistics from '@/views/Statistics.vue';
 import Login from '@/views/Login.vue';
@@ -44,7 +45,37 @@ const routes = [
   {
     path: '/board',
     name: 'board',
-    component: Dashboard,
+    component: BoardList,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/board/event/create',
+    name: 'EventCreate',
+    component: () => import('@/views/Board/EventCreate.vue'),
+    beforeEnter: authGuard
+  },
+  {
+    path: '/board/event/:id',
+    name: 'EventDetail',
+    component: () => import('@/views/Board/EventDetail.vue'),
+    beforeEnter: authGuard
+  },
+  {
+    path: '/board/materials/create',
+    name: 'MaterialsCreate',
+    component: () => import('@/views/Board/MaterialsCreate.vue'),
+    beforeEnter: authGuard
+  },
+  {
+    path: '/board/materials/:id',
+    name: 'MaterialsDetail',
+    component: () => import('@/views/Board/MaterialsDetail.vue'),
+    beforeEnter: authGuard
+  },
+  {
+    path: '/board1',
+    name: 'board1',
+    component: Board,
     beforeEnter: authGuard
   },
   {
