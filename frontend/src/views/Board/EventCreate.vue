@@ -71,6 +71,8 @@
 </template>
 
 <script>
+import { createOrUpdatePost } from '@/api.js'
+
 export default {
   name: 'EventCreate',
   data() {
@@ -79,8 +81,13 @@ export default {
         title: '',
         content: '',
         file: null,
-        fileName: ''
-      }
+        fileName: '',
+        author: '', // Will be set from user session or default
+        year: new Date().getFullYear(),
+        semester: '1'
+      },
+      loading: false,
+      error: null
     }
   },
   methods: {
@@ -95,13 +102,37 @@ export default {
       // Preserve category state when going back
       this.$router.push({ path: '/board', query: { category: 'events' } })
     },
-    handleSubmit() {
-      // TODO: Connect to backend API
-      console.log('Form submitted:', this.formData)
+    async handleSubmit() {
+      this.loading = true
+      this.error = null
 
-      // For now, just navigate back to board
-      alert('행사정보가 저장되었습니다.')
-      this.$router.push({ path: '/board', query: { category: 'events' } })
+      try {
+        // Prepare post data according to API spec
+        const postData = {
+          author: this.formData.author || 'Anonymous', // TODO: Get from user session
+          title: this.formData.title,
+          content: this.formData.content,
+          category: 'EVENT_INFO',
+          year: this.formData.year,
+          semester: this.formData.semester,
+          is_internal: true
+        }
+
+        // Add event_info if needed (optional field)
+        // postData.event_info = '';
+
+        const response = await createOrUpdatePost(postData)
+        console.log('Post created:', response.data)
+
+        alert('행사정보가 저장되었습니다.')
+        this.$router.push({ path: '/board', query: { category: 'events' } })
+      } catch (error) {
+        console.error('Failed to create post:', error)
+        this.error = 'Failed to create post'
+        alert('게시글 저장에 실패했습니다. 다시 시도해주세요.')
+      } finally {
+        this.loading = false
+      }
     }
   }
 }

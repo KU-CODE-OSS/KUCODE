@@ -143,6 +143,8 @@
 </template>
 
 <script>
+import { getBoardPostsList, getCompanyReposList, getTrendingReposList } from '@/api.js'
+
 export default {
   name: 'BoardPage',
   data() {
@@ -153,43 +155,20 @@ export default {
         { label: '오픈소스 Repos', value: 'opensource' }
       ],
       noticeTabs: [
-        { label: '행사 정보', value: 'events' },
-        { label: '학생', value: 'student' }
+        { label: '기업', value: 'company' },
+        { label: 'Trending', value: 'trending' }
       ],
       activeCategory: 'events',
-      activeNoticeTab: 'events',
+      activeNoticeTab: 'company',
       selectedYear: 2025,
       showYearDropdown: false,
       availableYears: [2025, 2024, 2023, 2022, 2021, 2020],
-      eventPosts: [
-        { id: 1, number: '1', title: '주제', date: '2025.11.15', author: '김OO', views: '1234', category: 'events' },
-        { id: 2, number: '2', title: '주제', date: '2025.11.15', author: '김OO', views: '1234', category: 'events' },
-        { id: 3, number: '3', title: '주제', date: '2025.11.15', author: '김OO', views: '1234', category: 'events' },
-        { id: 4, number: '4', title: '주제', date: '2025.11.15', author: '김OO', views: '1234', category: 'events' },
-        { id: 5, number: '5', title: '주제', date: '2025.11.15', author: '김OO', views: '1234', category: 'events' },
-        { id: 6, number: '6', title: '주제', date: '2025.11.15', author: '김OO', views: '1234', category: 'events' },
-        { id: 7, number: '7', title: '주제', date: '2025.11.15', author: '김OO', views: '1234', category: 'events' }
-      ],
-      learningPosts: [
-        { id: 1, number: '1', title: 'Git의 기초 및 Git을 이용한 프로젝트 형상관리 방법', date: '2025.10.16', author: '황영숙', views: '1234', category: 'learning' },
-        { id: 2, number: '2', title: '도커와 컨테이너 기초와 활용', date: '2025.11.15', author: '황영숙', views: '1234', category: 'learning' },
-        { id: 3, number: '3', title: 'DevOps - CI/CD 구성하기', date: '2025.10.16', author: '황영숙', views: '1234', category: 'learning' },
-        { id: 4, number: '4', title: 'MLOPs 구축하기', date: '2025.10.16', author: '황영숙', views: '1234', category: 'learning' },
-        { id: 5, number: '5', title: '학습 자료 1', date: '2025.10.16', author: '황영숙', views: '1234', category: 'learning' },
-        { id: 6, number: '6', title: '학습 자료 2', date: '2025.10.16', author: '황영숙', views: '1234', category: 'learning' },
-        { id: 7, number: '7', title: 'Design of Scalable System Architectures', date: '2025.10.16', author: '황영숙', views: '1234', category: 'learning' }
-      ],
-      repositories: [
-        { id: 1, number: '1', company: '티맥스클라우드', repoCount: '271', followers: '57', url: 'https://github.com/tmax-cloud' },
-        { id: 2, number: '2', company: '네이버', repoCount: '269', followers: '2377', url: 'https://github.com/naver' },
-        { id: 3, number: '3', company: '인베슘', repoCount: '199', followers: '70', url: 'https://github.com/hamonikr' },
-        { id: 4, number: '4', company: '삼성전자', repoCount: '182', followers: '1342', url: 'https://github.com/Samsung' },
-        { id: 5, number: '5', company: '샌드버드', repoCount: '194', followers: '340', url: 'https://github.com/sendbird' },
-        { id: 6, number: '6', company: '데브시스터즈', repoCount: '178', followers: '248', url: 'https://github.com/devsisters' },
-        { id: 7, number: '7', company: '리디', repoCount: '114', followers: '167', url: 'https://github.com/ridi' },
-        { id: 8, number: '8', company: '라인', repoCount: '158', followers: '1304', url: 'https://github.com/line' },
-        { id: 9, number: '9', company: '당근마켓', repoCount: '120', followers: '1143', url: 'https://github.com/daangn' }
-      ]
+      loading: false,
+      error: null,
+      eventPosts: [],
+      learningPosts: [],
+      companyRepos: [],
+      trendingRepos: []
     }
   },
   computed: {
@@ -206,14 +185,125 @@ export default {
       return []
     },
     filteredRepos() {
-      return this.repositories
+      if (this.activeNoticeTab === 'company') {
+        return this.companyRepos
+      } else if (this.activeNoticeTab === 'trending') {
+        return this.trendingRepos
+      }
+      return []
     }
   },
   methods: {
+    async loadPosts() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await getBoardPostsList(1, 100)
+        const posts = response.data.results || []
+
+        // Separate posts by category
+        this.eventPosts = posts
+          .filter(post => post.category === 'EVENT_INFO')
+          .map((post, index) => ({
+            id: post.id,
+            number: index + 1,
+            title: post.title,
+            date: this.formatDate(post.created_at),
+            author: post.author,
+            views: 0,
+            category: 'events'
+          }))
+
+        this.learningPosts = posts
+          .filter(post => post.category === 'LEARNING_MATERIALS')
+          .map((post, index) => ({
+            id: post.id,
+            number: index + 1,
+            title: post.title,
+            date: this.formatDate(post.created_at),
+            author: post.author,
+            views: 0,
+            category: 'learning'
+          }))
+      } catch (error) {
+        console.error('Failed to load posts:', error)
+        this.error = 'Failed to load posts'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async loadCompanyRepos() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await getCompanyReposList(1, 100)
+        const repos = response.data.results || []
+
+        this.companyRepos = repos.map((repo, index) => ({
+          id: repo.id,
+          number: index + 1,
+          company: repo.company_name || 'N/A',
+          repoCount: repo.repo_count || 0,
+          followers: repo.repo_count || 0,
+          url: repo.github_url
+        }))
+      } catch (error) {
+        console.error('Failed to load company repos:', error)
+        this.error = 'Failed to load company repositories'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async loadTrendingRepos() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await getTrendingReposList(1, 100)
+        const repos = response.data.results || []
+
+        this.trendingRepos = repos.map((repo, index) => ({
+          id: repo.id,
+          number: index + 1,
+          company: repo.repo_name || 'N/A',
+          repoCount: repo.trending_rank || 0,
+          followers: repo.trending_rank || 0,
+          url: repo.github_url
+        }))
+      } catch (error) {
+        console.error('Failed to load trending repos:', error)
+        this.error = 'Failed to load trending repositories'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    formatDate(dateString) {
+      if (!dateString) return ''
+      const date = new Date(dateString)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}.${month}.${day}`
+    },
+
     selectCategory(categoryValue) {
       this.activeCategory = categoryValue
       // Update URL query to preserve category state
       this.$router.replace({ path: '/board', query: { category: categoryValue } })
+
+      // Load data based on category
+      if (categoryValue === 'opensource') {
+        if (this.activeNoticeTab === 'company') {
+          this.loadCompanyRepos()
+        } else {
+          this.loadTrendingRepos()
+        }
+      }
     },
     toggleYearDropdown() {
       this.showYearDropdown = !this.showYearDropdown
@@ -255,11 +345,30 @@ export default {
     })
     // Restore category state when component mounts
     this.restoreCategoryFromQuery()
+
+    // Load initial data
+    this.loadPosts()
+    if (this.activeCategory === 'opensource') {
+      if (this.activeNoticeTab === 'company') {
+        this.loadCompanyRepos()
+      } else {
+        this.loadTrendingRepos()
+      }
+    }
   },
   watch: {
     '$route.query.category': function(newCategory) {
       if (newCategory && ['events', 'learning', 'opensource'].includes(newCategory)) {
         this.activeCategory = newCategory
+      }
+    },
+    activeNoticeTab(newTab) {
+      if (this.activeCategory === 'opensource') {
+        if (newTab === 'company') {
+          this.loadCompanyRepos()
+        } else if (newTab === 'trending') {
+          this.loadTrendingRepos()
+        }
       }
     }
   }
@@ -281,17 +390,20 @@ export default {
 }
 
 .board-container {
-  width: 1920px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
   display: flex;
   position: relative;
+  padding: 0 40px;
+  box-sizing: border-box;
 }
 
 /* Sidebar Navigation */
 .sidebar-navigation {
   width: 268px;
   padding: 155px 0 0 0;
-  margin-left: 320px;
+  margin-right: 40px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -334,8 +446,8 @@ export default {
 /* Main Content */
 .main-content {
   flex: 1;
-  max-width: 1012px;
-  padding: 71px 40px 40px;
+  min-width: 0;
+  padding: 71px 40px 40px 40px;
   border-left: 1px solid #DCE2ED;
   background: #FFFFFF;
 }
@@ -646,30 +758,43 @@ export default {
 }
 
 /* Responsive Design */
-@media (max-width: 1920px) {
+@media (max-width: 1440px) {
   .board-container {
-    width: 100%;
-  }
-
-  .sidebar-navigation {
-    margin-left: max(20px, calc((100vw - 1280px) / 2));
-  }
-}
-
-@media (max-width: 1600px) {
-  .sidebar-navigation {
-    margin-left: 80px;
+    max-width: 1200px;
   }
 }
 
 @media (max-width: 1200px) {
+  .board-container {
+    padding: 0 30px;
+  }
+
   .sidebar-navigation {
-    margin-left: 40px;
     width: 220px;
+    margin-right: 30px;
+  }
+
+  .main-content {
+    padding: 71px 30px 40px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .board-container {
+    padding: 0 20px;
+  }
+
+  .sidebar-navigation {
+    width: 200px;
+    margin-right: 20px;
   }
 
   .main-content {
     padding: 71px 20px 40px;
+  }
+
+  .col-title {
+    width: 300px;
   }
 }
 

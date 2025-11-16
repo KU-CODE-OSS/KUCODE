@@ -54,6 +54,8 @@
 </template>
 
 <script>
+import { getBoardPost } from '@/api.js'
+
 export default {
   name: 'MaterialsDetail',
   data() {
@@ -68,61 +70,41 @@ export default {
         title: '',
         content: '',
         attachment: null
-      }
+      },
+      loading: false,
+      error: null
     }
   },
   created() {
     this.loadPost()
   },
   methods: {
-    loadPost() {
-      // Get post ID from route params
+    async loadPost() {
       const postId = this.$route.params.id
+      this.loading = true
+      this.error = null
 
-      // TODO: Connect to backend API
-      // For now, using hardcoded sample data from Figma
-      const samplePosts = {
-        '1': {
-          id: 1,
-          title: 'Git의 기초 및 Git을 이용한 프로젝트 형상관리 방법',
-          content: `본 교육 자료는 다음의 내용을 포함합니다.
-첨부된 자료를 클릭하여 학습에 활용하시기 바랍니다.
+      try {
+        const response = await getBoardPost(postId)
+        const postData = response.data.post
 
-[1] 오픈소스 SW 개발 환경 구성하기
-(git 설치, 개발환경 설정, Github 회원가입 필수)
-
-[2] Git의 필수 개념과 명령어
-(Working Dir, Staging Area, Local Repo, Remote Repo 등)
-
-Git 설치
-Git 로컬 저장소 만들기
-Git 로컬 저장소 초기화 (init)
-파일 등록 (add)
-Git 로컬 저장소에 업로드 (commit)
-Git을 편리하게 사용하는 방법
-Git/Github을 이용한 팀 협업과 오픈소스 기여`,
-          attachment: {
-            name: 'Git의 기초 및 Git을 이용한 프로젝트 형상관리 방법_File.pdf',
-            url: '#'
-          }
-        },
-        '2': {
-          id: 2,
-          title: 'Github Actions를 활용한 CI/CD',
-          content: 'Github Actions를 활용하여 지속적 통합 및 배포를 구현하는 방법을 배웁니다.',
-          attachment: {
-            name: 'Github_Actions_Tutorial.pdf',
-            url: '#'
-          }
+        this.post = {
+          id: postData.id,
+          title: postData.title,
+          content: postData.content,
+          attachment: postData.attachment || null
         }
-      }
-
-      // Load the post or show default
-      this.post = samplePosts[postId] || {
-        id: postId,
-        title: '게시글을 찾을 수 없습니다',
-        content: '요청하신 게시글이 존재하지 않습니다.',
-        attachment: null
+      } catch (error) {
+        console.error('Failed to load post:', error)
+        this.error = 'Failed to load post'
+        this.post = {
+          id: postId,
+          title: '게시글을 찾을 수 없습니다',
+          content: '요청하신 게시글이 존재하지 않습니다.',
+          attachment: null
+        }
+      } finally {
+        this.loading = false
       }
     },
     goBack() {
@@ -152,17 +134,20 @@ Git/Github을 이용한 팀 협업과 오픈소스 기여`,
 }
 
 .detail-container {
-  width: 1920px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
   display: flex;
   position: relative;
+  padding: 0 40px;
+  box-sizing: border-box;
 }
 
 /* Sidebar Navigation */
 .sidebar-navigation {
   width: 268px;
   padding: 155px 0 0 0;
-  margin-left: 320px;
+  margin-right: 40px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -210,8 +195,8 @@ Git/Github을 이용한 팀 협업과 오픈소스 기여`,
 /* Main Content */
 .main-content {
   flex: 1;
-  max-width: 1012px;
-  padding: 71px 40px 40px;
+  min-width: 0;
+  padding: 71px 40px 40px 40px;
   border-left: 1px solid #DCE2ED;
   background: #FFFFFF;
   box-sizing: border-box;
@@ -307,19 +292,49 @@ Git/Github을 이용한 팀 협업과 오픈소스 기여`,
 
 /* Responsive Design */
 @media (max-width: 1440px) {
+  .detail-container {
+    max-width: 1200px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .detail-container {
+    padding: 0 30px;
+  }
+
   .sidebar-navigation {
-    margin-left: 160px;
+    width: 220px;
+    margin-right: 30px;
+  }
+
+  .main-content {
+    padding: 71px 30px 40px;
   }
 }
 
 @media (max-width: 1024px) {
+  .detail-container {
+    padding: 0 20px;
+  }
+
+  .sidebar-navigation {
+    width: 200px;
+    margin-right: 20px;
+  }
+
+  .main-content {
+    padding: 71px 20px 40px;
+  }
+}
+
+@media (max-width: 768px) {
   .detail-container {
     flex-direction: column;
   }
 
   .sidebar-navigation {
     width: 100%;
-    margin-left: 0;
+    margin-right: 0;
     padding: 40px;
     flex-direction: row;
     gap: 16px;
@@ -333,12 +348,6 @@ Git/Github을 이용한 팀 협업과 오픈소스 기여`,
   .main-content {
     border-left: none;
     border-top: 1px solid #DCE2ED;
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-content {
     padding: 32px 24px;
   }
 
