@@ -54,6 +54,8 @@
 </template>
 
 <script>
+import { getBoardPost } from '@/api.js'
+
 export default {
   name: 'EventDetail',
   data() {
@@ -68,55 +70,41 @@ export default {
         title: '',
         content: '',
         attachment: null
-      }
+      },
+      loading: false,
+      error: null
     }
   },
   created() {
     this.loadPost()
   },
   methods: {
-    loadPost() {
-      // Get post ID from route params
+    async loadPost() {
       const postId = this.$route.params.id
+      this.loading = true
+      this.error = null
 
-      // TODO: Connect to backend API
-      // For now, using hardcoded sample data
-      const samplePosts = {
-        '1': {
-          id: 1,
-          title: '2025학년도 1학기 오픈소스 SW 개발 설명회',
-          content: `오픈소스 SW 개발 프로젝트 설명회를 다음과 같이 진행합니다.
+      try {
+        const response = await getBoardPost(postId)
+        const postData = response.data.post
 
-일시: 2025년 3월 15일 (수) 14:00-16:00
-장소: 애기능생활관 컨벤션홀
-대상: 전체 학생
-
-주요 내용:
-- 오픈소스 SW 개발 프로젝트 소개
-- 참여 방법 및 혜택 안내
-- 우수 프로젝트 사례 발표
-- Q&A 세션
-
-많은 참여 바랍니다.`,
-          attachment: {
-            name: '오픈소스_SW_개발_설명회_안내문.pdf',
-            url: '#'
-          }
-        },
-        '2': {
-          id: 2,
-          title: '오픈소스 컨트리뷰션 아카데미 참가자 모집',
-          content: '오픈소스 컨트리뷰션 아카데미 참가자를 모집합니다. 관심있는 학생들의 많은 지원 바랍니다.',
+        this.post = {
+          id: postData.id,
+          title: postData.title,
+          content: postData.content,
+          attachment: postData.attachment || null
+        }
+      } catch (error) {
+        console.error('Failed to load post:', error)
+        this.error = 'Failed to load post'
+        this.post = {
+          id: postId,
+          title: '게시글을 찾을 수 없습니다',
+          content: '요청하신 게시글이 존재하지 않습니다.',
           attachment: null
         }
-      }
-
-      // Load the post or show default
-      this.post = samplePosts[postId] || {
-        id: postId,
-        title: '게시글을 찾을 수 없습니다',
-        content: '요청하신 게시글이 존재하지 않습니다.',
-        attachment: null
+      } finally {
+        this.loading = false
       }
     },
     goBack() {
