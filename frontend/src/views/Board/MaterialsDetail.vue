@@ -103,6 +103,32 @@ export default {
           content: '요청하신 게시글이 존재하지 않습니다.',
           attachment: null
         }
+
+        // TODO: DELETE THIS LATER, DUMMY DATA ----------------------------------------------
+        this.post = {
+          id: 1,
+          title: 'Git의 기초 및 Git을 이용한 프로젝트 형상관리 방법',
+          content: `본 교육 자료는 다음의 내용을 포함합니다.
+첨부된 자료를 클릭하여 학습에 활용하시기 바랍니다.
+
+[1] 오픈소스 SW 개발 환경 구성하기
+(git 설치, 개발환경 설정, Github 회원가입 필수)
+
+[2] Git의 필수 개념과 명령어
+(Working Dir, Staging Area, Local Repo, Remote Repo 등)
+
+Git 설치
+Git 로컬 저장소 만들기
+Git 로컬 저장소 초기화 (init)
+파일 등록 (add)
+Git 로컬 저장소에 업로드 (commit)
+Git을 편리하게 사용하는 방법
+Git/Github을 이용한 팀 협업과 오픈소스 기여`,
+          attachment: {
+            name: 'Git의 기초 및 Git을 이용한 프로젝트 형상관리 방법_File.pdf',
+            url: '#'
+          }
+        }
       } finally {
         this.loading = false
       }

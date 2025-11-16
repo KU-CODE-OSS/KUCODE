@@ -226,6 +226,14 @@ export default {
             views: 0,
             category: 'learning'
           }))
+        
+        // TODO: DELETE THIS LATER, DUMMY DATA ----------------------------------------------
+        this.eventPosts = [
+          { id: 1, number: '1', title: '2025학년도 1학기 오픈소스 SW 개발 설명회', date: '2025.11.15', author: '김OO', views: '0', category: 'events' },
+        ]
+        this.learningPosts = [
+          { id: 1, number: '1', title: 'Git의 기초 및 Git을 이용한 프로젝트 형상관리 방법', date: '2025.10.16', author: '황영숙', views: '0', category: 'learning' },
+        ]
       } catch (error) {
         console.error('Failed to load posts:', error)
         this.error = 'Failed to load posts'
@@ -250,6 +258,19 @@ export default {
           followers: repo.repo_count || 0,
           url: repo.github_url
         }))
+
+        // TODO: DELETE THIS LATER, DUMMY DATA ----------------------------------------------
+        this.companyRepos = [
+          { id: 1, number: '1', company: '티맥스클라우드', repoCount: '271', followers: '57', url: 'https://github.com/tmax-cloud' },
+          { id: 2, number: '2', company: '네이버', repoCount: '269', followers: '2377', url: 'https://github.com/naver' },
+          { id: 3, number: '3', company: '인베슘', repoCount: '199', followers: '70', url: 'https://github.com/hamonikr' },
+          { id: 4, number: '4', company: '삼성전자', repoCount: '182', followers: '1342', url: 'https://github.com/Samsung' },
+          { id: 5, number: '5', company: '샌드버드', repoCount: '194', followers: '340', url: 'https://github.com/sendbird' },
+          { id: 6, number: '6', company: '데브시스터즈', repoCount: '178', followers: '248', url: 'https://github.com/devsisters' },
+          { id: 7, number: '7', company: '리디', repoCount: '114', followers: '167', url: 'https://github.com/ridi' },
+          { id: 8, number: '8', company: '라인', repoCount: '158', followers: '1304', url: 'https://github.com/line' },
+          { id: 9, number: '9', company: '당근마켓', repoCount: '120', followers: '1143', url: 'https://github.com/daangn' }
+        ]
       } catch (error) {
         console.error('Failed to load company repos:', error)
         this.error = 'Failed to load company repositories'

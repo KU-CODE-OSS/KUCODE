@@ -94,6 +94,8 @@ export default {
           content: postData.content,
           attachment: postData.attachment || null
         }
+
+        
       } catch (error) {
         console.error('Failed to load post:', error)
         this.error = 'Failed to load post'
@@ -102,6 +104,27 @@ export default {
           title: '게시글을 찾을 수 없습니다',
           content: '요청하신 게시글이 존재하지 않습니다.',
           attachment: null
+        }
+        // TODO: DELETE THIS LATER, DUMMY DATA ----------------------------------------------
+        this.post = {
+          id: 1,
+          title: '2025학년도 1학기 오픈소스 SW 개발 설명회',
+          content: `오픈소스 SW 개발 프로젝트 설명회를 다음과 같이 진행합니다.
+일시: 2025년 3월 15일 (수) 14:00-16:00
+장소: 애기능생활관 컨벤션홀
+대상: 전체 학생
+
+주요 내용:
+- 오픈소스 SW 개발 프로젝트 소개
+- 참여 방법 및 혜택 안내
+- 우수 프로젝트 사례 발표
+- Q&A 세션
+
+많은 참여 바랍니다.`,
+          attachment: {
+            name: '오픈소스_SW_개발_설명회_안내문.pdf',
+            url: '#'
+          }
         }
       } finally {
         this.loading = false
