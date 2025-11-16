@@ -152,17 +152,20 @@ Git/Github을 이용한 팀 협업과 오픈소스 기여`,
 }
 
 .detail-container {
-  width: 1920px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
   display: flex;
   position: relative;
+  padding: 0 40px;
+  box-sizing: border-box;
 }
 
 /* Sidebar Navigation */
 .sidebar-navigation {
   width: 268px;
   padding: 155px 0 0 0;
-  margin-left: 320px;
+  margin-right: 40px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -210,8 +213,8 @@ Git/Github을 이용한 팀 협업과 오픈소스 기여`,
 /* Main Content */
 .main-content {
   flex: 1;
-  max-width: 1012px;
-  padding: 71px 40px 40px;
+  min-width: 0;
+  padding: 71px 40px 40px 40px;
   border-left: 1px solid #DCE2ED;
   background: #FFFFFF;
   box-sizing: border-box;
@@ -307,19 +310,49 @@ Git/Github을 이용한 팀 협업과 오픈소스 기여`,
 
 /* Responsive Design */
 @media (max-width: 1440px) {
+  .detail-container {
+    max-width: 1200px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .detail-container {
+    padding: 0 30px;
+  }
+
   .sidebar-navigation {
-    margin-left: 160px;
+    width: 220px;
+    margin-right: 30px;
+  }
+
+  .main-content {
+    padding: 71px 30px 40px;
   }
 }
 
 @media (max-width: 1024px) {
+  .detail-container {
+    padding: 0 20px;
+  }
+
+  .sidebar-navigation {
+    width: 200px;
+    margin-right: 20px;
+  }
+
+  .main-content {
+    padding: 71px 20px 40px;
+  }
+}
+
+@media (max-width: 768px) {
   .detail-container {
     flex-direction: column;
   }
 
   .sidebar-navigation {
     width: 100%;
-    margin-left: 0;
+    margin-right: 0;
     padding: 40px;
     flex-direction: row;
     gap: 16px;
@@ -333,12 +366,6 @@ Git/Github을 이용한 팀 협업과 오픈소스 기여`,
   .main-content {
     border-left: none;
     border-top: 1px solid #DCE2ED;
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-content {
     padding: 32px 24px;
   }
 
