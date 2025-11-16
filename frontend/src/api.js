@@ -114,34 +114,34 @@ export function updateRepoIntroduction(uuid, repo_id, project_introduction) {
 
 // Board Posts APIs
 export function getBoardPostsList(page = 1, size = 10) {
-  return ajax(ip_for_develop + '/api/board/read_posts_list', 'get', {
+  return ajax(ip_for_develop + '/board/read_posts_list', 'get', {
     params: { page, count: size }
   })
 }
 
 export function getBoardPost(postId) {
-  return ajax(ip_for_develop + '/api/board/read_post', 'get', {
+  return ajax(ip_for_develop + '/board/read_post', 'get', {
     params: { post_id: postId }
   })
 }
 
 // Company Repos APIs
 export function getCompanyReposList(page = 1, size = 10) {
-  return ajax(ip_for_develop + '/api/board/read_company_repos_list', 'get', {
+  return ajax(ip_for_develop + '/board/read_company_repos_list', 'get', {
     params: { page, count: size }
   })
 }
 
 // Trending Repos APIs
 export function getTrendingReposList(page = 1, size = 10) {
-  return ajax(ip_for_develop + '/api/board/read_trending_repos_list', 'get', {
+  return ajax(ip_for_develop + '/board/read_trending_repos_list', 'get', {
     params: { page, count: size }
   })
 }
 
 // Create/Update Post
 export function createOrUpdatePost(postData) {
-  return ajax(ip_for_develop + '/api/board/update_post', 'post', {
+  return ajax(ip_for_develop + '/board/update_post', 'post', {
     data: postData,
     headers: { 'Content-Type': 'application/json' }
   })
@@ -149,7 +149,7 @@ export function createOrUpdatePost(postData) {
 
 // Create/Update Company Repo
 export function createOrUpdateCompanyRepo(repoData) {
-  return ajax(ip_for_develop + '/api/board/update_company_repo', 'post', {
+  return ajax(ip_for_develop + '/board/update_company_repo', 'post', {
     data: repoData,
     headers: { 'Content-Type': 'application/json' }
   })
@@ -157,7 +157,7 @@ export function createOrUpdateCompanyRepo(repoData) {
 
 // Create/Update Trending Repo
 export function createOrUpdateTrendingRepo(repoData) {
-  return ajax(ip_for_develop + '/api/board/update_trending_repo', 'post', {
+  return ajax(ip_for_develop + '/board/update_trending_repo', 'post', {
     data: repoData,
     headers: { 'Content-Type': 'application/json' }
   })
