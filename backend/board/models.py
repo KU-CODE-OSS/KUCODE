@@ -9,7 +9,6 @@ class PostCategory(models.TextChoices):
     LEARNING_MATERIAL = 'LEARNING_MATERIAL', '학습 자료'
     OPENSOURCE_REPO = 'OPENSOURCE_REPO', '오픈소스 Repos'
     EVENT_INFO = 'EVENT_INFO', '행사 정보'
-    # 필요에 따라 추가 가능
 
 class Post(models.Model):
     """게시글 및 학습 자료"""
@@ -73,13 +72,6 @@ class File(models.Model):
 class CompanyRepo(models.Model):
     """기업 레포지토리 정보"""
     # id는 Django가 자동으로 생성
-    post = models.OneToOneField(
-        Post,
-        on_delete=models.CASCADE,
-        db_column='post_id',
-        related_name='company_repo',
-        unique=True
-    )
     repo_name = models.CharField(max_length=2048, null=False)
     github_url = models.CharField(max_length=2048, null=False)
     company_name = models.CharField(max_length=100, null=True, blank=True)
@@ -96,13 +88,6 @@ class CompanyRepo(models.Model):
 class TrendingRepo(models.Model):
     """트렌딩 레포지토리 정보"""
     # id는 Django가 자동으로 생성
-    post = models.OneToOneField(
-        Post,
-        on_delete=models.CASCADE,
-        db_column='post_id',
-        related_name='trending_repo',
-        unique=True
-    )
     repo_name = models.CharField(max_length=2048, null=False)
     github_url = models.CharField(max_length=2048, null=False)
     trending_rank = models.IntegerField(null=False)

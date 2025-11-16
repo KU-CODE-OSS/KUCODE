@@ -11,6 +11,7 @@ urlpatterns = [
     path(base_api_url + 'account/', include("account.api.urls")),
     path(base_api_url + 'repo/', include("repo.api.urls")),
     path(base_api_url + 'course/', include("course.api.urls")),
+    path(base_api_url + 'board/', include("board.api.urls")),
     path(base_api_url + 'login/',include("login.api.urls")),
     path(base_api_url + 'authentication/',include("authentication.api.urls")),
 ]
