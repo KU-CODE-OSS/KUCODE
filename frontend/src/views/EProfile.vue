@@ -1121,7 +1121,7 @@ export default {
         throw error
       }
     },
-    async loadActivityChart() {
+    async loadActivityChart(data) {
       try {
         // Initialize with empty data
         this.activityData = {
@@ -1137,22 +1137,21 @@ export default {
           }
         }
         
-        const response = await getEProfileHeatmap(this.student_uuid)
-        console.log(response)
+        const response = data
 
         // Process the API response data using utility function
-        if (response.data && response.data.monthly_commits) {
+        if (response && response.monthly_commits) {
           let monthlyData = { labels: [], values: [] }
           let addedLinesData = { labels: [], values: [] }
           
           // Process commits data
-          if (response.data.monthly_commits.total_count) {
-            monthlyData = processActivityData(response.data.monthly_commits.total_count)
+          if (response.monthly_commits.total_count) {
+            monthlyData = processActivityData(response.monthly_commits.total_count)
           }
           
           // Process added lines data
-          if (response.data.monthly_commits.added_lines) {
-            addedLinesData = processAddedLinesData(response.data.monthly_commits.added_lines)
+          if (response.monthly_commits.added_lines) {
+            addedLinesData = processAddedLinesData(response.monthly_commits.added_lines)
           }
           
           this.activityData.monthly = {
@@ -1193,6 +1192,8 @@ export default {
         const response = await getEProfileHeatmap(this.student_uuid)
         this.heatmapData = response.data.heatmap
         console.log('히트맵 데이터 로드 완료:', this.heatmapData)
+
+        this.loadActivityChart(response.data)
 
         this.user.introduction = response.data.student_introduction
         
