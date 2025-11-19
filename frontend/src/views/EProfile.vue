@@ -477,7 +477,7 @@ export default {
       user: {
         name: '최다영',
         university: '고려대학교',
-        department: '컴퓨터공학과',
+        department: '컴퓨터학과',
         email: 'joyyoj1@korea.ac.kr',
         github_id: '',
         introduction: ''
