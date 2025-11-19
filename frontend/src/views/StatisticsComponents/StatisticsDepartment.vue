@@ -41,8 +41,8 @@
     <div class="navigation_underline"></div>
     <div class="contents-box">
       <div class="student-sub-toggle">
-        <div class="all dragblock" :class="[this.subToggleButton ? 'all-unclick' :'all-click']" @click="allStudentToggleButton">전체 학생</div>
-        <div class="each dragblock" :class="[this.subToggleButton ? 'each-click' :'each-unclick']" @click="eachStudentToggleButton">학생별</div>
+        <div class="all dragblock" :class="[this.subToggleButton ? 'all-unclick' :'all-click']" @click="allStudentToggleButton">전체 학과</div>
+        <div class="each dragblock" :class="[this.subToggleButton ? 'each-click' :'each-unclick']" @click="eachStudentToggleButton">학과별</div>
       </div>
       <transition name="slide-fade" mode="out-in">
         <div v-if="!showTable" class="table">
@@ -153,34 +153,19 @@
                 </div>
               </div>
             </div>
-            <!-- 학생별 시작 -->
+            <!-- 학과별 시작 -->
             <div v-else class="each-table">
               <div class="sub-table-left">
-                <div class="title">학생별 Repos</div>
+                <div class="title">학과별 Repos</div>
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학과</th>
-
-
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
-
-
-                      <th width="58px">Q1</th>
-                      <th width="58px">Q2</th>
-                      <th width="58px">Q3</th>
-
-
-                      <th width="58px">25%</th>
-                      <th width="58px">50%</th>
-                      <th width="58px">75%</th>
                       <th width="58px">최대</th>
-
-
-
-
+                      <th width="58px">최소</th>
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -190,15 +175,8 @@
                         <td width="58px" :title="item.total.num_repos_stats.q1">{{item.total.num_repos_stats.q1}}</td>
                         <td width="58px" :title="item.total.num_repos_stats.median">{{item.total.num_repos_stats.median}}</td>
                         <td width="58px" :title="item.total.num_repos_stats.q3">{{item.total.num_repos_stats.q3}}</td>
-
-
                         <td width="58px" :title="item.total.num_repos_stats.max">{{item.total.num_repos_stats.max}}</td>
-
-
-
                         <td width="58px" :title="item.total.num_repos_stats.max">{{item.total.num_repos_stats.max}}</td>
-
-
                         <td width="87px" :title="item.total.num_repos_stats.mean">{{item.total.num_repos_stats.mean}}</td>
                         <td width="87px" :title="item.total.num_repos_stats.stdDev">{{item.total.num_repos_stats.stdDev}}</td>
                       </tr>
@@ -207,33 +185,16 @@
                 </div>
               </div>
               <div class="sub-table-right">
-                <div class="title">학생별 Commits</div>
+                <div class="title">학과별 Commits</div>
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학과</th>
-
-
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
-
-
-
-                      <th width="58px">Q1</th>
-                      <th width="58px">Q2</th>
-                      <th width="58px">Q3</th>
-
-
-                      <th width="58px">25%</th>
-                      <th width="58px">50%</th>
-                      <th width="58px">75%</th>
                       <th width="58px">최대</th>
-
-
-
-
-
+                      <th width="58px">최소</th>
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -243,16 +204,8 @@
                         <td width="58px" :title="item.total.commit_stats.q1">{{item.total.commit_stats.q1}}</td>
                         <td width="58px" :title="item.total.commit_stats.median">{{item.total.commit_stats.median}}</td>
                         <td width="58px" :title="item.total.commit_stats.q3">{{item.total.commit_stats.q3}}</td>
-
-
                         <td width="58px" :title="item.total.commit_stats.max">{{item.total.commit_stats.max}}</td>
-
-
-
-
                         <td width="58px" :title="item.total.commit_stats.max">{{item.total.commit_stats.max}}</td>
-
-
                         <td width="87px" :title="item.total.commit_stats.mean">{{item.total.commit_stats.mean}}</td>
                         <td width="87px" :title="item.total.commit_stats.stdDev">{{item.total.commit_stats.stdDev}}</td>
                       </tr>
@@ -262,32 +215,16 @@
               </div>
               <!-- 줄 바뀜 -->
               <div class="sub-table-left">
-                <div class="title">학생별 Issues</div>
+                <div class="title">학과별 Issues</div>
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학과</th>
-
-
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
-
-
-                      <th width="58px">Q1</th>
-                      <th width="58px">Q2</th>
-                      <th width="58px">Q3</th>
-
-
-                      <th width="58px">25%</th>
-                      <th width="58px">50%</th>
-                      <th width="58px">75%</th>
                       <th width="58px">최대</th>
-
-
-
-
-
+                      <th width="58px">최소</th>
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -297,15 +234,8 @@
                         <td width="58px" :title="item.total.issue_stats.q1">{{item.total.issue_stats.q1}}</td>
                         <td width="58px" :title="item.total.issue_stats.median">{{item.total.issue_stats.median}}</td>
                         <td width="58px" :title="item.total.issue_stats.q3">{{item.total.issue_stats.q3}}</td>
-
-
                         <td width="58px" :title="item.total.issue_stats.max">{{item.total.issue_stats.max}}</td>
-
-
-
                         <td width="58px" :title="item.total.issue_stats.max">{{item.total.issue_stats.max}}</td>
-
-
                         <td width="87px" :title="item.total.issue_stats.mean">{{item.total.issue_stats.mean}}</td>
                         <td width="87px" :title="item.total.issue_stats.stdDev">{{item.total.issue_stats.stdDev}}</td>
                       </tr>
@@ -314,32 +244,16 @@
                 </div>
               </div>
               <div class="sub-table-right">
-                <div class="title">학생별 PRs</div>
+                <div class="title">학과별 PRs</div>
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학과</th>
-
-
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
-
-
-                      <th width="58px">Q1</th>
-                      <th width="58px">Q2</th>
-                      <th width="58px">Q3</th>
-
-
-                      <th width="58px">25%</th>
-                      <th width="58px">50%</th>
-                      <th width="58px">75%</th>
                       <th width="58px">최대</th>
-
-
-
-
-
+                      <th width="58px">최소</th>
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -349,16 +263,8 @@
                         <td width="58px" :title="item.total.pr_stats.q1">{{item.total.pr_stats.q1}}</td>
                         <td width="58px" :title="item.total.pr_stats.median">{{item.total.pr_stats.median}}</td>
                         <td width="58px" :title="item.total.pr_stats.q3">{{item.total.pr_stats.q3}}</td>
-
-
                         <td width="58px" :title="item.total.pr_stats.max">{{item.total.pr_stats.max}}</td>
-
-
-
-
                         <td width="58px" :title="item.total.pr_stats.max">{{item.total.pr_stats.max}}</td>
-
-
                         <td width="87px" :title="item.total.pr_stats.mean">{{item.total.pr_stats.mean}}</td>
                         <td width="87px" :title="item.total.pr_stats.stdDev">{{item.total.pr_stats.stdDev}}</td>
                       </tr>
@@ -368,32 +274,16 @@
               </div>
               <!-- 줄 바뀜 -->
               <div class="sub-table-left">
-                <div class="title">학생별 Stars</div>
+                <div class="title">학과별 Stars</div>
                 <div class="sub-table">
                   <table>
                     <thead class="table-header-wrapper">
                       <th width="203px">학과</th>
-
-
                       <th width="58px">Q1</th>
                       <th width="58px">Q2</th>
                       <th width="58px">Q3</th>
-
-
-
-                      <th width="58px">Q1</th>
-                      <th width="58px">Q2</th>
-                      <th width="58px">Q3</th>
-
-
-                      <th width="58px">25%</th>
-                      <th width="58px">50%</th>
-                      <th width="58px">75%</th>
                       <th width="58px">최대</th>
-
-
-
-
+                      <th width="58px">최소</th>
                       <th width="87px">평균</th>
                       <th width="87px">표준편차</th>
                     </thead>
@@ -403,15 +293,8 @@
                         <td width="58px" :title="item.total.stars_stats.q1">{{item.total.stars_stats.q1}}</td>
                         <td width="58px" :title="item.total.stars_stats.median">{{item.total.stars_stats.median}}</td>
                         <td width="58px" :title="item.total.stars_stats.q3">{{item.total.stars_stats.q3}}</td>
-
-
                         <td width="58px" :title="item.total.stars_stats.max">{{item.total.stars_stats.max}}</td>
-
-
-
                         <td width="58px" :title="item.total.stars_stats.max">{{item.total.stars_stats.max}}</td>
-
-
                         <td width="87px" :title="item.total.stars_stats.mean">{{item.total.stars_stats.mean}}</td>
                         <td width="87px" :title="item.total.stars_stats.stdDev">{{item.total.stars_stats.stdDev}}</td>
                       </tr>
