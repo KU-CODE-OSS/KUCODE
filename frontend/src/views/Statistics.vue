@@ -531,7 +531,7 @@ export default {
       if (this.coursePosts.length === 0) {
         getCourseReadMinMaxAvg().then(res => {
           this.coursePosts = this.coursePreprocessingTableData(res.data)
-          this.courseFilteredPosts = []
+          this.courseFilteredPosts = this.coursePosts
           this.courseFiltering(this.coursePosts)
           this.courseFilteredPostsforCourseName = this.coursePosts
           this.coursePosts = this.yearSort(this.coursePosts)
@@ -1039,7 +1039,7 @@ export default {
       }
 
       if (this.selectedCourseNameItemsforCourse.length === 0) {
-        this.courseFilteredPostsforCourseName = [];
+        this.courseFilteredPostsforCourseName = this.coursePost;
       } else {
         this.courseFilteredPostsforCourseName = this.coursePosts.filter(item => this.selectedCourseNameItemsforCourse.includes(item.course_id));
       }
@@ -1047,7 +1047,9 @@ export default {
       this.courseFilteredPosts = this.combineFilterDataforCourse();
     },
     combineFilterDataforCourse() {
-
+      if (this.selectedCourseNameItemsforCourse.length === 0) {
+        return this.coursePosts;                                     // 필터 미선택 시 전체 반환
+      }
       const allData = [this.courseFilteredPostsforCourseName];
 
       let common = allData[0];
@@ -1063,7 +1065,7 @@ export default {
       this.selectedYearItemsforCourse = []
       this.selectedSemesterItemsforCourse = []
       this.selectedCourseNameItemsforCourse = []
-      this.courseFilteredPostsforCourseName = []
+      this.courseFilteredPostsforCourseName = this.coursePosts
       this.courseFilteredPosts = []
     },
     isCheckedforCourse(courseID) {

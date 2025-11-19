@@ -2,7 +2,9 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Sum
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import F, Q, Sum, Count, Avg, FloatField, IntegerField, Prefetch
+from django.db.models.functions import Cast
 from django.conf import settings
 
 from rest_framework.views import APIView
@@ -25,7 +27,6 @@ from openpyxl.styles import Font
 import io
 
 import json
-from django.db.models import Prefetch, Count, Q, F, Min, Max
 from django.http import JsonResponse
 
 import requests
@@ -521,155 +522,181 @@ def course_reg_look(request):
 
 def course_read_min_max_avg(request):
     try:
-        # 1) 과목별 학생 수 집계
-        course_stats = Course_registration.objects.select_related(
-            'course', 'student'
-        ).values(
-            'course__course_id',
-            'course__year',
-            'course__semester',
-            'course__name',
-            'course__prof'
-        ).annotate(
-            student_count=Count('student', distinct=True)
-        )
-        
-        merged_stats = []
-        
-        for stat in course_stats:
-            # 2) 해당 과목의 학생들 github_id 수집
-            student_github_ids = list(
-                Course_registration.objects.filter(
-                    course__course_id=stat['course__course_id'],
-                    course__year=stat['course__year'],
-                    course__semester=stat['course__semester']
-                ).select_related('student').values_list(
-                    'student__github_id', flat=True
+        courses = (
+            Course.objects
+            .select_related()
+            .prefetch_related(
+                Prefetch(
+                    'course_project_set',
+                    queryset=Course_project.objects.select_related('repo').filter(repo__forked=False)
+                ),
+                Prefetch(
+                    'course_registration_set',
+                    queryset=Course_registration.objects.select_related('student')
                 )
             )
-            
-            # 3) Repository 통계 가져오기 (Python에서 처리)
-            commits = list(
-                Repository.objects.filter(
-                    owner_github_id__in=student_github_ids
-                ).values_list('contributed_commit_count', flat=True)
-            )
-            
-            prs = list(
-                Repository.objects.filter(
-                    owner_github_id__in=student_github_ids
-                ).values_list('contributed_open_pr_count', 'contributed_closed_pr_count')
-            )
-            
-            issues = list(
-                Repository.objects.filter(
-                    owner_github_id__in=student_github_ids
-                ).values_list('contributed_open_issue_count', 'contributed_closed_issue_count')
-            )
-            
-            stars = list(
-                Repository.objects.filter(
-                    owner_github_id__in=student_github_ids
-                ).values_list('star_count', flat=True)
-            )
-            
-            # 4) 통계 계산
-            if commits:
-                commits_arr = np.array([c or 0 for c in commits])
-                commit_q1 = float(np.percentile(commits_arr, 25))
-                commit_q2 = float(np.percentile(commits_arr, 50))
-                commit_q3 = float(np.percentile(commits_arr, 75))
-                commit_std = float(np.std(commits_arr))
-                commit_min = float(np.min(commits_arr))
-                commit_max = float(np.max(commits_arr))
-                commit_avg = float(np.mean(commits_arr))
-            else:
-                commit_q1 = commit_q2 = commit_q3 = commit_std = 0
-                commit_min = commit_max = commit_avg = 0
-            
-            if prs:
-                total_prs = [(open or 0) + (closed or 0) for open, closed in prs]
-                pr_arr = np.array(total_prs)
-                pr_q1 = float(np.percentile(pr_arr, 25))
-                pr_q2 = float(np.percentile(pr_arr, 50))
-                pr_q3 = float(np.percentile(pr_arr, 75))
-                pr_std = float(np.std(pr_arr))
-                pr_min = float(np.min(pr_arr))
-                pr_max = float(np.max(pr_arr))
-                pr_avg = float(np.mean(pr_arr))
-            else:
-                pr_q1 = pr_q2 = pr_q3 = pr_std = 0
-                pr_min = pr_max = pr_avg = 0
-            
-            if issues:
-                total_issues = [(open or 0) + (closed or 0) for open, closed in issues]
-                issue_arr = np.array(total_issues)
-                issue_q1 = float(np.percentile(issue_arr, 25))
-                issue_q2 = float(np.percentile(issue_arr, 50))
-                issue_q3 = float(np.percentile(issue_arr, 75))
-                issue_std = float(np.std(issue_arr))
-                issue_min = float(np.min(issue_arr))
-                issue_max = float(np.max(issue_arr))
-                issue_avg = float(np.mean(issue_arr))
-            else:
-                issue_q1 = issue_q2 = issue_q3 = issue_std = 0
-                issue_min = issue_max = issue_avg = 0
-            
-            if stars:
-                star_arr = np.array([s or 0 for s in stars])
-                star_q1 = float(np.percentile(star_arr, 25))
-                star_q2 = float(np.percentile(star_arr, 50))
-                star_q3 = float(np.percentile(star_arr, 75))
-                star_std = float(np.std(star_arr))
-                star_min = float(np.min(star_arr))
-                star_max = float(np.max(star_arr))
-                star_avg = float(np.mean(star_arr))
-            else:
-                star_q1 = star_q2 = star_q3 = star_std = 0
-                star_min = star_max = star_avg = 0
-            
-            merged_stats.append({
-                "course_id": stat['course__course_id'],
-                "year": stat['course__year'],
-                "semester": stat['course__semester'],
-                "course_name": stat['course__name'],
-                "prof": stat['course__prof'],
-                "student_count": stat['student_count'],
-                "commit_q1": commit_q1,
-                "commit_q2": commit_q2,
-                "commit_q3": commit_q3,
-                "commit_std": commit_std,
-                "commit_min": commit_min,
-                "commit_max": commit_max,
-                "commit_avg": commit_avg,
-                "pr_q1": pr_q1,
-                "pr_q2": pr_q2,
-                "pr_q3": pr_q3,
-                "pr_std": pr_std,
-                "pr_min": pr_min,
-                "pr_max": pr_max,
-                "pr_avg": pr_avg,
-                "issue_q1": issue_q1,
-                "issue_q2": issue_q2,
-                "issue_q3": issue_q3,
-                "issue_std": issue_std,
-                "issue_min": issue_min,
-                "issue_max": issue_max,
-                "issue_avg": issue_avg,
-                "star_q1": star_q1,
-                "star_q2": star_q2,
-                "star_q3": star_q3,
-                "star_std": star_std,
-                "star_min": star_min,
-                "star_max": star_max,
-                "star_avg": star_avg
-            })
-        
-        return JsonResponse({"group_stats": merged_stats}, safe=False)
-    
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, safe=False)
+        )
 
+        merged_stats = []
+        total_stats_by_semester = defaultdict(lambda: {
+            "total_student_count_sum": 0,
+            "total_repository_count_sum": 0,
+            "total_commits_sum": 0,
+            "total_stars_sum": 0,
+            "total_contributors_sum": 0,
+            "course_count_in_semester": 0
+        })
+
+        for course in courses:
+            course_key = (course.course_id, course.year, course.semester)
+
+            course_projects = [
+                cp for cp in course.course_project_set.all()
+                if cp.repo and not cp.repo.forked
+            ]
+            repo_count = len(course_projects)
+            total_commits = sum((cp.repo.commit_count or 0) for cp in course_projects)
+            total_issues = sum(
+                (cp.repo.open_issue_count or 0) + (cp.repo.closed_issue_count or 0)
+                for cp in course_projects
+            )
+            total_prs = sum(
+                (cp.repo.open_pr_count or 0) + (cp.repo.closed_pr_count or 0)
+                for cp in course_projects
+            )
+            total_stars = sum((cp.repo.star_count or 0) for cp in course_projects)
+
+            student_regs = list(course.course_registration_set.all())
+            student_count = len(student_regs)
+
+            contributor_count = 0
+            repos_by_owner = defaultdict(list)
+            for cp in course_projects:
+                if cp.repo.contributors:
+                    contributors = [c.strip() for c in cp.repo.contributors.split(',') if c.strip()]
+                    contributor_count += len(contributors)
+                repos_by_owner[cp.repo.owner_github_id].append(cp)
+
+            student_stats = {'commits': [], 'prs': [], 'issues': [], 'num_repos': [], 'stars': []}
+            for reg in student_regs:
+                repos_for_student = repos_by_owner.get(reg.student.github_id, [])
+                if not repos_for_student:
+                    continue
+                student_stats['commits'].append(sum(cp.repo.contributed_commit_count or 0 for cp in repos_for_student))
+                student_stats['prs'].append(sum(
+                    (cp.repo.contributed_open_pr_count or 0) + (cp.repo.contributed_closed_pr_count or 0)
+                    for cp in repos_for_student
+                ))
+                student_stats['issues'].append(sum(
+                    (cp.repo.contributed_open_issue_count or 0) + (cp.repo.contributed_closed_issue_count or 0)
+                    for cp in repos_for_student
+                ))
+                student_stats['num_repos'].append(len(repos_for_student))
+                student_stats['stars'].append(sum(cp.repo.star_count or 0 for cp in repos_for_student))
+
+            def calc(values):
+                if not values:
+                    return {'q1': 0, 'q2': 0, 'q3': 0, 'std': 0, 'min': 0, 'max': 0}
+                arr = np.array(values)
+                return {
+                    'q1': float(np.percentile(arr, 25)),
+                    'q2': float(np.percentile(arr, 50)),
+                    'q3': float(np.percentile(arr, 75)),
+                    'std': float(np.std(arr)),
+                    'min': float(np.min(arr)),
+                    'max': float(np.max(arr))
+                }
+
+            commit_stats = calc(student_stats['commits'])
+            pr_stats = calc(student_stats['prs'])
+            issue_stats = calc(student_stats['issues'])
+            num_repo_stats = calc(student_stats['num_repos'])
+            star_stats = calc(student_stats['stars'])
+
+            avg_commits = round(total_commits / student_count, 2) if student_count else 0
+
+            merged_stats.append({
+                "course_id": course.course_id,
+                "year": course.year,
+                "semester": course.semester,
+                "course_name": course.name,
+                "prof": course.prof,
+                "ta": course.ta,
+                "student_count": student_count,
+                "total_commits": total_commits,
+                "total_issues": total_issues,
+                "total_prs": total_prs,
+                "total_stars": total_stars,
+                "avg_commits": avg_commits,
+                "repository_count": repo_count,
+                "contributor_count": contributor_count,
+                "commit_min": commit_stats['min'],
+                "commit_max": commit_stats['max'],
+                "pr_min": pr_stats['min'],
+                "pr_max": pr_stats['max'],
+                "issue_min": issue_stats['min'],
+                "issue_max": issue_stats['max'],
+                "num_repos_min": num_repo_stats['min'],
+                "num_repos_max": num_repo_stats['max'],
+                "star_count_min": star_stats['min'],
+                "star_count_max": star_stats['max'],
+                "commit_q1": commit_stats['q1'],
+                "commit_q2": commit_stats['q2'],
+                "commit_q3": commit_stats['q3'],
+                "commit_std": commit_stats['std'],
+                "pr_q1": pr_stats['q1'],
+                "pr_q2": pr_stats['q2'],
+                "pr_q3": pr_stats['q3'],
+                "pr_std": pr_stats['std'],
+                "issue_q1": issue_stats['q1'],
+                "issue_q2": issue_stats['q2'],
+                "issue_q3": issue_stats['q3'],
+                "issue_std": issue_stats['std'],
+                "num_repos_q1": num_repo_stats['q1'],
+                "num_repos_q2": num_repo_stats['q2'],
+                "num_repos_q3": num_repo_stats['q3'],
+                "num_repos_std": num_repo_stats['std'],
+                "star_q1": star_stats['q1'],
+                "star_q2": star_stats['q2'],
+                "star_q3": star_stats['q3'],
+                "star_std": star_stats['std'],
+            })
+
+            semester_key = (course.year, course.semester)
+            total_stats_by_semester[semester_key]["total_student_count_sum"] += student_count
+            total_stats_by_semester[semester_key]["total_repository_count_sum"] += repo_count
+            total_stats_by_semester[semester_key]["total_commits_sum"] += total_commits
+            total_stats_by_semester[semester_key]["total_stars_sum"] += total_stars
+            total_stats_by_semester[semester_key]["total_contributors_sum"] += contributor_count
+            total_stats_by_semester[semester_key]["course_count_in_semester"] += 1
+
+        final_total_stats = []
+        for (year, semester), stats in total_stats_by_semester.items():
+            students = stats["total_student_count_sum"] or 1
+            final_total_stats.append({
+                "year": year,
+                "semester": semester,
+                "avg_repository_count": round(stats["total_repository_count_sum"] / students, 2),
+                "avg_commits": round(stats["total_commits_sum"] / students, 2),
+                "avg_stars": round(stats["total_stars_sum"] / students, 2),
+                "avg_contributors": round(stats["total_contributors_sum"] / students, 2),
+                "total_courses_in_semester": stats["course_count_in_semester"],
+                "total_student_counts_in_semester": stats["total_student_count_sum"],
+                "total_repository_counts_in_semester": stats["total_repository_count_sum"],
+                "total_commits_in_semester": stats["total_commits_sum"],
+                "total_stars_in_semester": stats["total_stars_sum"],
+                "total_contributors_in_semester": stats["total_contributors_sum"],
+            })
+
+        return JsonResponse({
+            "group_stats": merged_stats,
+            "total_stats_by_semester": final_total_stats,
+        }, safe=False)
+    except Exception as e:
+        import traceback
+        print(f"Error in course_read_min_max_avg: {traceback.format_exc()}")
+        return JsonResponse({"error": str(e)}, status=500)
+    
 def course_read_db_total_excel(request):
     try:
         data = []
