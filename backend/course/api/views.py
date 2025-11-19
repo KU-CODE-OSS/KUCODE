@@ -521,7 +521,7 @@ def course_reg_look(request):
 
 def course_read_min_max_avg(request):
     try:
-        # 1) DB에서 직접 집계 (Python 그룹화 제거)
+        # 1) 과목별 학생 수 집계
         course_stats = Course_registration.objects.select_related(
             'course', 'student'
         ).values(
@@ -534,49 +534,99 @@ def course_read_min_max_avg(request):
             student_count=Count('student', distinct=True)
         )
         
-        # 2) 학생별 통계를 subquery로 계산
-        from django.db.models import Subquery, OuterRef
-        
-        student_repo_stats = Repository.objects.filter(
-            owner_github_id=OuterRef('student__github_id')
-        ).values('owner_github_id').annotate(
-            total_commits=Sum('contributed_commit_count')
-        )
-        
-        # 3) 필요한 집계만 계산
         merged_stats = []
         
         for stat in course_stats:
-            # 해당 과목의 학생들 repo 통계
-            student_commits = Course_registration.objects.filter(
-                course__course_id=stat['course__course_id'],
-                course__year=stat['course__year'],
-                course__semester=stat['course__semester']
-            ).select_related('student').values_list(
-                'student__github_id', flat=True
+            # 2) 해당 과목의 학생들 github_id 수집
+            student_github_ids = list(
+                Course_registration.objects.filter(
+                    course__course_id=stat['course__course_id'],
+                    course__year=stat['course__year'],
+                    course__semester=stat['course__semester']
+                ).select_related('student').values_list(
+                    'student__github_id', flat=True
+                )
             )
             
-            # Repository에서 한 번에 통계 계산
-            repo_stats = Repository.objects.filter(
-                owner_github_id__in=student_commits
-            ).aggregate(
-                commit_values=ArrayAgg('contributed_commit_count'),  # PostgreSQL만 가능
-                # SQLite/MySQL은 values_list로 가져와서 Python에서 처리
+            # 3) Repository 통계 가져오기 (Python에서 처리)
+            commits = list(
+                Repository.objects.filter(
+                    owner_github_id__in=student_github_ids
+                ).values_list('contributed_commit_count', flat=True)
             )
             
-            # Q1, Q2, Q3 계산은 Python에서 (DB는 percentile 함수 제한적)
-            commits = list(Repository.objects.filter(
-                owner_github_id__in=student_commits
-            ).values_list('contributed_commit_count', flat=True))
+            prs = list(
+                Repository.objects.filter(
+                    owner_github_id__in=student_github_ids
+                ).values_list('contributed_open_pr_count', 'contributed_closed_pr_count')
+            )
             
+            issues = list(
+                Repository.objects.filter(
+                    owner_github_id__in=student_github_ids
+                ).values_list('contributed_open_issue_count', 'contributed_closed_issue_count')
+            )
+            
+            stars = list(
+                Repository.objects.filter(
+                    owner_github_id__in=student_github_ids
+                ).values_list('star_count', flat=True)
+            )
+            
+            # 4) 통계 계산
             if commits:
-                commits_arr = np.array(commits)
-                commit_q1 = np.percentile(commits_arr, 25)
-                commit_q2 = np.percentile(commits_arr, 50)
-                commit_q3 = np.percentile(commits_arr, 75)
-                commit_std = np.std(commits_arr)
+                commits_arr = np.array([c or 0 for c in commits])
+                commit_q1 = float(np.percentile(commits_arr, 25))
+                commit_q2 = float(np.percentile(commits_arr, 50))
+                commit_q3 = float(np.percentile(commits_arr, 75))
+                commit_std = float(np.std(commits_arr))
+                commit_min = float(np.min(commits_arr))
+                commit_max = float(np.max(commits_arr))
+                commit_avg = float(np.mean(commits_arr))
             else:
                 commit_q1 = commit_q2 = commit_q3 = commit_std = 0
+                commit_min = commit_max = commit_avg = 0
+            
+            if prs:
+                total_prs = [(open or 0) + (closed or 0) for open, closed in prs]
+                pr_arr = np.array(total_prs)
+                pr_q1 = float(np.percentile(pr_arr, 25))
+                pr_q2 = float(np.percentile(pr_arr, 50))
+                pr_q3 = float(np.percentile(pr_arr, 75))
+                pr_std = float(np.std(pr_arr))
+                pr_min = float(np.min(pr_arr))
+                pr_max = float(np.max(pr_arr))
+                pr_avg = float(np.mean(pr_arr))
+            else:
+                pr_q1 = pr_q2 = pr_q3 = pr_std = 0
+                pr_min = pr_max = pr_avg = 0
+            
+            if issues:
+                total_issues = [(open or 0) + (closed or 0) for open, closed in issues]
+                issue_arr = np.array(total_issues)
+                issue_q1 = float(np.percentile(issue_arr, 25))
+                issue_q2 = float(np.percentile(issue_arr, 50))
+                issue_q3 = float(np.percentile(issue_arr, 75))
+                issue_std = float(np.std(issue_arr))
+                issue_min = float(np.min(issue_arr))
+                issue_max = float(np.max(issue_arr))
+                issue_avg = float(np.mean(issue_arr))
+            else:
+                issue_q1 = issue_q2 = issue_q3 = issue_std = 0
+                issue_min = issue_max = issue_avg = 0
+            
+            if stars:
+                star_arr = np.array([s or 0 for s in stars])
+                star_q1 = float(np.percentile(star_arr, 25))
+                star_q2 = float(np.percentile(star_arr, 50))
+                star_q3 = float(np.percentile(star_arr, 75))
+                star_std = float(np.std(star_arr))
+                star_min = float(np.min(star_arr))
+                star_max = float(np.max(star_arr))
+                star_avg = float(np.mean(star_arr))
+            else:
+                star_q1 = star_q2 = star_q3 = star_std = 0
+                star_min = star_max = star_avg = 0
             
             merged_stats.append({
                 "course_id": stat['course__course_id'],
@@ -589,7 +639,30 @@ def course_read_min_max_avg(request):
                 "commit_q2": commit_q2,
                 "commit_q3": commit_q3,
                 "commit_std": commit_std,
-                # ... 나머지 필드
+                "commit_min": commit_min,
+                "commit_max": commit_max,
+                "commit_avg": commit_avg,
+                "pr_q1": pr_q1,
+                "pr_q2": pr_q2,
+                "pr_q3": pr_q3,
+                "pr_std": pr_std,
+                "pr_min": pr_min,
+                "pr_max": pr_max,
+                "pr_avg": pr_avg,
+                "issue_q1": issue_q1,
+                "issue_q2": issue_q2,
+                "issue_q3": issue_q3,
+                "issue_std": issue_std,
+                "issue_min": issue_min,
+                "issue_max": issue_max,
+                "issue_avg": issue_avg,
+                "star_q1": star_q1,
+                "star_q2": star_q2,
+                "star_q3": star_q3,
+                "star_std": star_std,
+                "star_min": star_min,
+                "star_max": star_max,
+                "star_avg": star_avg
             })
         
         return JsonResponse({"group_stats": merged_stats}, safe=False)
