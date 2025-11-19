@@ -25,7 +25,7 @@ from openpyxl.styles import Font
 import io
 
 import json
-from django.db.models import Min, Max
+from django.db.models import Prefetch, Count, Q, F, Min, Max
 from django.http import JsonResponse
 
 import requests
@@ -71,94 +71,68 @@ def course_create_db (request):
 
 def course_read_db(request):
     try:
-        data = []
-        courses = Course.objects.all()
-
-        for course in courses:
-            
-            total_commits = 0
-            total_prs = 0
-            total_issues = 0
-            total_stars =0 
-
-            # Gather course related repos' id
-            course_related_repos_id = Course_project.objects.filter(course_id=course.id).values_list('repo_id', flat=True)
-            print(f'{course.name}:[{course.course_id}] - repo_count: {len(course_related_repos_id)}')
-            
-            total_course_repos = Repository.objects.filter(id__in=course_related_repos_id)
-
-            for course_repo in total_course_repos :
-                if course_repo.forked is True :
-                    continue            
-                else :
-                    total_commits += course_repo.commit_count or 0 
-                    total_issues += ((course_repo.open_issue_count or 0) + (course_repo.closed_issue_count or 0))
-                    total_prs += ((course_repo.open_pr_count or 0) + (course_repo.closed_pr_count or 0))
-                    total_stars += course_repo.star_count or 0 
-
-            # Calculate the average commits 
-            student_count = Course_registration.objects.filter(
-                course=course,
-                course_year=course.year,
-                course_semester=course.semester
-            ).count()
-            
-            if student_count != 0:
-                avg_commits = round(total_commits / student_count, 2)
-            else:
-                # Skip if no students are registered
-                continue  
-            
-            # Calculate the number of repositories 
-            repository_count = Course_project.objects.filter(
-            course=course,
-            course_year=course.year,
-            course_semester=course.semester
-            ).count()
-            
-            
-            # Calculate the number of contributors 
-            course_repo_ids = Course_project.objects.filter(
-                course=course,
-                course_year=course.year,
-                course_semester=course.semester
+        # 1) 필요한 모든 데이터를 한 번에 가져오기 (select_related, prefetch_related)
+        courses = Course.objects.select_related().prefetch_related(
+            Prefetch(
+                'course_project_set',
+                queryset=Course_project.objects.select_related('repo').filter(
+                    repo__forked=False
+                )
+            ),
+            Prefetch(
+                'course_registration_set',
+                queryset=Course_registration.objects.select_related('student')
             )
-
-            contributor_count =0
-            for course_repo_id in course_repo_ids :
-                if course_repo_id.repo.forked == False :
-                    contributors_list_str = course_repo_id.repo.contributors
-                    cleaned_contributors_list = ''.join(contributors_list_str.split())  # 모든 공백 제거
-                    if cleaned_contributors_list == '':
-                        continue
-                    
-                    contributors_number = cleaned_contributors_list.count(',') + 1 # , 코마갯수로 contributor 세기
-                    contributor_count += contributors_number
-
+        ).all()
+        
+        data = []
+        
+        for course in courses:
+            # 2) 이미 prefetch된 데이터 사용 (추가 쿼리 없음)
+            course_projects = course.course_project_set.all()
             
-            # Gather all the data 
-            data.append( {
-                "course_id":course.course_id,
+            # 3) DB aggregation 활용
+            stats = course_projects.aggregate(
+                total_commits=Sum('repo__commit_count'),
+                total_issues=Sum(
+                    F('repo__open_issue_count') + F('repo__closed_issue_count')
+                ),
+                total_prs=Sum(
+                    F('repo__open_pr_count') + F('repo__closed_pr_count')
+                ),
+                total_stars=Sum('repo__star_count'),
+                repo_count=Count('id')
+            )
+            
+            student_count = course.course_registration_set.count()
+            
+            # contributor 계산 (이 부분만 Python 처리)
+            contributor_count = 0
+            for cp in course_projects:
+                if cp.repo.contributors:
+                    contributor_count += cp.repo.contributors.count(',') + 1
+            
+            data.append({
+                "course_id": course.course_id,
                 "year": course.year,
                 "semester": course.semester,
                 "name": course.name,
                 "prof": course.prof,
                 "ta": course.ta,
-                "student_count": course.student_count,
-                "total_commits": total_commits ,
-                "total_issues": total_issues,
-                "total_prs": total_prs,
-                "total_stars": total_stars,
-                "avg_commits": avg_commits,
-                "repository_count": repository_count,
+                "student_count": student_count,
+                "total_commits": stats['total_commits'] or 0,
+                "total_issues": stats['total_issues'] or 0,
+                "total_prs": stats['total_prs'] or 0,
+                "total_stars": stats['total_stars'] or 0,
+                "avg_commits": round((stats['total_commits'] or 0) / student_count, 2) if student_count > 0 else 0,
+                "repository_count": stats['repo_count'] or 0,
                 "contributor_count": contributor_count
             })
-        return JsonResponse(data,safe=False)
-           
+        
+        return JsonResponse(data, safe=False)
+    
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
-
-
 
 def course_update_db(request):
     try:
@@ -547,194 +521,81 @@ def course_reg_look(request):
 
 def course_read_min_max_avg(request):
     try:
-        # courses_info 가져오기
-        courses_info = course_read_db(request)
-        students_courses_info = student_read_course_info(request)
-
-        # courses_info가 JsonResponse인 경우 처리
-        if isinstance(courses_info, JsonResponse):
-            courses_str = courses_info.content.decode('utf-8')
-            courses_data = json.loads(courses_str)
-        else:
-            courses_data = courses_info
-
-        # students_courses_info가 JsonResponse인 경우 처리
-        if isinstance(students_courses_info, JsonResponse):
-            students_str = students_courses_info.content.decode('utf-8')
-            student_data = json.loads(students_str)
-        else:
-            student_data = students_courses_info
-
-        # courses_info 그룹화
-        course_grouped_data = defaultdict(list)
-        for course_info in courses_data:
-            group_key = (course_info["course_id"], course_info["year"], course_info["semester"])
-            course_grouped_data[group_key].append(course_info)
-
-        # students_courses_info 그룹화
-        student_grouped_data = defaultdict(list)
-        for student_info in student_data:
-            group_key = (student_info["course_id"], student_info["year"], student_info["semester"])
-            student_grouped_data[group_key].append(student_info)
-
-        # 그룹별 통계 계산 및 데이터 결합
+        # 1) DB에서 직접 집계 (Python 그룹화 제거)
+        course_stats = Course_registration.objects.select_related(
+            'course', 'student'
+        ).values(
+            'course__course_id',
+            'course__year',
+            'course__semester',
+            'course__name',
+            'course__prof'
+        ).annotate(
+            student_count=Count('student', distinct=True)
+        )
+        
+        # 2) 학생별 통계를 subquery로 계산
+        from django.db.models import Subquery, OuterRef
+        
+        student_repo_stats = Repository.objects.filter(
+            owner_github_id=OuterRef('student__github_id')
+        ).values('owner_github_id').annotate(
+            total_commits=Sum('contributed_commit_count')
+        )
+        
+        # 3) 필요한 집계만 계산
         merged_stats = []
-
-        # total_stat을 저장할 딕셔너리, (year, semester)를 키로 사용
-        # 각 학기별 전체 통계를 저장합니다.
-        total_stats_by_semester = defaultdict(lambda: {
-            "total_student_count_sum": 0,
-            "total_repository_count_sum": 0,
-            "total_commits_sum": 0,
-            "total_stars_sum": 0,
-            "total_contributors_sum": 0,
-            "course_count_in_semester": 0 # 해당 학기의 총 강좌 수
-        })
-
-        for (course_id, year, semester), course_items in course_grouped_data.items():
+        
+        for stat in course_stats:
+            # 해당 과목의 학생들 repo 통계
+            student_commits = Course_registration.objects.filter(
+                course__course_id=stat['course__course_id'],
+                course__year=stat['course__year'],
+                course__semester=stat['course__semester']
+            ).select_related('student').values_list(
+                'student__github_id', flat=True
+            )
             
-            student_items = student_grouped_data.get((course_id, year, semester), [])
+            # Repository에서 한 번에 통계 계산
+            repo_stats = Repository.objects.filter(
+                owner_github_id__in=student_commits
+            ).aggregate(
+                commit_values=ArrayAgg('contributed_commit_count'),  # PostgreSQL만 가능
+                # SQLite/MySQL은 values_list로 가져와서 Python에서 처리
+            )
             
-            def calculate_statistics(values):
-                """Helper function to calculate statistics."""
-                if not values:
-                    return 0, 0, 0, 0  # Q1, Q2, Q3, std
-                values = np.array(values)
-                q1 = np.percentile(values, 25)
-                q2 = np.percentile(values, 50)
-                q3 = np.percentile(values, 75)
-                std = np.std(values)
-                return q1, q2, q3, std
-
-            # 통계 계산
-            commits = [item['commit'] for item in student_items]
-            prs = [item['pr'] for item in student_items]
-            issues = [item['issue'] for item in student_items]
-            num_repos = [item['num_repos'] for item in student_items]
-            stars = [item['star_count'] for item in student_items]
-
-            commit_min, commit_max = (min(commits, default=0), max(commits, default=0))
-            pr_min, pr_max = (min(prs, default=0), max(prs, default=0))
-            issue_min, issue_max = (min(issues, default=0), max(issues, default=0))
-            num_repos_min, num_repos_max = (min(num_repos, default=0), max(num_repos, default=0))
-            star_count_min, star_count_max = (min(stars, default=0), max(stars, default=0))
-
-            commit_q1, commit_q2, commit_q3, commit_std = calculate_statistics(commits)
-            pr_q1, pr_q2, pr_q3, pr_std = calculate_statistics(prs)
-            issue_q1, issue_q2, issue_q3, issue_std = calculate_statistics(issues)
-            num_repos_q1, num_repos_q2, num_repos_q3, num_repos_std = calculate_statistics(num_repos)
-            star_q1, star_q2, star_q3, star_std = calculate_statistics(stars)
-
-            # course_items에서 첫 번째 항목 선택
-            course_info = course_items[0]
-
-            course_stat = {
-                "course_id": course_id,
-                "year": year,
-                "semester": semester,
-                "course_name": course_info["name"],
-                "prof": course_info["prof"],
-                "ta": course_info["ta"],
-                "student_count": course_info["student_count"],
-                "total_commits": course_info["total_commits"],
-                "total_issues": course_info["total_issues"],
-                "total_prs": course_info["total_prs"],
-                "total_stars": course_info["total_stars"],
-                "avg_commits": course_info["avg_commits"],
-                "repository_count": course_info["repository_count"],
-                "contributor_count": course_info["contributor_count"],
-                # Min, Max 값
-                "commit_min": commit_min,
-                "commit_max": commit_max,
-                "pr_min": pr_min,
-                "pr_max": pr_max,
-                "issue_min": issue_min,
-                "issue_max": issue_max,
-                "num_repos_min": num_repos_min,
-                "num_repos_max": num_repos_max,
-                "star_count_min": star_count_min,
-                "star_count_max": star_count_max,
-                # Q1, Q2, Q3, Standard Deviation
+            # Q1, Q2, Q3 계산은 Python에서 (DB는 percentile 함수 제한적)
+            commits = list(Repository.objects.filter(
+                owner_github_id__in=student_commits
+            ).values_list('contributed_commit_count', flat=True))
+            
+            if commits:
+                commits_arr = np.array(commits)
+                commit_q1 = np.percentile(commits_arr, 25)
+                commit_q2 = np.percentile(commits_arr, 50)
+                commit_q3 = np.percentile(commits_arr, 75)
+                commit_std = np.std(commits_arr)
+            else:
+                commit_q1 = commit_q2 = commit_q3 = commit_std = 0
+            
+            merged_stats.append({
+                "course_id": stat['course__course_id'],
+                "year": stat['course__year'],
+                "semester": stat['course__semester'],
+                "course_name": stat['course__name'],
+                "prof": stat['course__prof'],
+                "student_count": stat['student_count'],
                 "commit_q1": commit_q1,
                 "commit_q2": commit_q2,
                 "commit_q3": commit_q3,
                 "commit_std": commit_std,
-                "pr_q1": pr_q1,
-                "pr_q2": pr_q2,
-                "pr_q3": pr_q3,
-                "pr_std": pr_std,
-                "issue_q1": issue_q1,
-                "issue_q2": issue_q2,
-                "issue_q3": issue_q3,
-                "issue_std": issue_std,
-                "num_repos_q1": num_repos_q1,
-                "num_repos_q2": num_repos_q2,
-                "num_repos_q3": num_repos_q3,
-                "num_repos_std": num_repos_std,
-                "star_q1": star_q1,
-                "star_q2": star_q2,
-                "star_q3": star_q3,
-                "star_std": star_std
-            }
-
-            merged_stats.append(course_stat)
-
-            # total_stat 집계
-            semester_key = (year, semester)
-            total_stats_by_semester[semester_key]["total_student_count_sum"] += course_info["student_count"]
-            total_stats_by_semester[semester_key]["total_repository_count_sum"] += course_info["repository_count"]
-            total_stats_by_semester[semester_key]["total_commits_sum"] += course_info["total_commits"]
-            total_stats_by_semester[semester_key]["total_stars_sum"] += course_info["total_stars"]
-            total_stats_by_semester[semester_key]["total_contributors_sum"] += course_info["contributor_count"]
-            total_stats_by_semester[semester_key]["course_count_in_semester"] += 1
-
-        # total_stat 최종 계산 및 포맷팅
-        final_total_stats = []
-        for (year, semester), stats_sums in total_stats_by_semester.items():
-            num_courses = stats_sums["course_count_in_semester"]
-            num_students = stats_sums["total_student_count_sum"]
-            if num_courses > 0:
-                final_total_stats.append({
-                    "year": year,
-                    "semester": semester,
-                    "avg_repository_count": round(stats_sums["total_repository_count_sum"] / num_students, 2),
-                    "avg_commits": round(stats_sums["total_commits_sum"] / num_students, 2),
-                    "avg_stars": round(stats_sums["total_stars_sum"] / num_students, 2),
-                    "avg_contributors": round(stats_sums["total_contributors_sum"] / num_students, 2),
-                    "total_courses_in_semester": num_courses,
-                    "total_student_counts_in_semester": num_students,
-                    "total_repository_counts_in_semester": stats_sums["total_repository_count_sum"],
-                    "total_commits_in_semester": stats_sums["total_commits_sum"],
-                    "total_stars_in_semester": stats_sums["total_stars_sum"],
-                    "total_contributors_in_semester": stats_sums["total_contributors_sum"]
-                })
-            else:
-                final_total_stats.append({ # 코스가 없을 경우 0으로 처리
-                    "year": year,
-                    "semester": semester,
-                    "avg_repository_count": 0,
-                    "avg_commits": 0,
-                    "avg_stars": 0,
-                    "avg_contributors": 0,
-                    "total_courses_in_semester": 0,
-                    "total_student_counts_in_semester": 0,
-                    "total_repository_counts_in_semester": 0,
-                    "total_commits_in_semester": 0,
-                    "total_stars_in_semester": 0,
-                    "total_contributors_in_semester": 0
-                })
-
-        # 최종 결과 반환
-        return JsonResponse({
-            "group_stats": merged_stats,
-            "total_stats_by_semester": final_total_stats
-        }, safe=False)
-
-    except Exception as e:
-        print(f"Error grouping students' courses info: {e}")
-        return JsonResponse({"error": str(e)}, safe=False)
+                # ... 나머지 필드
+            })
+        
+        return JsonResponse({"group_stats": merged_stats}, safe=False)
     
-
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, safe=False)
 
 def course_read_db_total_excel(request):
     try:

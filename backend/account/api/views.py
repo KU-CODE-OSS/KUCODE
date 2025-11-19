@@ -12,7 +12,7 @@ from account.models import User,Student
 from login.models import Student as LoginStudent
 from course.models import Course, Course_registration, Course_project
 from repo.models import Repo_commit, Repo_pr ,Repo_issue, Repository,Repo_contributor
-from django.db.models import Sum,Count
+from django.db.models import Sum, Count, Prefetch
 from openpyxl import load_workbook
 from django.db.models import Q
 from datetime import datetime
@@ -257,7 +257,7 @@ def student_excel_import(request):
 # ---------------------------------------------
 
 # ------------Student's course_reated info --------------#
-def student_read_course_info(request):
+# def student_read_course_info(request):
     try:
         data = []
         students = Student.objects.all()
@@ -406,7 +406,139 @@ def student_read_course_info(request):
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # ---------------------------------------------
-
+def student_read_course_info(request):
+    try:
+        # 1) Student와 관련 데이터를 미리 로드
+        students = Student.objects.prefetch_related(
+            'course_registration_set__course'
+        ).all()
+        
+        # 2) 모든 Repository를 미리 로드 (owner_github_id로 인덱싱)
+        all_repos = Repository.objects.select_related().all()
+        repos_by_github_id = {}
+        for repo in all_repos:
+            if repo.owner_github_id not in repos_by_github_id:
+                repos_by_github_id[repo.owner_github_id] = []
+            repos_by_github_id[repo.owner_github_id].append(repo)
+        
+        # 3) 모든 Course_project를 미리 로드 (repo_id로 인덱싱)
+        all_course_projects = Course_project.objects.select_related('course', 'repo').all()
+        course_projects_by_repo_id = {}
+        for cp in all_course_projects:
+            course_projects_by_repo_id[cp.repo.id] = cp
+        
+        # 4) Repo_contributor를 미리 로드 (repo_url로 인덱싱)
+        all_contributors = Repo_contributor.objects.all()
+        contributor_counts = {}
+        for contrib in all_contributors:
+            url = contrib.repo_url
+            contributor_counts[url] = contributor_counts.get(url, 0) + 1
+        
+        data = []
+        
+        for student in students:
+            try:
+                # 5) 이미 로드된 데이터 사용
+                student_repos = repos_by_github_id.get(student.github_id, [])
+                course_reg_list = list(student.course_registration_set.all())
+                
+                # 과목 ID 목록
+                course_ids = [course_reg.course for course_reg in course_reg_list]
+                
+                # 딕셔너리 초기화
+                course_dict = {
+                    course: {'commit': 0, 'pr': 0, 'issue': 0, 'repo': 0, 'star': 0, 'contributors': 0}
+                    for course in course_ids
+                }
+                
+                etc_stats = {
+                    'commit': 0, 'pr': 0, 'issue': 0, 
+                    'repo': 0, 'star': 0, 'contributors': 0
+                }
+                
+                # 6) 각 repo 처리
+                for repo in student_repos:
+                    sanitized_url = repo.url.replace(":", "")
+                    
+                    # Course_project 확인
+                    course_project = course_projects_by_repo_id.get(repo.id)
+                    
+                    if course_project:
+                        # 과목 관련 repo
+                        course = course_project.course
+                        
+                        if course in course_dict:
+                            stats = course_dict[course]
+                            stats['commit'] += repo.contributed_commit_count or 0
+                            stats['pr'] += (repo.contributed_open_pr_count or 0) + \
+                                          (repo.contributed_closed_pr_count or 0)
+                            stats['issue'] += (repo.contributed_open_issue_count or 0) + \
+                                             (repo.contributed_closed_issue_count or 0)
+                            stats['repo'] += 1
+                            stats['star'] += repo.star_count or 0
+                            stats['contributors'] += contributor_counts.get(sanitized_url, 0)
+                    else:
+                        # 기타 repo
+                        etc_stats['commit'] += repo.contributed_commit_count or 0
+                        etc_stats['pr'] += (repo.contributed_open_pr_count or 0) + \
+                                           (repo.contributed_closed_pr_count or 0)
+                        etc_stats['issue'] += (repo.contributed_open_issue_count or 0) + \
+                                             (repo.contributed_closed_issue_count or 0)
+                        etc_stats['repo'] += 1
+                        etc_stats['star'] += repo.star_count or 0
+                        etc_stats['contributors'] += contributor_counts.get(sanitized_url, 0)
+                
+                # 7) 과목별 결과 추가
+                for course, course_count in course_dict.items():
+                    data.append({
+                        "id": student.id,
+                        "github_id": student.github_id,
+                        "name": student.name,
+                        "department": student.department or '',
+                        "enrollment": student.enrollment or '',
+                        "year": course.year,
+                        "semester": course.semester,
+                        "course_name": course.name,
+                        "commit": course_count['commit'],
+                        "pr": course_count['pr'],
+                        "issue": course_count['issue'],
+                        "num_repos": course_count['repo'],
+                        "star_count": course_count['star'],
+                        "prof": course.prof or '',
+                        "course_id": course.course_id,
+                        "total_contributors": course_count['contributors']
+                    })
+                
+                # 8) 기타 추가
+                if etc_stats['repo'] > 0:
+                    data.append({
+                        "id": student.id,
+                        "github_id": student.github_id,
+                        "name": student.name,
+                        "department": student.department or '',
+                        "enrollment": student.enrollment or '',
+                        "year": "",
+                        "semester": "",
+                        "course_name": "기타",
+                        "course_id": "",
+                        "prof": "",
+                        "commit": etc_stats['commit'],
+                        "pr": etc_stats['pr'],
+                        "issue": etc_stats['issue'],
+                        "num_repos": etc_stats['repo'],
+                        "star_count": etc_stats['star'],
+                        "total_contributors": etc_stats['contributors']
+                    })
+            
+            except Exception as e:
+                print(f'Error processing student {student.name}: {e}')
+                continue
+        
+        return JsonResponse(data, safe=False)
+    
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+    
 # ------------Student's info --------------#
 def student_read_total(request):
     try:
