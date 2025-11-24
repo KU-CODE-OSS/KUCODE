@@ -36,20 +36,66 @@
         <!-- 첨부파일 Field -->
         <div class="form-row">
           <label class="form-label">첨부파일</label>
-          <div class="form-input-wrapper file-input-wrapper">
-            <div class="file-input-content">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="file-icon">
-                <path d="M11.6667 1.66669H5.00001C4.55798 1.66669 4.13406 1.84228 3.82149 2.15484C3.50893 2.4674 3.33334 2.89133 3.33334 3.33335V16.6667C3.33334 17.1087 3.50893 17.5326 3.82149 17.8452C4.13406 18.1578 4.55798 18.3334 5.00001 18.3334H15C15.442 18.3334 15.866 18.1578 16.1785 17.8452C16.4911 17.5326 16.6667 17.1087 16.6667 16.6667V6.66669L11.6667 1.66669Z" stroke="#616161" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M11.6667 1.66669V6.66669H16.6667" stroke="#616161" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <label for="file-upload" class="file-label">파일 선택하기</label>
+          <div class="form-input-wrapper">
+            <!-- Upload Method Toggle -->
+            <div class="upload-method-toggle">
+              <label class="method-option">
+                <input
+                  type="radio"
+                  v-model="formData.uploadMethod"
+                  value="link"
+                  class="method-radio"
+                />
+                <span class="method-label">Google Drive 링크</span>
+              </label>
+              <label v-if="enableDriveUpload" class="method-option">
+                <input
+                  type="radio"
+                  v-model="formData.uploadMethod"
+                  value="upload"
+                  class="method-radio"
+                />
+                <span class="method-label">파일 업로드</span>
+              </label>
+            </div>
+
+            <!-- Option 1: Drive Link Input -->
+            <div v-if="formData.uploadMethod === 'link'" class="drive-link-section">
               <input
-                id="file-upload"
-                type="file"
-                @change="handleFileChange"
-                class="file-input-hidden"
+                v-model="formData.driveUrl"
+                type="url"
+                class="form-input drive-url-input"
+                placeholder="Google Drive 링크를 입력하세요 (예: https://drive.google.com/file/d/...)"
               />
-              <span v-if="formData.fileName" class="file-name">{{ formData.fileName }}</span>
+              <input
+                v-model="formData.fileName"
+                type="text"
+                class="form-input file-name-input"
+                placeholder="파일 이름 (선택사항)"
+              />
+            </div>
+
+            <!-- Option 2: File Upload -->
+            <div v-if="formData.uploadMethod === 'upload' && enableDriveUpload" class="file-input-wrapper">
+              <div class="file-input-content">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="file-icon">
+                  <path d="M11.6667 1.66669H5.00001C4.55798 1.66669 4.13406 1.84228 3.82149 2.15484C3.50893 2.4674 3.33334 2.89133 3.33334 3.33335V16.6667C3.33334 17.1087 3.50893 17.5326 3.82149 17.8452C4.13406 18.1578 4.55798 18.3334 5.00001 18.3334H15C15.442 18.3334 15.866 18.1578 16.1785 17.8452C16.4911 17.5326 16.6667 17.1087 16.6667 16.6667V6.66669L11.6667 1.66669Z" stroke="#616161" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M11.6667 1.66669V6.66669H16.6667" stroke="#616161" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <label for="file-upload" class="file-label">파일 선택하기</label>
+                <input
+                  id="file-upload"
+                  type="file"
+                  @change="handleFileChange"
+                  class="file-input-hidden"
+                />
+                <span v-if="formData.fileName" class="file-name">{{ formData.fileName }}</span>
+              </div>
+            </div>
+
+            <!-- Upload Progress -->
+            <div v-if="uploadProgress" class="upload-progress">
+              {{ uploadProgress }}
             </div>
           </div>
         </div>
@@ -71,7 +117,7 @@
 </template>
 
 <script>
-import { createOrUpdatePost } from '@/api.js'
+import { createOrUpdatePost, getDriveConfig, uploadFileToDrive, linkDriveFile } from '@/api.js'
 
 export default {
   name: 'EventCreate',
@@ -82,15 +128,31 @@ export default {
         content: '',
         file: null,
         fileName: '',
+        driveUrl: '',
+        uploadMethod: 'link', // 'link' or 'upload'
         author: '', // Will be set from user session or default
         year: new Date().getFullYear(),
         semester: '1'
       },
       loading: false,
-      error: null
+      error: null,
+      enableDriveUpload: false,
+      uploadProgress: null
     }
   },
+  mounted() {
+    this.fetchDriveConfig()
+  },
   methods: {
+    async fetchDriveConfig() {
+      try {
+        const response = await getDriveConfig()
+        this.enableDriveUpload = response.data.enable_drive_upload
+      } catch (error) {
+        console.error('Failed to fetch Drive config:', error)
+        this.enableDriveUpload = false
+      }
+    },
     handleFileChange(event) {
       const file = event.target.files[0]
       if (file) {
@@ -105,6 +167,7 @@ export default {
     async handleSubmit() {
       this.loading = true
       this.error = null
+      this.uploadProgress = null
 
       try {
         // Prepare post data according to API spec
@@ -118,11 +181,33 @@ export default {
           is_internal: true
         }
 
-        // Add event_info if needed (optional field)
-        // postData.event_info = '';
-
+        // Create post first
         const response = await createOrUpdatePost(postData)
-        console.log('Post created:', response.data)
+        const postId = response.data.post_id
+        console.log('Post created:', postId)
+
+        // Handle file attachment if provided
+        if (this.formData.uploadMethod === 'upload' && this.formData.file && this.enableDriveUpload) {
+          // Option 1: Upload file to Drive
+          this.uploadProgress = 'Uploading file to Google Drive...'
+          try {
+            await uploadFileToDrive(postId, this.formData.file)
+            console.log('File uploaded to Drive')
+          } catch (fileError) {
+            console.error('Failed to upload file:', fileError)
+            alert('게시글은 저장되었으나 파일 업로드에 실패했습니다.')
+          }
+        } else if (this.formData.uploadMethod === 'link' && this.formData.driveUrl) {
+          // Option 2: Link existing Drive file
+          this.uploadProgress = 'Linking Google Drive file...'
+          try {
+            await linkDriveFile(postId, this.formData.driveUrl, this.formData.fileName || null)
+            console.log('Drive file linked')
+          } catch (fileError) {
+            console.error('Failed to link Drive file:', fileError)
+            alert('게시글은 저장되었으나 드라이브 링크 연결에 실패했습니다.')
+          }
+        }
 
         alert('행사정보가 저장되었습니다.')
         this.$router.push({ path: '/board', query: { category: 'events' } })
@@ -132,6 +217,7 @@ export default {
         alert('게시글 저장에 실패했습니다. 다시 시도해주세요.')
       } finally {
         this.loading = false
+        this.uploadProgress = null
       }
     }
   }
@@ -302,6 +388,63 @@ export default {
   line-height: 17px;
   color: #262626;
   margin-left: 8px;
+}
+
+.upload-method-toggle {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding: 12px 0;
+}
+
+.method-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.method-radio {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #910024;
+}
+
+.method-label {
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 17px;
+  color: #616161;
+  user-select: none;
+}
+
+.method-option:hover .method-label {
+  color: #910024;
+}
+
+.drive-link-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.drive-url-input {
+  width: 100%;
+}
+
+.file-name-input {
+  width: 100%;
+}
+
+.upload-progress {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #F0F8FF;
+  border-left: 3px solid #910024;
+  font-size: 14px;
+  color: #616161;
+  border-radius: 4px;
 }
 
 .form-actions {
