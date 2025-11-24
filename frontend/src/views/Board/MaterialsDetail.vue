@@ -37,16 +37,18 @@
           <p>{{ post.content }}</p>
         </div>
 
-        <!-- Attachment Section -->
-        <div class="attachment-section" v-if="post.attachment">
-          <a :href="post.attachment.url" download class="attachment-link">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="download-icon">
-              <path d="M17.5 12.5V15.8333C17.5 16.2754 17.3244 16.6993 17.0118 17.0118C16.6993 17.3244 16.2754 17.5 15.8333 17.5H4.16667C3.72464 17.5 3.30072 17.3244 2.98816 17.0118C2.67559 16.6993 2.5 16.2754 2.5 15.8333V12.5" stroke="#262626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M5.83334 8.33331L10 12.5L14.1667 8.33331" stroke="#262626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M10 12.5V2.5" stroke="#262626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span class="attachment-name">{{ post.attachment.name }}</span>
-          </a>
+        <!-- Attachment Section (Google Drive Files) -->
+        <div v-if="post.files && post.files.length > 0" class="attachments-container">
+          <div v-for="file in post.files" :key="file.id" class="attachment-section">
+            <a :href="file.storage_link" target="_blank" rel="noopener noreferrer" class="attachment-link">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="download-icon">
+                <path d="M17.5 12.5V15.8333C17.5 16.2754 17.3244 16.6993 17.0118 17.0118C16.6993 17.3244 16.2754 17.5 15.8333 17.5H4.16667C3.72464 17.5 3.30072 17.3244 2.98816 17.0118C2.67559 16.6993 2.5 16.2754 2.5 15.8333V12.5" stroke="#262626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5.83334 8.33331L10 12.5L14.1667 8.33331" stroke="#262626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M10 12.5V2.5" stroke="#262626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="attachment-name">{{ file.file_name }}</span>
+            </a>
+          </div>
         </div>
       </main>
     </div>
@@ -69,7 +71,7 @@ export default {
         id: null,
         title: '',
         content: '',
-        attachment: null
+        files: []
       },
       loading: false,
       error: null
@@ -92,7 +94,7 @@ export default {
           id: postData.id,
           title: postData.title,
           content: postData.content,
-          attachment: postData.attachment || null
+          files: postData.files || []
         }
       } catch (error) {
         console.error('Failed to load post:', error)
@@ -101,7 +103,7 @@ export default {
           id: postId,
           title: '게시글을 찾을 수 없습니다',
           content: '요청하신 게시글이 존재하지 않습니다.',
-          attachment: null
+          files: []
         }
 
         // TODO: DELETE THIS LATER, DUMMY DATA ----------------------------------------------
@@ -124,10 +126,15 @@ Git 로컬 저장소 초기화 (init)
 Git 로컬 저장소에 업로드 (commit)
 Git을 편리하게 사용하는 방법
 Git/Github을 이용한 팀 협업과 오픈소스 기여`,
-          attachment: {
-            name: 'Git의 기초 및 Git을 이용한 프로젝트 형상관리 방법_File.pdf',
-            url: '#'
-          }
+          files: [
+            {
+              id: 1,
+              file_name: 'Git의 기초 및 Git을 이용한 프로젝트 형상관리 방법_File.pdf',
+              storage_link: 'https://drive.google.com/file/d/DUMMY_ID/view',
+              file_extension: 'pdf',
+              display_type: 'DOWNLOAD'
+            }
+          ]
         }
       } finally {
         this.loading = false
@@ -280,9 +287,16 @@ Git/Github을 이용한 팀 협업과 오픈소스 기여`,
   margin: 0;
 }
 
-.attachment-section {
+.attachments-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   width: 100%;
   max-width: 972px;
+}
+
+.attachment-section {
+  width: 100%;
   height: 50px;
   background: #F8F8F8;
   display: flex;

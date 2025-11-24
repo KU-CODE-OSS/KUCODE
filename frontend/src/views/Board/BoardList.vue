@@ -228,12 +228,12 @@ export default {
           }))
         
         // TODO: DELETE THIS LATER, DUMMY DATA ----------------------------------------------
-        this.eventPosts = [
-          { id: 1, number: '1', title: '2025학년도 1학기 오픈소스 SW 개발 설명회', date: '2025.11.15', author: '김OO', views: '0', category: 'events' },
-        ]
-        this.learningPosts = [
-          { id: 1, number: '1', title: 'Git의 기초 및 Git을 이용한 프로젝트 형상관리 방법', date: '2025.10.16', author: '황영숙', views: '0', category: 'learning' },
-        ]
+        // this.eventPosts = [
+        //   { id: 1, number: '1', title: '2025학년도 1학기 오픈소스 SW 개발 설명회', date: '2025.11.15', author: '김OO', views: '0', category: 'events' },
+        // ]
+        // this.learningPosts = [
+        //   { id: 1, number: '1', title: 'Git의 기초 및 Git을 이용한 프로젝트 형상관리 방법', date: '2025.10.16', author: '황영숙', views: '0', category: 'learning' },
+        // ]
       } catch (error) {
         console.error('Failed to load posts:', error)
         this.error = 'Failed to load posts'

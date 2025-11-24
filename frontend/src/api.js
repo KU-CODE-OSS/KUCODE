@@ -162,3 +162,34 @@ export function createOrUpdateTrendingRepo(repoData) {
     headers: { 'Content-Type': 'application/json' }
   })
 }
+
+// Google Drive Configuration
+export function getDriveConfig() {
+  return ajax(ip_for_develop + '/board/drive_config', 'get')
+}
+
+// Upload File to Google Drive
+export function uploadFileToDrive(postId, file, displayType = 'DOWNLOAD') {
+  const formData = new FormData()
+  formData.append('post_id', postId)
+  formData.append('file', file)
+  formData.append('display_type', displayType)
+
+  return ajax(ip_for_develop + '/board/upload_file_to_drive', 'post', {
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
+// Link Google Drive File
+export function linkDriveFile(postId, driveUrl, fileName = null, displayType = 'DOWNLOAD') {
+  return ajax(ip_for_develop + '/board/link_drive_file', 'post', {
+    data: {
+      post_id: postId,
+      drive_url: driveUrl,
+      file_name: fileName,
+      display_type: displayType
+    },
+    headers: { 'Content-Type': 'application/json' }
+  })
+}

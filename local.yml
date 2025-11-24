@@ -33,6 +33,7 @@ services:
       - FIREBASE_CLIENT_CERT_URL=${FIREBASE_CLIENT_CERT_URL}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ENABLE_BOARD_DRIVE_UPLOAD=${ENABLE_BOARD_DRIVE_UPLOAD}
     volumes:
       - ./backend:/app
     ports:
