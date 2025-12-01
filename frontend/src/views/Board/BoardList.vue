@@ -53,10 +53,9 @@
             </div>
 
             <button
+              v-if="authStore.canWriteBoard && activeCategory !== 'opensource'"
               class="write-post-btn"
               @click="openWritePost"
-              :disabled="activeCategory === 'opensource'"
-              :class="{ disabled: activeCategory === 'opensource' }"
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="btn-icon">
                 <circle cx="10" cy="10" r="9.25" stroke="#616161" stroke-width="1.5"/>
@@ -88,6 +87,7 @@
                 <div class="table-cell col-title">제목</div>
                 <div class="table-cell col-date">등록 일자</div>
                 <div class="table-cell col-author">작성자</div>
+                <div class="table-cell col-likes">좋아요</div>
                 <div class="table-cell col-views">조회수</div>
               </div>
             </div>
@@ -97,12 +97,30 @@
                 v-for="post in filteredPosts"
                 :key="post.id"
                 class="table-row"
-                @click="openPost(post.id)"
               >
                 <div class="table-cell col-number">{{ post.number }}</div>
-                <div class="table-cell col-title">{{ post.title }}</div>
+                <div class="table-cell col-title" @click="openPost(post.id)">
+                  {{ post.title }}
+                </div>
                 <div class="table-cell col-date">{{ post.date }}</div>
                 <div class="table-cell col-author">{{ post.author }}</div>
+                <div class="table-cell col-likes">
+                  <button
+                    class="like-btn"
+                    :class="{ liked: post.isLiked }"
+                    @click.stop="toggleLike(post)"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path
+                        d="M8 14C8 14 2 10 2 5.5C2 3.5 3.5 2 5.5 2C6.5 2 7.5 2.5 8 3.5C8.5 2.5 9.5 2 10.5 2C12.5 2 14 3.5 14 5.5C14 10 8 14 8 14Z"
+                        :fill="post.isLiked ? '#CB385C' : 'none'"
+                        :stroke="post.isLiked ? '#CB385C' : '#616161'"
+                        stroke-width="1.5"
+                      />
+                    </svg>
+                    <span>{{ post.likeCount || 0 }}</span>
+                  </button>
+                </div>
                 <div class="table-cell col-views">{{ post.views }}</div>
               </div>
             </div>
@@ -143,10 +161,15 @@
 </template>
 
 <script>
-import { getBoardPostsList, getCompanyReposList, getTrendingReposList } from '@/api.js'
+import { getBoardPostsList, getCompanyReposList, getTrendingReposList, togglePostLike } from '@/api.js'
+import { useAuthStore } from '@/stores/auth'
 
 export default {
   name: 'BoardPage',
+  setup() {
+    const authStore = useAuthStore()
+    return { authStore }
+  },
   data() {
     return {
       categories: [
@@ -212,6 +235,8 @@ export default {
             date: this.formatDate(post.created_at),
             author: post.author,
             views: 0,
+            likeCount: post.like_count || 0,
+            isLiked: false, // TODO: Get from backend based on current user
             category: 'events'
           }))
 
@@ -223,6 +248,8 @@ export default {
             title: post.title,
             date: this.formatDate(post.created_at),
             author: post.author,
+            likeCount: post.like_count || 0,
+            isLiked: false, // TODO: Get from backend based on current user
             views: 0,
             category: 'learning'
           }))
@@ -348,6 +375,28 @@ export default {
         this.$router.push({ path: `/board/event/${postId}`, query: { from: this.activeCategory } })
       } else if (this.activeCategory === 'learning') {
         this.$router.push({ path: `/board/materials/${postId}`, query: { from: this.activeCategory } })
+      }
+    },
+    async toggleLike(post) {
+      if (!this.authStore.memberId) {
+        alert('로그인이 필요합니다.')
+        return
+      }
+
+      try {
+        // Optimistic UI update
+        const wasLiked = post.isLiked
+        post.isLiked = !post.isLiked
+        post.likeCount += post.isLiked ? 1 : -1
+
+        // Call API
+        await togglePostLike(post.id, this.authStore.memberId)
+      } catch (error) {
+        // Revert on error
+        post.isLiked = !post.isLiked
+        post.likeCount += post.isLiked ? 1 : -1
+        console.error('Failed to toggle like:', error)
+        alert('좋아요 처리에 실패했습니다.')
       }
     },
     restoreCategoryFromQuery() {
@@ -730,10 +779,47 @@ export default {
   text-align: left;
 }
 
+.col-likes {
+  width: 100px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
 .col-views {
   width: 92px;
   flex-shrink: 0;
   text-align: right;
+}
+
+/* Like Button */
+.like-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 16px;
+  transition: all 0.2s;
+  font-size: 14px;
+  color: #616161;
+}
+
+.like-btn:hover {
+  background: #FFF5F7;
+}
+
+.like-btn.liked {
+  color: #CB385C;
+}
+
+.like-btn svg {
+  transition: transform 0.2s;
+}
+
+.like-btn:active svg {
+  transform: scale(1.2);
 }
 
 /* Open Source Repos Table Columns */
