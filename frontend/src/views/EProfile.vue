@@ -939,9 +939,9 @@ export default {
           await new Promise(resolve => setTimeout(resolve, 500))
         }
 
-        // Capture the main content with html2canvas
+        // Capture the main content with html2canvas at higher quality
         const canvas = await html2canvas(mainContent, {
-          scale: 1.5,
+          scale: 2,
           useCORS: true,
           logging: false,
           allowTaint: true,
@@ -965,38 +965,47 @@ export default {
         // Create PDF with proper page handling
         const pdf = new jsPDF({
           orientation: 'portrait',
-          unit: 'mm',
+          unit: 'px',
           format: 'a4',
           compress: true
         })
 
-        const pdfWidth = 210 // A4 width in mm
-        const pdfHeight = 297 // A4 height in mm
+        const pdfWidth = 595 // A4 width in pixels at 72 DPI
+        const pdfHeight = 842 // A4 height in pixels at 72 DPI
         const imgWidth = pdfWidth
         const imgHeight = (canvas.height * pdfWidth) / canvas.width
 
-        // Calculate how many pages we need
-        const pageCount = Math.ceil(imgHeight / pdfHeight)
+        let position = 0
 
-        for (let i = 0; i < pageCount; i++) {
-          if (i > 0) {
+        // Add pages by slicing the canvas at page boundaries
+        while (position < imgHeight) {
+          const pageCanvas = document.createElement('canvas')
+          const pageHeight = Math.min(pdfHeight, imgHeight - position)
+
+          pageCanvas.width = canvas.width
+          pageCanvas.height = (pageHeight * canvas.width) / pdfWidth
+
+          const ctx = pageCanvas.getContext('2d')
+          ctx.fillStyle = '#ffffff'
+          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height)
+
+          // Calculate source Y position in original canvas
+          const srcY = (position * canvas.width) / pdfWidth
+
+          ctx.drawImage(
+            canvas,
+            0, srcY, canvas.width, pageCanvas.height,
+            0, 0, pageCanvas.width, pageCanvas.height
+          )
+
+          const pageImgData = pageCanvas.toDataURL('image/png', 1.0)
+
+          if (position > 0) {
             pdf.addPage()
           }
 
-          // Calculate the portion of the image to show on this page
-          const srcY = (canvas.height / pageCount) * i
-          const srcHeight = canvas.height / pageCount
-
-          // Use a temporary canvas to extract the portion we need
-          const pageCanvas = document.createElement('canvas')
-          pageCanvas.width = canvas.width
-          pageCanvas.height = srcHeight
-
-          const ctx = pageCanvas.getContext('2d')
-          ctx.drawImage(canvas, 0, -srcY)
-
-          const pageImgData = pageCanvas.toDataURL('image/png', 1.0)
-          pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, pdfHeight)
+          pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, pageHeight)
+          position += pdfHeight
         }
 
         // Download PDF
@@ -2106,8 +2115,19 @@ export default {
 .repo-checkbox-item input[type="checkbox"] {
   margin-right: 10px;
   cursor: pointer;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
+  accent-color: #1a73e8;
+}
+
+.repo-checkbox-item input[type="checkbox"]:checked {
+  background-color: #1a73e8;
+}
+
+.repo-checkbox-item:hover {
+  background-color: #f5f5f5;
+  padding-left: 4px;
+  transition: all 0.2s;
 }
 
 .modal-footer {
