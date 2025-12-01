@@ -629,7 +629,7 @@ def add_comment(request):
 def delete_comment(request):
     """
     댓글 삭제 API
-    POST body: { "comment_id": int, "member_id": int }
+    POST body: { "comment_id": int, "author_id": int }
     
     - 자식 댓글(대댓글)이 있는 경우: 내용과 작성자 정보만 지우고 레코드는 유지 (Soft Delete)
     - 자식 댓글이 없는 경우: DB에서 완전히 삭제 (Hard Delete)
@@ -644,10 +644,10 @@ def delete_comment(request):
             body = {}
             
         comment_id = body.get('comment_id')
-        member_id = body.get('member_id')
+        author_id = body.get('author_id')
         
-        if not comment_id or not member_id:
-            return JsonResponse({"status": "Error", "message": "comment_id and member_id are required"}, status=400)
+        if not comment_id or not author_id:
+            return JsonResponse({"status": "Error", "message": "comment_id and author_id are required"}, status=400)
             
         try:
             comment = Comment.objects.get(id=comment_id)
@@ -655,13 +655,13 @@ def delete_comment(request):
             return JsonResponse({"status": "Error", "message": "comment not found"}, status=404)
             
         try:
-            member = Member.objects.get(id=member_id)
+            author = Member.objects.get(id=author_id)
         except Member.DoesNotExist:
             return JsonResponse({"status": "Error", "message": "member not found"}, status=404)
             
         # 작성자 권한 확인
         # author가 None인 경우(이미 삭제된 댓글)는 삭제 불가
-        if not comment.author or comment.author.id != member.id:
+        if not comment.author or comment.author.id != author.id:
             return JsonResponse({"status": "Error", "message": "Permission denied"}, status=403)
             
         # 자식 댓글(대댓글) 존재 여부 확인
