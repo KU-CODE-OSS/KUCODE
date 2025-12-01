@@ -894,6 +894,9 @@ export default {
     async exportToPdf() {
       this.pdfExporting = true
 
+      // Save the selected repos to restore later
+      const savedSelectedRepos = [...this.selectedReposForPdf]
+
       // Close the modal first so it doesn't appear in the PDF
       const modalWasOpen = this.showPdfExportModal
       this.showPdfExportModal = false
@@ -906,7 +909,7 @@ export default {
         // This is temporary until backend PDF rendering is implemented
 
         // Wait for modal to close and DOM to update
-        await new Promise(resolve => setTimeout(resolve, 200))
+        await new Promise(resolve => setTimeout(resolve, 300))
 
         // Get the main content area (everything except modals and buttons)
         const mainContent = document.querySelector('.main-content')
@@ -919,67 +922,85 @@ export default {
         const originalDisplay = saveSection ? saveSection.style.display : ''
         if (saveSection) saveSection.style.display = 'none'
 
+        // Store original scroll position
+        const originalScrollTop = window.pageYOffset || document.documentElement.scrollTop
+
+        // Scroll to top to ensure full capture
+        window.scrollTo(0, 0)
+
         // Filter repos based on selection if any are selected
         const originalRepos = [...this.repositoriesData]
-        if (this.selectedReposForPdf.length > 0) {
+        if (savedSelectedRepos.length > 0) {
           this.repositoriesData = this.repositoriesData.filter(repo =>
-            this.selectedReposForPdf.includes(repo.id)
+            savedSelectedRepos.includes(repo.id)
           )
           // Wait for Vue to re-render
           await this.$nextTick()
-          await new Promise(resolve => setTimeout(resolve, 300))
+          await new Promise(resolve => setTimeout(resolve, 500))
         }
 
         // Capture the main content with html2canvas
         const canvas = await html2canvas(mainContent, {
-          scale: 2,
+          scale: 1.5,
           useCORS: true,
           logging: false,
           allowTaint: true,
           backgroundColor: '#ffffff',
-          width: mainContent.scrollWidth,
+          scrollY: -window.scrollY,
+          scrollX: -window.scrollX,
           height: mainContent.scrollHeight,
-          windowWidth: mainContent.scrollWidth,
-          windowHeight: mainContent.scrollHeight
+          windowHeight: mainContent.scrollHeight + window.scrollY
         })
 
         // Restore repos if filtered
-        if (this.selectedReposForPdf.length > 0) {
-          this.repositoriesData = originalRepos
-          await this.$nextTick()
-        }
+        this.repositoriesData = originalRepos
+        await this.$nextTick()
 
         // Restore button visibility
         if (saveSection) saveSection.style.display = originalDisplay
 
-        // Create PDF
-        const imgData = canvas.toDataURL('image/png')
+        // Restore scroll position
+        window.scrollTo(0, originalScrollTop)
+
+        // Create PDF with proper page handling
         const pdf = new jsPDF({
           orientation: 'portrait',
           unit: 'mm',
-          format: 'a4'
+          format: 'a4',
+          compress: true
         })
 
-        const imgWidth = 210 // A4 width in mm
-        const pageHeight = 297 // A4 height in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width
-        let heightLeft = imgHeight
-        let position = 0
+        const pdfWidth = 210 // A4 width in mm
+        const pdfHeight = 297 // A4 height in mm
+        const imgWidth = pdfWidth
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width
 
-        // Add first page
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-        heightLeft -= pageHeight
+        // Calculate how many pages we need
+        const pageCount = Math.ceil(imgHeight / pdfHeight)
 
-        // Add additional pages if content is longer than one page
-        while (heightLeft >= 0) {
-          position = heightLeft - imgHeight
-          pdf.addPage()
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-          heightLeft -= pageHeight
+        for (let i = 0; i < pageCount; i++) {
+          if (i > 0) {
+            pdf.addPage()
+          }
+
+          // Calculate the portion of the image to show on this page
+          const srcY = (canvas.height / pageCount) * i
+          const srcHeight = canvas.height / pageCount
+
+          // Use a temporary canvas to extract the portion we need
+          const pageCanvas = document.createElement('canvas')
+          pageCanvas.width = canvas.width
+          pageCanvas.height = srcHeight
+
+          const ctx = pageCanvas.getContext('2d')
+          ctx.drawImage(canvas, 0, -srcY)
+
+          const pageImgData = pageCanvas.toDataURL('image/png', 1.0)
+          pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, pdfHeight)
         }
 
         // Download PDF
-        const fileName = this.selectedReposForPdf.length > 0
+        const fileName = savedSelectedRepos.length > 0
           ? `${this.user.name}_EProfile_선택된프로젝트.pdf`
           : `${this.user.name}_EProfile.pdf`
         pdf.save(fileName)
@@ -990,6 +1011,8 @@ export default {
         alert('PDF 내보내기에 실패했습니다. 다시 시도해주세요.')
       } finally {
         this.pdfExporting = false
+        // Restore the selected repos
+        this.selectedReposForPdf = savedSelectedRepos
         if (modalWasOpen) {
           this.showPdfExportModal = true
         }
