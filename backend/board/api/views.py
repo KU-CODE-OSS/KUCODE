@@ -8,6 +8,7 @@ from rest_framework import status
 import json
 
 from board.models import Post, File, CompanyRepo, TrendingRepo
+from login.models import Member
 from board.services.google_drive import GoogleDriveService, GoogleDriveServiceError
 
 
@@ -107,7 +108,8 @@ def read_post(request):
             "event_info": post.event_info,
             "created_at": post.created_at.isoformat() if post.created_at else None,
             "updated_at": post.updated_at.isoformat() if post.updated_at else None,
-            "files": files_data
+            "files": files_data,
+            "like_count": post.like_count  # like_count 추가
         }
 
         return JsonResponse({
@@ -512,3 +514,50 @@ def update_trending_repo(request):
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 
+@csrf_exempt
+def toggle_post_like(request):
+    """
+    게시글 좋아요/취소 토글 API
+    POST body: { "post_id": int, "member_id": int }
+    """
+    if request.method != 'POST':
+        return JsonResponse({"status": "Error", "message": "Only POST method is allowed"}, status=405)
+    
+    try:
+        try:
+            body = json.loads(request.body.decode('utf-8') or '{}')
+        except Exception:
+            body = {}
+            
+        post_id = body.get('post_id')
+        member_id = body.get('member_id')
+        
+        if not post_id or not member_id:
+            return JsonResponse({"status": "Error", "message": "post_id and member_id are required"}, status=400)
+            
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": "post not found"}, status=404)
+            
+        try:
+            member = Member.objects.get(id=member_id)
+        except Member.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": "member not found"}, status=404)
+            
+        # 좋아요 토글 로직
+        if post.likes.filter(id=member.id).exists():
+            post.likes.remove(member)
+            liked = False
+        else:
+            post.likes.add(member)
+            liked = True
+            
+        return JsonResponse({
+            "status": "OK",
+            "liked": liked,
+            "like_count": post.likes.count()
+        }, status=200)
+        
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)

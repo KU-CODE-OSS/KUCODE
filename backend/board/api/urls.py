@@ -14,6 +14,7 @@ urlpatterns = [
   path("link_drive_file", views.link_drive_file, name="link_drive_file"),
   path("update_company_repo", views.update_company_repo, name="update_company_repo"),
   path("update_trending_repo", views.update_trending_repo, name="update_trending_repo"),
+  path("toggle_post_like", views.toggle_post_like, name="toggle_post_like"),
 ]
 
 
