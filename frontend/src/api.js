@@ -193,3 +193,48 @@ export function linkDriveFile(postId, driveUrl, fileName = null, displayType = '
     headers: { 'Content-Type': 'application/json' }
   })
 }
+
+// Login Role API
+export function postLoginRole(uuid) {
+  return ajax(ip_for_develop + '/login/signin', 'post', {
+    data: { uuid },
+    headers: { 'Content-Type': 'application/json' }
+  })
+}
+
+// PDF Export API (Placeholder - to be replaced with backend implementation)
+export function exportProfilePdf(uuid, repoIds) {
+  // TODO: PLACEHOLDER_API_CALL - This will be replaced with actual backend PDF generation
+  return ajax(ip_for_develop + '/repo/export_profile_pdf', 'post', {
+    data: { uuid, repo_ids: repoIds },
+    headers: { 'Content-Type': 'application/json' }
+  })
+}
+
+// Likes & Comments APIs
+export function togglePostLike(postId, memberId) {
+  return ajax(ip_for_develop + '/board/toggle_post_like', 'post', {
+    data: { post_id: postId, member_id: memberId },
+    headers: { 'Content-Type': 'application/json' }
+  })
+}
+
+export function addComment(postId, authorId, content, parentId = null) {
+  return ajax(ip_for_develop + '/board/add_comment', 'post', {
+    data: { post_id: postId, author_id: authorId, content, parent_id: parentId },
+    headers: { 'Content-Type': 'application/json' }
+  })
+}
+
+export function deleteComment(commentId, authorId) {
+  return ajax(ip_for_develop + '/board/delete_comment', 'post', {
+    data: { comment_id: commentId, author_id: authorId },
+    headers: { 'Content-Type': 'application/json' }
+  })
+}
+
+export function getComments(postId, page = 1, size = 10) {
+  return ajax(ip_for_develop + '/board/read_comments_list', 'get', {
+    params: { post_id: postId, page, count: size }
+  })
+}

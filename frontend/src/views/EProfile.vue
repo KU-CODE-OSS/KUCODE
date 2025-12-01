@@ -2,6 +2,9 @@
   <div class="e-portfolio">
     <!-- Edit/Save Button -->
       <div class="save-section">
+        <button class="pdf-export-btn" @click="openPdfExportModal">
+          PDF 내보내기
+        </button>
         <button class="save-btn" @click="isEditingProfile ? saveProfile() : toggleEditMode()">
           {{ isEditingProfile ? '저장' : '편집' }}
         </button>
@@ -445,7 +448,57 @@
       </section>
 
     </main>
-    
+
+    <!-- PDF 내보내기 모달 -->
+    <div v-if="showPdfExportModal" class="modal-overlay" @click.self="closePdfExportModal">
+      <div class="pdf-export-modal">
+        <div class="modal-header">
+          <h3>PDF 내보내기</h3>
+          <button class="close-btn" @click="closePdfExportModal">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-description">프로필 요약 정보와 함께 내보낼 프로젝트를 선택하세요.</p>
+
+          <div class="search-section">
+            <input
+              v-model="pdfExportSearchQuery"
+              type="text"
+              placeholder="프로젝트 검색..."
+              class="search-input"
+            />
+          </div>
+
+          <div class="select-actions">
+            <button @click="selectAllRepos" class="action-btn">전체 선택</button>
+            <button @click="clearAllRepos" class="action-btn">선택 해제</button>
+          </div>
+
+          <div class="repo-list">
+            <div
+              v-for="repo in filteredReposForPdf"
+              :key="repo.id"
+              class="repo-checkbox-item"
+            >
+              <label>
+                <input
+                  type="checkbox"
+                  :value="repo.id"
+                  v-model="selectedReposForPdf"
+                />
+                <span>{{ repo.name }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closePdfExportModal" class="cancel-btn">취소</button>
+          <button @click="exportToPdf" class="confirm-btn" :disabled="pdfExporting">
+            {{ pdfExporting ? '내보내는 중...' : 'PDF 다운로드' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 프로젝트 상세 모달 -->
     <RepoDetailModal
       :show="showRepoModal"
@@ -457,6 +510,8 @@
 
 <script>
 import { Chart, registerables } from 'chart.js'
+import html2canvas from 'html2canvas'
+import { jsPDF } from 'jspdf'
 import EProfileHeatmap from './EProfileComponents/EProfileHeatmap.vue'
 import RepoDetailModal from './EProfileComponents/RepoDetailModal.vue'
 import { getEProfileHeatmap, updateStudentIntroduction, updateStudentTechnologyStack } from '@/api.js'
@@ -598,7 +653,12 @@ export default {
       currentPage: 1,
       itemsPerPage: 10,
       // Edit mode state
-      isEditingProfile: false
+      isEditingProfile: false,
+      // PDF Export properties
+      showPdfExportModal: false,
+      pdfExportSearchQuery: '',
+      selectedReposForPdf: [],
+      pdfExporting: false
     }
   },
   computed: {
@@ -737,6 +797,16 @@ export default {
       const adjustedStart = Math.max(1, end - maxVisible + 1)
 
       return Array.from({ length: end - adjustedStart + 1 }, (_, i) => adjustedStart + i)
+    },
+
+    filteredReposForPdf() {
+      if (!this.pdfExportSearchQuery) {
+        return this.repositoriesData
+      }
+      const query = this.pdfExportSearchQuery.toLowerCase()
+      return this.repositoriesData.filter(repo =>
+        repo.name.toLowerCase().includes(query)
+      )
     }
   },
   async mounted() {
@@ -805,6 +875,112 @@ export default {
     closeRepoModal() {
       this.showRepoModal = false
       this.selectedRepo = null
+    },
+    // PDF Export 모달 관련 메서드
+    openPdfExportModal() {
+      this.showPdfExportModal = true
+    },
+    closePdfExportModal() {
+      this.showPdfExportModal = false
+      this.pdfExportSearchQuery = ''
+      this.selectedReposForPdf = []
+    },
+    selectAllRepos() {
+      this.selectedReposForPdf = this.filteredReposForPdf.map(repo => repo.id)
+    },
+    clearAllRepos() {
+      this.selectedReposForPdf = []
+    },
+    async exportToPdf() {
+      this.pdfExporting = true
+      try {
+        // TODO: PLACEHOLDER_API_CALL('/repo/export_profile_pdf')
+        // Expected payload: { uuid: this.student_uuid, repo_ids: this.selectedReposForPdf }
+
+        // For now, use client-side PDF generation (html2canvas + jsPDF)
+        // This is temporary until backend PDF rendering is implemented
+
+        // Create a hidden DOM snapshot with profile summary and selected repos
+        const pdfContent = this.createPdfContent()
+        document.body.appendChild(pdfContent)
+
+        // Generate PDF
+        const canvas = await html2canvas(pdfContent, {
+          scale: 2,
+          useCORS: true,
+          logging: false
+        })
+
+        const imgData = canvas.toDataURL('image/png')
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        })
+
+        const imgWidth = 210 // A4 width in mm
+        const pageHeight = 297 // A4 height in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width
+        let heightLeft = imgHeight
+        let position = 0
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight
+          pdf.addPage()
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+          heightLeft -= pageHeight
+        }
+
+        // Download PDF
+        pdf.save(`${this.user.name}_EProfile.pdf`)
+
+        // Clean up
+        document.body.removeChild(pdfContent)
+
+        alert('PDF 내보내기 완료!')
+        this.closePdfExportModal()
+      } catch (error) {
+        console.error('PDF export error:', error)
+        alert('PDF 내보내기에 실패했습니다. 다시 시도해주세요.')
+      } finally {
+        this.pdfExporting = false
+      }
+    },
+    createPdfContent() {
+      // Create a hidden div with profile summary and selected repos
+      const container = document.createElement('div')
+      container.style.cssText = 'position: absolute; left: -9999px; width: 800px; background: white; padding: 40px;'
+
+      // Add profile summary
+      const summary = `
+        <div style="margin-bottom: 30px;">
+          <h1 style="font-size: 24px; margin-bottom: 20px;">${this.user.name} - E-Profile</h1>
+          <p><strong>대학:</strong> ${this.user.university} ${this.user.department}</p>
+          <p><strong>이메일:</strong> ${this.user.email}</p>
+          <p><strong>GitHub:</strong> ${this.user.github_id || 'N/A'}</p>
+          <p><strong>소개:</strong> ${this.user.introduction || 'N/A'}</p>
+        </div>
+      `
+
+      // Add selected repos
+      const selectedRepos = this.repositoriesData.filter(repo =>
+        this.selectedReposForPdf.includes(repo.id)
+      )
+
+      const reposHtml = selectedRepos.map(repo => `
+        <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px;">
+          <h3 style="margin: 0 0 10px 0;">${repo.name}</h3>
+          <p><strong>설명:</strong> ${repo.project_introduction || 'N/A'}</p>
+          <p><strong>커밋:</strong> ${this.getRepoCommits(repo)} | <strong>PR:</strong> ${this.getRepoPRs(repo)} | <strong>이슈:</strong> ${this.getRepoIssues(repo)}</p>
+        </div>
+      `).join('')
+
+      container.innerHTML = summary + '<h2 style="font-size: 20px; margin: 30px 0 20px 0;">프로젝트 목록</h2>' + reposHtml
+
+      return container
     },
     createTechStackChart() {
       const ctx = this.$refs.techStackChart.getContext('2d')
@@ -1725,6 +1901,219 @@ export default {
 .save-btn:hover {
   background: #CB385C;
   color: #FCFCFC;
+}
+
+.pdf-export-btn {
+  background: #FCFCFC;
+  border: 1px solid #4A90E2;
+  border-radius: 30px;
+  padding: 5px 17px;
+  font-size: 14px;
+  color: #4A90E2;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 113px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin-right: 10px;
+}
+
+.pdf-export-btn:hover {
+  background: #4A90E2;
+  color: #FCFCFC;
+}
+
+/* PDF Export Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.pdf-export-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.close-btn:hover {
+  background: #f0f0f0;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-description {
+  margin: 0 0 20px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.search-section {
+  margin-bottom: 16px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Pretendard', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  border-color: #4A90E2;
+}
+
+.select-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Pretendard', sans-serif;
+}
+
+.action-btn:hover {
+  background: #e8e8e8;
+  border-color: #bbb;
+}
+
+.repo-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.repo-checkbox-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.repo-checkbox-item:last-child {
+  border-bottom: none;
+}
+
+.repo-checkbox-item label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: #262626;
+}
+
+.repo-checkbox-item input[type="checkbox"] {
+  margin-right: 10px;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.cancel-btn, .confirm-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Pretendard', sans-serif;
+  border: none;
+}
+
+.cancel-btn {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.cancel-btn:hover {
+  background: #e8e8e8;
+}
+
+.confirm-btn {
+  background: #4A90E2;
+  color: white;
+}
+
+.confirm-btn:hover {
+  background: #3a7bc8;
+}
+
+.confirm-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }
 
 /* Main Content */
