@@ -75,7 +75,7 @@ def read_post(request):
         if request.method != 'GET':
             return JsonResponse({"status": "Error", "message": "Only GET method is allowed"}, status=405)
 
-        post_id = request.GET.get('post_id') or request.GET.get('id')
+        post_id = request.GET.get('post_id')
         if not post_id:
             return JsonResponse({"status": "Error", "message": "post_id is required"}, status=400)
 
