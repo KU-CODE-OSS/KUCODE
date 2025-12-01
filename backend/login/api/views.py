@@ -24,7 +24,7 @@ from rest_framework.decorators import api_view
 from rest_framework.permissions import BasePermission
 
 import requests
-
+import json
 
 
 temp_student_id = ''
@@ -192,3 +192,54 @@ def signup(request):
             "status": "Error", 
             "message": f"회원가입 중 오류가 발생했습니다: {str(e)}"
         }, status=500)
+
+@csrf_exempt
+def signin(request):
+    """
+    로그인 API (사실상 admin check API)
+    POST body: { "uuid": str }
+    - uuid: 사용자의 firebase UUID
+    - Login member 테이블에 admin으로 등록된 사용자인지 확인
+    - admin 권한이 있으면 True, 없으면 False 반환
+    """
+    if request.method != 'POST':
+        return JsonResponse({"status": "Error", "message": "Only POST method is allowed"}, status=405)
+    try:
+        try:
+            body = json.loads(request.body.decode('utf-8') or '{}')
+        except Exception:
+            return JsonResponse({"status": "Error", "message": "json load error"}, status=400)
+
+        uuid = body.get('uuid')
+
+        if not uuid:
+            return JsonResponse({"status": "Error", "message": "uuid is required"}, status=400)
+            
+        member = Member.objects.get(id=uuid)
+        
+        # Role check similar to switch-case
+        if member.role == 'ADMIN':
+            return JsonResponse({
+                "status": "OK", 
+                "role": "ADMIN",
+                "message": "Authenticated as ADMIN",
+                "data": {"id": member.id, "name": member.name}
+            }, status=200)
+        elif member.role == 'STUDENT':
+            return JsonResponse({
+                "status": "OK", 
+                "role": "STUDENT",
+                "message": "Authenticated as STUDENT",
+                "data": {"id": member.id, "name": member.name}
+            }, status=200)
+        elif member.role == 'PROFESSOR':
+            return JsonResponse({
+                "status": "OK", 
+                "role": "PROFESSOR",
+                "message": "Authenticated as PROFESSOR",
+                "data": {"id": member.id, "name": member.name}
+            }, status=200)
+        else:
+            return JsonResponse({"status": "Error", "message": f"Permission denied: Invalid role '{member.role}'"}, status=403)
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
