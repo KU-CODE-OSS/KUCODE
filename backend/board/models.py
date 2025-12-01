@@ -16,13 +16,16 @@ class Post(models.Model):
     # id는 Django가 자동으로 생성 (BigAutoField)
     # author를 Member 모델과 연결 (작성자)
     # null=True를 설정하여 익명(비로그인) 또는 회원 탈퇴 시에도 데이터가 남도록 함
-    author = models.ForeignKey(
-        Member,
-        on_delete=models.SET_NULL,  # 작성자가 삭제되면 NULL로 설정
-        related_name='posts',
-        null=True,
-        blank=True  # 폼 검증 시 필수 입력 아님
-    )
+
+    # author = models.ForeignKey(
+    #     Member,
+    #     on_delete=models.SET_NULL,  # 작성자가 삭제되면 NULL로 설정
+    #     related_name='posts',
+    #     null=True,
+    #     blank=True  # 폼 검증 시 필수 입력 아님
+    # )
+
+    author = models.CharField(max_length=100, null=False, default='Anonymous')
     title = models.CharField(max_length=255, null=False)
     # 서식이 포함된 글을 저장하기 위해 TextField 사용 (HTML, 마크다운 등 저장 가능)
     content = models.TextField(null=False)

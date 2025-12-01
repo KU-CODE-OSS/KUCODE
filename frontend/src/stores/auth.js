@@ -50,8 +50,8 @@ export const useAuthStore = defineStore('auth', () => {
         const roleResponse = await postLoginRole(firebaseUser.uid)
         if (roleResponse.data) {
           role.value = roleResponse.data.role
-          memberId.value = roleResponse.data.member_id
-          memberName.value = roleResponse.data.member_name
+          memberId.value = roleResponse.data.data.id
+          memberName.value = roleResponse.data.data.name
 
           // Cache role data in sessionStorage
           sessionStorage.setItem('userRole', role.value)
@@ -122,8 +122,8 @@ export const useAuthStore = defineStore('auth', () => {
               const roleResponse = await postLoginRole(firebaseUser.uid)
               if (roleResponse.data) {
                 role.value = roleResponse.data.role
-                memberId.value = roleResponse.data.member_id
-                memberName.value = roleResponse.data.member_name
+                memberId.value = roleResponse.data.data.id
+                memberName.value = roleResponse.data.data.name
 
                 // Cache role data in sessionStorage
                 sessionStorage.setItem('userRole', role.value)

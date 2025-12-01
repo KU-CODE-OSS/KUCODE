@@ -378,10 +378,6 @@ export default {
       }
     },
     async toggleLike(post) {
-      if (!this.authStore.memberId) {
-        alert('로그인이 필요합니다.')
-        return
-      }
 
       try {
         // Optimistic UI update
