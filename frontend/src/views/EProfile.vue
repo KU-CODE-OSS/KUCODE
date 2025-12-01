@@ -893,6 +893,11 @@ export default {
     },
     async exportToPdf() {
       this.pdfExporting = true
+
+      // Close the modal first so it doesn't appear in the PDF
+      const modalWasOpen = this.showPdfExportModal
+      this.showPdfExportModal = false
+
       try {
         // TODO: PLACEHOLDER_API_CALL('/repo/export_profile_pdf')
         // Expected payload: { uuid: this.student_uuid, repo_ids: this.selectedReposForPdf }
@@ -900,17 +905,54 @@ export default {
         // For now, use client-side PDF generation (html2canvas + jsPDF)
         // This is temporary until backend PDF rendering is implemented
 
-        // Create a hidden DOM snapshot with profile summary and selected repos
-        const pdfContent = this.createPdfContent()
-        document.body.appendChild(pdfContent)
+        // Wait for modal to close and DOM to update
+        await new Promise(resolve => setTimeout(resolve, 200))
 
-        // Generate PDF
-        const canvas = await html2canvas(pdfContent, {
+        // Get the main content area (everything except modals and buttons)
+        const mainContent = document.querySelector('.main-content')
+        if (!mainContent) {
+          throw new Error('Main content not found')
+        }
+
+        // Hide buttons and edit controls temporarily
+        const saveSection = document.querySelector('.save-section')
+        const originalDisplay = saveSection ? saveSection.style.display : ''
+        if (saveSection) saveSection.style.display = 'none'
+
+        // Filter repos based on selection if any are selected
+        const originalRepos = [...this.repositoriesData]
+        if (this.selectedReposForPdf.length > 0) {
+          this.repositoriesData = this.repositoriesData.filter(repo =>
+            this.selectedReposForPdf.includes(repo.id)
+          )
+          // Wait for Vue to re-render
+          await this.$nextTick()
+          await new Promise(resolve => setTimeout(resolve, 300))
+        }
+
+        // Capture the main content with html2canvas
+        const canvas = await html2canvas(mainContent, {
           scale: 2,
           useCORS: true,
-          logging: false
+          logging: false,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          width: mainContent.scrollWidth,
+          height: mainContent.scrollHeight,
+          windowWidth: mainContent.scrollWidth,
+          windowHeight: mainContent.scrollHeight
         })
 
+        // Restore repos if filtered
+        if (this.selectedReposForPdf.length > 0) {
+          this.repositoriesData = originalRepos
+          await this.$nextTick()
+        }
+
+        // Restore button visibility
+        if (saveSection) saveSection.style.display = originalDisplay
+
+        // Create PDF
         const imgData = canvas.toDataURL('image/png')
         const pdf = new jsPDF({
           orientation: 'portrait',
@@ -924,9 +966,11 @@ export default {
         let heightLeft = imgHeight
         let position = 0
 
+        // Add first page
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
         heightLeft -= pageHeight
 
+        // Add additional pages if content is longer than one page
         while (heightLeft >= 0) {
           position = heightLeft - imgHeight
           pdf.addPage()
@@ -935,52 +979,21 @@ export default {
         }
 
         // Download PDF
-        pdf.save(`${this.user.name}_EProfile.pdf`)
-
-        // Clean up
-        document.body.removeChild(pdfContent)
+        const fileName = this.selectedReposForPdf.length > 0
+          ? `${this.user.name}_EProfile_선택된프로젝트.pdf`
+          : `${this.user.name}_EProfile.pdf`
+        pdf.save(fileName)
 
         alert('PDF 내보내기 완료!')
-        this.closePdfExportModal()
       } catch (error) {
         console.error('PDF export error:', error)
         alert('PDF 내보내기에 실패했습니다. 다시 시도해주세요.')
       } finally {
         this.pdfExporting = false
+        if (modalWasOpen) {
+          this.showPdfExportModal = true
+        }
       }
-    },
-    createPdfContent() {
-      // Create a hidden div with profile summary and selected repos
-      const container = document.createElement('div')
-      container.style.cssText = 'position: absolute; left: -9999px; width: 800px; background: white; padding: 40px;'
-
-      // Add profile summary
-      const summary = `
-        <div style="margin-bottom: 30px;">
-          <h1 style="font-size: 24px; margin-bottom: 20px;">${this.user.name} - E-Profile</h1>
-          <p><strong>대학:</strong> ${this.user.university} ${this.user.department}</p>
-          <p><strong>이메일:</strong> ${this.user.email}</p>
-          <p><strong>GitHub:</strong> ${this.user.github_id || 'N/A'}</p>
-          <p><strong>소개:</strong> ${this.user.introduction || 'N/A'}</p>
-        </div>
-      `
-
-      // Add selected repos
-      const selectedRepos = this.repositoriesData.filter(repo =>
-        this.selectedReposForPdf.includes(repo.id)
-      )
-
-      const reposHtml = selectedRepos.map(repo => `
-        <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px;">
-          <h3 style="margin: 0 0 10px 0;">${repo.name}</h3>
-          <p><strong>설명:</strong> ${repo.project_introduction || 'N/A'}</p>
-          <p><strong>커밋:</strong> ${this.getRepoCommits(repo)} | <strong>PR:</strong> ${this.getRepoPRs(repo)} | <strong>이슈:</strong> ${this.getRepoIssues(repo)}</p>
-        </div>
-      `).join('')
-
-      container.innerHTML = summary + '<h2 style="font-size: 20px; margin: 30px 0 20px 0;">프로젝트 목록</h2>' + reposHtml
-
-      return container
     },
     createTechStackChart() {
       const ctx = this.$refs.techStackChart.getContext('2d')
