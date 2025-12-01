@@ -471,6 +471,7 @@
           <div class="select-actions">
             <button @click="selectAllRepos" class="action-btn">전체 선택</button>
             <button @click="clearAllRepos" class="action-btn">선택 해제</button>
+            <span class="selection-count">선택됨: {{ selectedReposForPdf.length }}개</span>
           </div>
 
           <div class="repo-list">
@@ -930,10 +931,12 @@ export default {
 
         // Filter repos based on selection if any are selected
         const originalRepos = [...this.repositoriesData]
+        const originalPage = this.currentPage
         if (savedSelectedRepos.length > 0) {
           this.repositoriesData = this.repositoriesData.filter(repo =>
             savedSelectedRepos.includes(repo.id)
           )
+          this.currentPage = 1 // Reset to first page to show all selected repos
           // Wait for Vue to re-render
           await this.$nextTick()
           await new Promise(resolve => setTimeout(resolve, 500))
@@ -952,8 +955,9 @@ export default {
           windowHeight: mainContent.scrollHeight + window.scrollY
         })
 
-        // Restore repos if filtered
+        // Restore repos and page if filtered
         this.repositoriesData = originalRepos
+        this.currentPage = originalPage
         await this.$nextTick()
 
         // Restore button visibility
@@ -962,50 +966,52 @@ export default {
         // Restore scroll position
         window.scrollTo(0, originalScrollTop)
 
-        // Create PDF with proper page handling
+        // Create PDF with proper A4 fitting
         const pdf = new jsPDF({
           orientation: 'portrait',
-          unit: 'px',
+          unit: 'mm',
           format: 'a4',
           compress: true
         })
 
-        const pdfWidth = 595 // A4 width in pixels at 72 DPI
-        const pdfHeight = 842 // A4 height in pixels at 72 DPI
-        const imgWidth = pdfWidth
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width
+        const pdfWidth = 210 // A4 width in mm
+        const pdfHeight = 297 // A4 height in mm
+        const margin = 10 // 10mm margin on each side
+        const contentWidth = pdfWidth - (margin * 2)
 
-        let position = 0
+        // Calculate scaling to fit content width
+        const imgWidth = contentWidth
+        const imgHeight = (canvas.height * contentWidth) / canvas.width
+
+        let yPosition = 0
 
         // Add pages by slicing the canvas at page boundaries
-        while (position < imgHeight) {
-          const pageCanvas = document.createElement('canvas')
-          const pageHeight = Math.min(pdfHeight, imgHeight - position)
+        while (yPosition < imgHeight) {
+          if (yPosition > 0) {
+            pdf.addPage()
+          }
 
+          const remainingHeight = imgHeight - yPosition
+          const pageContentHeight = Math.min(pdfHeight - (margin * 2), remainingHeight)
+
+          // Calculate source rectangle in canvas
+          const srcY = (yPosition / imgHeight) * canvas.height
+          const srcHeight = (pageContentHeight / imgHeight) * canvas.height
+
+          // Create a temporary canvas for this page
+          const pageCanvas = document.createElement('canvas')
           pageCanvas.width = canvas.width
-          pageCanvas.height = (pageHeight * canvas.width) / pdfWidth
+          pageCanvas.height = srcHeight
 
           const ctx = pageCanvas.getContext('2d')
           ctx.fillStyle = '#ffffff'
           ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height)
-
-          // Calculate source Y position in original canvas
-          const srcY = (position * canvas.width) / pdfWidth
-
-          ctx.drawImage(
-            canvas,
-            0, srcY, canvas.width, pageCanvas.height,
-            0, 0, pageCanvas.width, pageCanvas.height
-          )
+          ctx.drawImage(canvas, 0, srcY, canvas.width, srcHeight, 0, 0, canvas.width, srcHeight)
 
           const pageImgData = pageCanvas.toDataURL('image/png', 1.0)
+          pdf.addImage(pageImgData, 'PNG', margin, margin, imgWidth, pageContentHeight)
 
-          if (position > 0) {
-            pdf.addPage()
-          }
-
-          pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, pageHeight)
-          position += pdfHeight
+          yPosition += pageContentHeight
         }
 
         // Download PDF
@@ -2067,6 +2073,7 @@ export default {
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
+  align-items: center;
 }
 
 .action-btn {
@@ -2085,6 +2092,16 @@ export default {
 .action-btn:hover {
   background: #e8e8e8;
   border-color: #bbb;
+}
+
+.selection-count {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: #CB385C;
+  padding: 4px 12px;
+  background: #ffe8ee;
+  border-radius: 12px;
 }
 
 .repo-list {
@@ -2117,11 +2134,8 @@ export default {
   cursor: pointer;
   width: 18px;
   height: 18px;
-  accent-color: #1a73e8;
-}
-
-.repo-checkbox-item input[type="checkbox"]:checked {
-  background-color: #1a73e8;
+  accent-color: #CB385C;
+  flex-shrink: 0;
 }
 
 .repo-checkbox-item:hover {
