@@ -107,14 +107,14 @@
                 <div class="table-cell col-likes">
                   <button
                     class="like-btn"
-                    :class="{ liked: post.isLiked }"
+                    :class="{ liked: post.is_liked }"
                     @click.stop="toggleLike(post)"
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <path
                         d="M8 14C8 14 2 10 2 5.5C2 3.5 3.5 2 5.5 2C6.5 2 7.5 2.5 8 3.5C8.5 2.5 9.5 2 10.5 2C12.5 2 14 3.5 14 5.5C14 10 8 14 8 14Z"
-                        :fill="post.isLiked ? '#CB385C' : 'none'"
-                        :stroke="post.isLiked ? '#CB385C' : '#616161'"
+                        :fill="post.is_liked ? '#CB385C' : 'none'"
+                        :stroke="post.is_liked ? '#CB385C' : '#616161'"
                         stroke-width="1.5"
                       />
                     </svg>
@@ -222,7 +222,7 @@ export default {
       this.error = null
 
       try {
-        const response = await getBoardPostsList(1, 100)
+        const response = await getBoardPostsList(1, 100, this.authStore.user.id)
         const posts = response.data.results || []
 
         // Separate posts by category
@@ -236,12 +236,12 @@ export default {
             author: post.author,
             views: 0,
             likeCount: post.like_count || 0,
-            isLiked: false, // TODO: Get from backend based on current user
+            is_liked: post.is_liked, // TODO: Get from backend based on current user
             category: 'events'
           }))
 
         this.learningPosts = posts
-          .filter(post => post.category === 'LEARNING_MATERIALS')
+          .filter(post => post.category === 'LEARNING_MATERIAL')
           .map((post, index) => ({
             id: post.id,
             number: index + 1,
@@ -249,7 +249,7 @@ export default {
             date: this.formatDate(post.created_at),
             author: post.author,
             likeCount: post.like_count || 0,
-            isLiked: false, // TODO: Get from backend based on current user
+            is_liked: post.is_liked, // TODO: Get from backend based on current user
             views: 0,
             category: 'learning'
           }))
@@ -381,16 +381,16 @@ export default {
 
       try {
         // Optimistic UI update
-        const wasLiked = post.isLiked
-        post.isLiked = !post.isLiked
-        post.likeCount += post.isLiked ? 1 : -1
+        const wasLiked = post.is_liked
+        post.is_liked = !post.is_liked
+        post.likeCount += post.is_liked ? 1 : -1
 
         // Call API
         await togglePostLike(post.id, this.authStore.memberId)
       } catch (error) {
         // Revert on error
-        post.isLiked = !post.isLiked
-        post.likeCount += post.isLiked ? 1 : -1
+        post.is_liked = !post.is_liked
+        post.likeCount += post.is_liked ? 1 : -1
         console.error('Failed to toggle like:', error)
         alert('좋아요 처리에 실패했습니다.')
       }
@@ -698,6 +698,8 @@ export default {
 
 .table-wrapper {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .table-header {
@@ -705,7 +707,9 @@ export default {
 }
 
 .table-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 80px 1fr 160px 120px 100px 90px;
+  width: 100%;
   align-items: center;
   padding: 14px 10px;
   gap: 16px;
@@ -750,40 +754,29 @@ export default {
 
 /* Event/Learning Table Columns */
 .col-number {
-  width: 79px;
-  flex-shrink: 0;
   text-align: left;
 }
 
 .col-title {
-  width: 419px;
-  flex-shrink: 0;
+  text-align: left;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
 }
 
 .col-date {
-  width: 200px;
-  flex-shrink: 0;
   text-align: left;
 }
 
 .col-author {
-  width: 92px;
-  flex-shrink: 0;
   text-align: left;
 }
 
 .col-likes {
-  width: 100px;
-  flex-shrink: 0;
   text-align: center;
 }
 
 .col-views {
-  width: 92px;
-  flex-shrink: 0;
   text-align: right;
 }
 
@@ -896,8 +889,14 @@ export default {
     padding: 71px 20px 40px;
   }
 
-  .col-title {
-    width: 300px;
+  /* Hide date and author columns on tablets */
+  .table-row {
+    grid-template-columns: 80px 1fr 100px 90px;
+  }
+
+  .col-date,
+  .col-author {
+    display: none;
   }
 }
 
@@ -933,9 +932,27 @@ export default {
     width: 100%;
   }
 
+  /* Stack layout for mobile - show only number, title, likes, views */
+  .table-row {
+    grid-template-columns: 60px 1fr 80px 70px;
+    gap: 8px;
+    padding: 14px 8px;
+  }
+
   .col-date,
   .col-author {
     display: none;
+  }
+
+  .col-number,
+  .col-title,
+  .col-likes,
+  .col-views {
+    font-size: 13px;
+  }
+
+  .header-row .table-cell {
+    font-size: 14px;
   }
 }
 </style>

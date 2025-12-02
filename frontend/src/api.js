@@ -113,9 +113,9 @@ export function updateRepoIntroduction(uuid, repo_id, project_introduction) {
 }
 
 // Board Posts APIs
-export function getBoardPostsList(page = 1, size = 10) {
+export function getBoardPostsList(page = 1, size = 10, uuid) {
   return ajax(ip_for_develop + '/board/read_posts_list', 'get', {
-    params: { page, count: size }
+    params: { page, count: size, uuid }
   })
 }
 

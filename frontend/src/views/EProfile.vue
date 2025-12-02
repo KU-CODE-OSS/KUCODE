@@ -247,7 +247,7 @@
         <!-- Activity Time Pattern -->
           <div class="time-pattern-card">
             <div class="section-header">
-              <h3 class="chart-title-text">활동 시간대 ()</h3>
+              <h3 class="chart-title-text">활동 시간대</h3>
             </div>
           
           <!-- 히트맵 컴포넌트 -->
