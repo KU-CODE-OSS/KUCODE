@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_date
 from django.conf import settings
+from django.db.models import Count
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -51,7 +52,8 @@ def read_posts_list(request):
 
         rows = list(
             Post.objects.all()
-            .values('id', 'title', 'author', 'category', 'is_internal', 'year', 'semester', 'created_at')[offset:offset+count]
+            .annotate(like_count=Count('likes'))
+            .values('id', 'title', 'author', 'category', 'is_internal', 'year', 'semester', 'created_at', 'like_count')[offset:offset+count]
         )
 
         # created_at 직렬화 보정
