@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_date
 from django.conf import settings
-from django.db.models import Count
+from django.db.models import Count, Case, When, Value, BooleanField
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -37,6 +37,9 @@ def read_posts_list(request):
 
         page_str = request.GET.get('page', '1')
         count_str = request.GET.get('count') or request.GET.get('size') or '10'
+        uuid = request.GET.get('uuid')
+        if not uuid:
+            return JsonResponse({"status": "Error", "message": "uuid is required"}, status=400)
 
         try:
             page = int(page_str)
@@ -52,8 +55,20 @@ def read_posts_list(request):
 
         rows = list(
             Post.objects.all()
-            .annotate(like_count=Count('likes'))
-            .values('id', 'title', 'author', 'category', 'is_internal', 'year', 'semester', 'created_at', 'like_count')[offset:offset+count]
+            .annotate(
+                like_count=Count('likes'),
+                is_liked=Case(
+                    When(likes__id=uuid, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                ),
+                is_author=Case(
+                    When(author=uuid, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                )
+            )
+            .values('id', 'title', 'author', 'category', 'is_internal', 'year', 'semester', 'created_at', 'like_count', 'is_liked', 'is_author')[offset:offset+count]
         )
 
         # created_at 직렬화 보정
@@ -98,6 +113,8 @@ def read_post(request):
                 "display_type": file.display_type
             })
 
+        uuid = request.GET.get('uuid')
+        
         data = {
             "id": post.id,
             "author": post.author,
@@ -111,7 +128,9 @@ def read_post(request):
             "created_at": post.created_at.isoformat() if post.created_at else None,
             "updated_at": post.updated_at.isoformat() if post.updated_at else None,
             "files": files_data,
-            "like_count": post.like_count  # like_count 추가
+            "like_count": post.like_count,  # like_count 추가
+            "is_author": post.is_author(uuid) if uuid else False,
+            "is_liked": post.is_liked(uuid) if uuid else False
         }
 
         return JsonResponse({

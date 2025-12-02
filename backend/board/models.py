@@ -61,6 +61,14 @@ class Post(models.Model):
     def like_count(self):
         return self.likes.count()
 
+    def is_author(self, uuid):
+        """해당 uuid가 게시글 작성자인지 확인"""
+        return str(self.author) == str(uuid)
+
+    def is_liked(self, member_id):
+        """해당 member_id가 이 글에 좋아요를 눌렀는지 확인"""
+        return self.likes.filter(id=member_id).exists()
+
 
 class FileDisplayType(models.TextChoices):
     """파일 표시 방식"""
