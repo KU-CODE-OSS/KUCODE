@@ -70,7 +70,11 @@
             </thead>
             <tbody>
                 <tr v-for="(item, index) in paginatedFilteredSummarizedStudents" :key="index" class="table-row">
-                <td :title="item.name">{{item.name}}</td>
+                <td :title="item.name">
+                  <button class="student-name-link" @click="openEProfile(item.id)">
+                    {{item.name}}
+                  </button>
+                </td>
                 <td :title="item.department">{{item.department}}</td>
                 <td :title="item.id">{{item.id}}</td>
                 <td :title="item.enrollment">{{item.enrollment}}</td>
@@ -549,6 +553,14 @@ export default {
       this.toSummarized(this.posts);
       this.slicingforsummary();
     },
+    openEProfile(data){
+      this.$router.push(
+        {
+          name: 'EProfile',
+          state: {student_num: data}
+        }
+      )
+    }
   },
   mounted() {
     this.posts = this.postss;

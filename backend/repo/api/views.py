@@ -1316,6 +1316,7 @@ def repo_account_read_db(request):
             body_unicode = request.body.decode('utf-8')
             body_data = json.loads(body_unicode)
             uuid = body_data.get('uuid')
+            student_num = body_data.get('student_num')
         except (json.JSONDecodeError, UnicodeDecodeError):
             return JsonResponse({"status": "Error", "message": "Invalid JSON format or character encoding"}, status=400)
         
@@ -1323,10 +1324,15 @@ def repo_account_read_db(request):
             return JsonResponse({"status": "Error", "message": "uuid is required in the request body"}, status=400)
 
         try:
-            login_student = LoginStudent.objects.get(member_id=uuid)
-            student_id = login_student.id
-            student = Student.objects.get(id=student_id)
-            github_id = student.github_id
+            if (uuid == 'empty'):
+                student = Student.objects.get(id=student_num)
+                github_id = student.github_id
+            
+            elif (uuid != 'empty'):
+                login_student = LoginStudent.objects.get(member_id=uuid)
+                student_id = login_student.id
+                student = Student.objects.get(id=student_id)
+                github_id = student.github_id
             
             # 1) 모든 레포지토리를 한 번에 로드 (owner + contributor)
             owner_repo_list = Repository.objects.filter(owner_github_id=github_id).prefetch_related(
