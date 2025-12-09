@@ -77,9 +77,13 @@ export function getRepoInfo() {
   return ajax('/repo/repo_read_db', 'get');
 }
 
-// 히트맵 API
-export function getEProfileHeatmap(student_uuid) {
-  const data = { uuid: student_uuid };
+// 히트맵 API 함수 (POST 방식)
+export function getEProfileHeatmap(student_uuid, student_num) {
+  // 전송할 데이터를 JSON 객체로 만듭니다.
+  const data = {
+    uuid: student_uuid,
+    student_num: student_num
+  };
 
   return ajax('/repo/repo_account_read_db', 'post', {
     data,

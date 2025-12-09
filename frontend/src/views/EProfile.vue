@@ -814,9 +814,7 @@ export default {
     this.techStackDropdowns.forEach(dropdown => {
       dropdown.options = this.allTechOptions
     })
-    
-    await this.loadActivityChart()
-    await this.loadHeatmapData()
+    await this.loadHeatmapData(this.$router.options.history.state.student_num)
 
     this.createTechStackChart()
     setTimeout(() => {
@@ -839,6 +837,9 @@ export default {
     
     document.addEventListener('click', this.closeAllDropdowns)
   },
+  beforeRouteUpdate() {
+    this.handleStudentChange().finally(() => next())
+  },
   beforeUnmount() {
     if (this.techStackChart) {
       this.techStackChart.destroy()
@@ -853,6 +854,22 @@ export default {
     document.removeEventListener('click', this.closeAllDropdowns)
   },
   methods: {
+    async handleStudentChang() {
+      const { student_num } = this.$router.options.history.state.student_num || {}
+      const target = student_num || this.student_uuid
+      if (!target) return
+
+      this.resetCharts()
+      await this.loadHeatmapData(target)
+    },
+    resetCharts() {
+      this.techStackChart?.destroy()
+      this.techStackChart = null
+      this.activityChart?.destroy()
+      this.activityChart = null
+      this.teamSizeChart?.destroy()
+      this.teamSizeChart = null
+    },
     // 편집 모드 토글
     toggleEditMode() {
       this.isEditingProfile = true
@@ -1414,9 +1431,17 @@ export default {
       }
     },
 
-    async loadHeatmapData() {
+    async loadHeatmapData(student_num) {
       try {
-        const response = await getEProfileHeatmap(this.student_uuid)
+        let response
+        if (student_num != undefined) {
+          response = await getEProfileHeatmap('empty', student_num)
+        }
+
+        else {
+          response = await getEProfileHeatmap(this.student_uuid, 'empty')
+        }
+
         this.heatmapData = response.data.heatmap
         console.log('히트맵 데이터 로드 완료:', this.heatmapData)
 
