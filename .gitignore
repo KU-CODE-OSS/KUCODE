@@ -182,3 +182,6 @@ frontend/Dockerfile
 frontend/.dockerignore
 frontend/docekrRun.txt
 .DS_Store
+
+# TLS certificate
+certs
