@@ -228,6 +228,7 @@ export default {
         // Separate posts by category
         this.eventPosts = posts
           .filter(post => post.category === 'EVENT_INFO')
+          .sort((a, b) => a.id - b.id)
           .map((post, index) => ({
             id: post.id,
             number: index + 1,
@@ -242,6 +243,7 @@ export default {
 
         this.learningPosts = posts
           .filter(post => post.category === 'LEARNING_MATERIAL')
+          .sort((a, b) => a.id - b.id)
           .map((post, index) => ({
             id: post.id,
             number: index + 1,
