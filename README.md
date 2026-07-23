@@ -38,19 +38,26 @@ Vetur
 
 ## Setup and Usage
 
-### Setting up the .env file
+### Setting up environment files
 
-To get started, you need to create a .env file in the root directory of the project. Then, you must populate it following this format:
+The project uses two kinds of env files:
+
+- `.env`: shared values such as public IP, API keys, OAuth keys, Firebase keys, and sync URLs.
+- `.envs/<environment>/*.env`: service/runtime values such as Django settings, database settings, and pgAdmin login.
 
 ```bash
 # .env
 PUBLIC_IP=  # Place to write the IP address (exclude 'http://')
+FASTAPI_PORT=5000
+VITE_API_BASE=/api
 VUE_APP_API_URL=http://${PUBLIC_IP}:8000/api
 CORS_ALLOWED_ORIGIN=http://${PUBLIC_IP}
+
 OAUTH_CLIENT_ID=
 OAUTH_CLIENT_SECRET=
 KOREAUNIV_OPENAPI_CLIENT_ID=
 KOREAUNIV_OPENAPI_CLIENT_SECRET=
+KOREAUNIV_OPENAPI_TOKEN=
 
 STUDENT_SYNC_URL=
 REPO_SYNC_URL=
@@ -63,7 +70,24 @@ COURSE_{NAME}_SYNC=
 
 In this setup, if you are running the environment locally, you can use localhost or 127.0.0.1 as the PUBLIC_IP. However, in a cloud environment, you should specify the public IP address.
 
-For an example, refer to the .env_example file provided in the project.
+For examples, refer to `.env_example` and the `.env.sample` files under `.envs/`.
+
+Current environment policy:
+
+- Keep shared API keys/secrets in root `.env` for now.
+- Keep service-specific values in `.envs/.local`, `.envs/.staging`, and `.envs/.production`.
+- Local, staging, and production may share DB credentials and `SECRET_KEY` for now.
+- Docker Compose project names and Docker volumes separate the actual containers/data.
+- Commit only `.env_example` and `.env.sample` files. Do not commit real `.env` files.
+
+Before running staging or production for the first time, create real files from the samples:
+
+```bash
+cp .envs/.staging/django.env.sample .envs/.staging/django.env
+cp .envs/.staging/postgres.env.sample .envs/.staging/postgres.env
+cp .envs/.production/django.env.sample .envs/.production/django.env
+cp .envs/.production/postgres.env.sample .envs/.production/postgres.env
+```
 
 ### Running Locally
 
@@ -73,20 +97,54 @@ To run the project locally for development, you can use the provided `local.yml`
 make run
 ```
 
+Equivalent explicit command:
+
+```bash
+docker compose -p kucode-local -f local.yml up --build
+```
+
 | Container  | Service | Host Port | Docker Port |
 | ---------- | ------- | --------- | ----------- |
-| dev-django | django  | 8000      | 8000        |
-| dev-frontend  | vuejs   | 80      | 5173        |
-| dev-db     | db      |       | 5432        |
-| dev-pg-admin     | pg-admin      | 9000      | 80        |
+| backend    | django  | 8000      | 8000        |
+| frontend   | vuejs   | 5173      | 5173        |
+| db         | db      |           | 5432        |
+| pgadmin    | pgadmin | 9000      | 80          |
+| nginx      | nginx   | 8080/8443 | 80/443      |
+
+NOTE: `nginx` container shows ports for `http/https` entrypoints respectively.
+
+### Running in Staging
+
+Staging is production-like and should usually be deployed from the `dev_all` branch.
+
+```bash
+make staging
+```
+
+Equivalent explicit command:
+
+```bash
+docker compose -p kucode-staging -f staging.yml up --build
+```
+
+| Container | Service | Host Port | Docker Port |
+| --------- | ------- | --------- | ----------- |
+| backend   | django  |           | 8000        |
+| db        | db      |           | 5432        |
+| nginx     | nginx   | 8081      | 80          |
 
 ### Running in Production
 
-To run the project in a production environment, you can use the provided `production.yml` Docker Compose file along with the `Makefile`.
-Before running in production, make sure to add the necessary environment settings for each service in the .envs/.production directory. Sample environment files for each service are provided in this directory and need to be configured accordingly.
+To run the project in a production environment, use the provided `production.yml` Docker Compose file along with the `Makefile`.
 
 ```bash
-make run env=production
+make prod
+```
+
+Equivalent explicit command:
+
+```bash
+docker compose -p kucode-prod -f production.yml up --build
 ```
 
 | Container  | Service | Host Port | Docker Port |
@@ -95,7 +153,14 @@ make run env=production
 | db         | db      |           | 5432        |
 | nginx      | nginx   | 80        | 80          |
 
-For a quick check of what it looks like in production you can copy the files in .envs/.local to .envs/.production
+Important: always run Compose with the correct project name (`kucode-local`, `kucode-staging`, or `kucode-prod`). This prevents containers, networks, and volumes from colliding on the same machine.
+
+Recommended branch flow:
+
+```text
+feature branches -> dev_all -> main
+local.yml        -> staging.yml -> production.yml
+```
 
 ### Useful Makefile Commands
 
@@ -103,6 +168,8 @@ For a quick check of what it looks like in production you can copy the files in 
 - `make makemigrations`: Generate Django migration files.
 - `make test`: Run Django tests.
 - `make flake`: Run Flake8 for linting.
+- `make staging`: Run the production-like staging stack.
+- `make prod`: Run the production stack.
 
 ### Health Check Endpoint
 
@@ -146,6 +213,26 @@ In local terminal, outside the docker container, execute command below to copy t
 ```
 sudo docker cp dev_db:/home/backup_db_[날짜]_[시간].sql /home/kucode/backup/DB/
 ```
+
+## DB import from backup
+To import a backup SQL file into an environment, copy the SQL file into that environment's DB container, reset the new DB schema, then run `psql`.
+
+Example for local:
+```
+docker compose -p kucode-local -f local.yml cp /home/kucode/backup/DB/backup_db_[yyyymmdd]_[hhmm].sql db:/tmp/backup.sql
+docker compose -p kucode-local -f local.yml exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"'
+docker compose -p kucode-local -f local.yml exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /tmp/backup.sql'
+docker compose -p kucode-local -f local.yml restart backend
+```
+
+For staging or production, replace the project name and compose file:
+```
+kucode-local    local.yml
+kucode-staging  staging.yml
+kucode-prod     production.yml
+```
+
+Do not use `down -v` or remove Docker volumes unless you intentionally want to delete database data.
 
 
 ## 기여 가이드라인

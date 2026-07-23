@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -8,32 +6,6 @@ services:
     command: bash -c "
           python manage.py migrate --no-input &&
           python manage.py runserver 0.0.0.0:8000"
-    environment:
-      - PUBLIC_IP=${PUBLIC_IP}
-      - VUE_APP_API_URL=${VUE_APP_API_URL}
-      - CORS_ALLOWED_ORIGIN=${CORS_ALLOWED_ORIGIN}
-      - FASTAPI_PORT=${FASTAPI_PORT}
-      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
-      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
-      - KOREAUNIV_OPENAPI_CLIENT_ID=${KOREAUNIV_OPENAPI_CLIENT_ID}
-      - KOREAUNIV_OPENAPI_CLIENT_SECRET=${KOREAUNIV_OPENAPI_CLIENT_SECRET}
-      - KOREAUNIV_OPENAPI_TOKEN=${KOREAUNIV_OPENAPI_TOKEN}
-      - STUDENT_SYNC_URL=${STUDENT_SYNC_URL}
-      - REPO_SYNC_URL=${REPO_SYNC_URL}
-      - REPO_COMMIT_SYNC_URL=${REPO_COMMIT_SYNC_URL}
-      - REPO_ISSUE_SYNC_URL=${REPO_ISSUE_SYNC_URL}
-      - REPO_PR_SYNC_URL=${REPO_PR_SYNC_URL}
-      - REPO_CONTRIBUTOR_SYNC_URL=${REPO_CONTRIBUTOR_SYNC_URL}
-      - COURSE_UPDATE_URL=${COURSE_UPDATE_URL}
-      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
-      - FIREBASE_PRIVATE_KEY_ID=${FIREBASE_PRIVATE_KEY_ID}
-      - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
-      - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
-      - FIREBASE_CLIENT_ID=${FIREBASE_CLIENT_ID}
-      - FIREBASE_CLIENT_CERT_URL=${FIREBASE_CLIENT_CERT_URL}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
-      - ENABLE_BOARD_DRIVE_UPLOAD=${ENABLE_BOARD_DRIVE_UPLOAD}
     volumes:
       - ./backend:/app
     ports:
@@ -42,8 +14,8 @@ services:
       db:
         condition: service_healthy
     env_file:
+      - ./.env
       - ./.envs/.local/django.env
-    container_name: dev_backend
 
   db:
     image: postgres:15-alpine
@@ -56,7 +28,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    container_name: dev_db
 
   pgadmin:
     image: dpage/pgadmin4
@@ -69,7 +40,6 @@ services:
       - dev_pgadmin:/var/lib/pgadmin
     ports:
       - "9000:80"
-    container_name: dev_pgadmin
 
   frontend:
     build:
@@ -89,7 +59,6 @@ services:
       - .env
     depends_on:
       - backend
-    container_name: dev_frontend
   
   nginx:
     image: nginx:alpine
@@ -101,9 +70,8 @@ services:
       - ./certs/dev.crt:/etc/nginx/certs/dev.crt:ro
       - ./certs/dev.key:/etc/nginx/certs/dev.key:ro
     ports:
-      - "80:80"
-      - "443:443"
-    container_name: dev_nginx
+      - "8080:80"
+      - "8443:443"
 
 
 volumes:

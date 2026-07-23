@@ -49,7 +49,7 @@ export function getHealthCheck() {
 
 // Course 관련
 export function getCourseInfo() {
-  return ajax(' ', 'get');
+  return ajax('/account/student_read_course_info', 'get');
 }
 
 export function getCourseReadMinMaxAvg() {
@@ -193,17 +193,17 @@ export function uploadFileToDrive(postId, file, displayType = 'DOWNLOAD') {
 }
 
 // Link Google Drive File
-// export function linkDriveFile(postId, driveUrl, fileName = null, displayType = 'DOWNLOAD') {
-//   return ajax('/board/link_drive_file', 'post', {
-//     data: {
-//       post_id: postId,
-//       drive_url: driveUrl,
-//       file_name: fileName,
-//       display_type: displayType
-//     },
-//     headers: { 'Content-Type': 'application/json' }
-//   });
-// }
+export function linkDriveFile(postId, driveUrl, fileName = null, displayType = 'DOWNLOAD') {
+  return ajax('/board/link_drive_file', 'post', {
+    data: {
+      post_id: postId,
+      drive_url: driveUrl,
+      file_name: fileName,
+      display_type: displayType
+    },
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
 
 // Login Role API
 export function postLoginRole(uuid) {

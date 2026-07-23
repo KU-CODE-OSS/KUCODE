@@ -1,25 +1,50 @@
 env ?= local
 
+PROJECT_local = kucode-local
+PROJECT_staging = kucode-staging
+PROJECT_production = kucode-prod
+
+PROJECT_NAME = $(or $(PROJECT_$(env)),kucode-$(env))
+COMPOSE = docker compose -p $(PROJECT_NAME) -f $(env).yml
+
 run:
-	docker compose -f ${env}.yml up --build
+	$(COMPOSE) up --build
+
+up:
+	$(COMPOSE) up -d --build
+
+down:
+	$(COMPOSE) down
+
+logs:
+	$(COMPOSE) logs -f
+
+dev:
+	$(MAKE) run env=local
+
+staging:
+	$(MAKE) run env=staging
+
+prod:
+	$(MAKE) run env=production
 
 migrate:
-	docker compose -f ${env}.yml exec backend sh -c "python manage.py migrate $(target)"
+	$(COMPOSE) exec backend sh -c "python manage.py migrate $(target)"
 
 show_migrate:
-	docker compose -f ${env}.yml exec backend sh -c "python manage.py showmigrations"
+	$(COMPOSE) exec backend sh -c "python manage.py showmigrations"
 
 start_app:
-	docker compose -f ${env}.yml exec backend sh -c "python manage.py startapp $(target)"
+	$(COMPOSE) exec backend sh -c "python manage.py startapp $(target)"
 
 makemigrations:
-	docker compose -f ${env}.yml exec backend sh -c "python manage.py makemigrations"
+	$(COMPOSE) exec backend sh -c "python manage.py makemigrations"
 
 test:
-	docker compose -f ${env}.yml exec backend sh -c "python manage.py test"
+	$(COMPOSE) exec backend sh -c "python manage.py test"
 
 flake:
-	docker compose -f ${env}.yml exec backend sh -c "flake8"
+	$(COMPOSE) exec backend sh -c "flake8"
 
 createsuperuser:
-	docker compose -f ${env}.yml exec backend sh -c "python manage.py createsuperuser"
+	$(COMPOSE) exec backend sh -c "python manage.py createsuperuser"
