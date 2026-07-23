@@ -149,7 +149,7 @@ docker compose -p kucode-prod -f production.yml up --build
 
 | Container  | Service | Host Port | Docker Port |
 | ---------- | ------- | --------- | ----------- |
-| django     | django  |           | 8000        |
+| backend    | django  |           | 8000        |
 | db         | db      |           | 5432        |
 | nginx      | nginx   | 80        | 80          |
 
