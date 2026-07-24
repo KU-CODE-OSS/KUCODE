@@ -39,7 +39,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -59,10 +59,6 @@ const handleLogout = async () => {
   }
 }
 
-// Initialize auth state on mount
-onMounted(async () => {
-  await authStore.checkSession()
-})
 </script>
 
 <style>
