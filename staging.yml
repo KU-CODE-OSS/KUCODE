@@ -37,12 +37,15 @@ services:
   nginx:
     build:
       context: .
-      dockerfile: ./compose/production/nginx/Dockerfile
+      dockerfile: ./compose/staging/nginx/Dockerfile
     ports:
       - "8081:80"
+      - "8444:443"
     volumes:
       - static_volume:/home/app/web/static
       - media_volume:/home/app/web/media
+      - ./certs/staging.crt:/etc/nginx/certs/staging.crt:ro
+      - ./certs/staging.key:/etc/nginx/certs/staging.key:ro
     environment:
       - NODE_ENV=production
     depends_on:

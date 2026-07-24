@@ -131,7 +131,7 @@ docker compose -p kucode-staging -f staging.yml up --build
 | --------- | ------- | --------- | ----------- |
 | backend   | django  |           | 8000        |
 | db        | db      |           | 5432        |
-| nginx     | nginx   | 8081      | 80          |
+| nginx     | nginx   | 8081/8444 | 80/443      |
 
 ### Running in Production
 
@@ -151,7 +151,7 @@ docker compose -p kucode-prod -f production.yml up --build
 | ---------- | ------- | --------- | ----------- |
 | backend    | django  |           | 8000        |
 | db         | db      |           | 5432        |
-| nginx      | nginx   | 80        | 80          |
+| nginx      | nginx   | 80/443    | 80/443      |
 
 Important: always run Compose with the correct project name (`kucode-local`, `kucode-staging`, or `kucode-prod`). This prevents containers, networks, and volumes from colliding on the same machine.
 
