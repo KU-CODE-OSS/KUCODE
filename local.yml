@@ -34,6 +34,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - ENABLE_BOARD_DRIVE_UPLOAD=${ENABLE_BOARD_DRIVE_UPLOAD}
+      - ENABLE_GITHUB_2026_METRICS=${ENABLE_GITHUB_2026_METRICS}
     volumes:
       - ./backend:/app
     ports:
