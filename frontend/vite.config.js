@@ -18,6 +18,6 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 5173, // (선택) 포트 변경 가능
+    port: 5173,
   }
 })

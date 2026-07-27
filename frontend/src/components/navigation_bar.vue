@@ -15,6 +15,9 @@
           <router-link to="/statistics" class="default-router">통계</router-link>
         </div>
         <div class="menu-item">
+          <router-link to="/ranking" class="default-router">랭킹</router-link>
+        </div>
+        <div class="menu-item">
           <router-link to="/board" class="default-router">게시판</router-link>
         </div>
         <div class="menu-item">
