@@ -17,6 +17,7 @@ const StatisticsDepartment = () => import('@/views/StatisticsComponents/Statisti
 const InformationCourse = () => import('@/views/InformationComponents/InformationCourse.vue')
 const InformationRepos   = () => import('@/views/InformationComponents/InformationRepos.vue')
 const InformationStudent = () => import('@/views/InformationComponents/InformationStudent.vue')
+const Ranking = () => import('@/views/Ranking.vue')
 import QnA from '../views/QnA.vue'
 
 const routes = [
@@ -139,6 +140,12 @@ const routes = [
     path: '/qna',
     name: 'QnA',
     component: QnA,
+    beforeEnter: authGuard,
+  },
+  {
+    path: '/ranking',
+    name: 'Ranking',
+    component: Ranking,
     beforeEnter: authGuard,
   },
   {
