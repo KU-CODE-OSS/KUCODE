@@ -41,20 +41,6 @@
             <h1>{{ selectedCourseTitle }}</h1>
             <p class="summary-meta">{{ summaryMeta }}</p>
           </div>
-          <div class="summary-stats">
-            <div class="summary-card">
-              <span>대상 학생</span>
-              <strong>{{ rankedStudents.length }}</strong>
-            </div>
-            <div class="summary-card">
-              <span>1위 점수</span>
-              <strong>{{ winnerScore }}</strong>
-            </div>
-            <div class="summary-card">
-              <span>시상 후보</span>
-              <strong>{{ awardCandidates.length }}</strong>
-            </div>
-          </div>
         </section>
 
         <section class="winner-strip" v-if="awardCandidates.length">
@@ -283,9 +269,6 @@ export default {
     awardCandidates() {
       return this.rankedStudents.slice(0, 3)
     },
-    winnerScore() {
-      return this.rankedStudents[0]?.score || 0
-    },
   },
   watch: {
     selectedYear() {
@@ -485,7 +468,6 @@ export default {
 .filter-header,
 .table-top,
 .ranking-summary,
-.summary-stats,
 .winner-strip {
   display: flex;
 }
@@ -563,30 +545,11 @@ export default {
   font-size: 15px;
 }
 
-.summary-stats {
-  gap: 12px;
-}
-
-.summary-card {
-  min-width: 104px;
-  padding: 14px 16px;
-  border-left: 3px solid #910024;
-  background: #fcfcfc;
-}
-
-.summary-card span,
 .winner-card span,
 .table-top p {
   display: block;
   color: #8a8a8a;
   font-size: 13px;
-}
-
-.summary-card strong {
-  display: block;
-  margin-top: 8px;
-  color: #262626;
-  font-size: 24px;
 }
 
 .winner-strip {
@@ -809,10 +772,6 @@ export default {
   .winner-strip {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .summary-stats {
-    flex-wrap: wrap;
   }
 
   .search-box input {
