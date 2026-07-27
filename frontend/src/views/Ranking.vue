@@ -9,24 +9,24 @@
 
         <label class="filter-field">
           <span>연도</span>
-          <select v-model="selectedYear" :disabled="years.length === 0">
-            <option v-if="years.length === 0" value="" disabled>연도 없음</option>
+          <select v-model="selectedYear" :disabled="loading || years.length === 0">
+            <option v-if="years.length === 0" value="" disabled>{{ loading ? '불러오는 중' : '연도 없음' }}</option>
             <option v-for="year in years" :key="year" :value="year">{{ year }}년</option>
           </select>
         </label>
 
         <label class="filter-field">
           <span>학기</span>
-          <select v-model="selectedSemester" :disabled="semesters.length === 0">
-            <option v-if="semesters.length === 0" value="" disabled>학기 없음</option>
+          <select v-model="selectedSemester" :disabled="loading || semesters.length === 0">
+            <option v-if="semesters.length === 0" value="" disabled>{{ loading ? '불러오는 중' : '학기 없음' }}</option>
             <option v-for="semester in semesters" :key="semester" :value="semester">{{ semester }}학기</option>
           </select>
         </label>
 
         <label class="filter-field">
           <span>과목</span>
-          <select v-model="selectedCourseKey" :disabled="filteredCourses.length === 0">
-            <option v-if="filteredCourses.length === 0" value="" disabled>과목 없음</option>
+          <select v-model="selectedCourseKey" :disabled="loading || filteredCourses.length === 0">
+            <option v-if="filteredCourses.length === 0" value="" disabled>{{ loading ? '불러오는 중' : '과목 없음' }}</option>
             <option v-for="course in filteredCourses" :key="course.key" :value="course.key">
               {{ course.course_id }} - {{ course.course_name }}
             </option>
@@ -80,7 +80,7 @@
               <p>동점자는 이름 순으로 정렬됩니다.</p>
             </div>
             <div class="search-box">
-              <input v-model="searchKeyword" type="search" placeholder="이름, 학번, Github 검색" />
+              <input v-model="searchKeyword" type="search" placeholder="이름, 학번, Github 검색" :disabled="loading || rows.length === 0" />
             </div>
           </div>
 
@@ -168,34 +168,34 @@
 </template>
 
 <script>
-const DEFAULT_SCORE_METRIC = 'commits'
+import { getRankingStudentCourseInfo } from '@/api.js'
 
-const rankingRows = []
+const DEFAULT_SCORE_METRIC = 'commits'
 
 export default {
   name: 'Ranking',
   data() {
-    const initialCourse = rankingRows[0]
-
     return {
-      selectedYear: initialCourse?.year || '',
-      selectedSemester: initialCourse?.semester || '',
-      selectedCourseKey: initialCourse ? this.toCourseKey(initialCourse) : '',
+      loading: false,
+      loadError: '',
+      selectedYear: '',
+      selectedSemester: '',
+      selectedCourseKey: '',
       searchKeyword: '',
       currentPage: 1,
       postsPerPage: 10,
-      rows: rankingRows,
+      rows: [],
     }
   },
   computed: {
     years() {
-      return [...new Set(this.rows.map((row) => row.year))].sort((a, b) => b - a)
+      return [...new Set(this.rows.map((row) => row.year))].sort((a, b) => Number(b) - Number(a))
     },
     semesters() {
       return [...new Set(this.rows
         .filter((row) => row.year === this.selectedYear)
         .map((row) => row.semester))]
-        .sort((a, b) => b - a)
+        .sort((a, b) => Number(b) - Number(a))
     },
     filteredCourses() {
       return this.rows
@@ -206,15 +206,21 @@ export default {
       return this.filteredCourses.find((course) => course.key === this.selectedCourseKey) || this.filteredCourses[0]
     },
     selectedCourseTitle() {
+      if (this.loading) return '랭킹 데이터를 불러오는 중입니다'
+      if (this.loadError) return '랭킹 데이터를 불러오지 못했습니다'
       if (!this.selectedCourse) return '랭킹 데이터가 없습니다'
       return `${this.selectedCourse.course_id} - ${this.selectedCourse.course_name}`
     },
     summaryMeta() {
+      if (this.loading) return '학생별 과목 활동 데이터를 읽고 있습니다.'
+      if (this.loadError) return this.loadError
       if (!this.selectedCourse) return '연도, 학기, 과목 데이터를 연결하면 랭킹이 표시됩니다.'
-      return `${this.selectedYear}년 ${this.selectedSemester}학기 · ${this.selectedCourse.prof} 교수`
+      return `${this.selectedYear}년 ${this.selectedSemester}학기 · ${this.selectedCourse.prof || '담당교수 미등록'}`
     },
     emptyStateMessage() {
-      if (this.rows.length === 0) return '아직 연결된 랭킹 데이터가 없습니다.'
+      if (this.loading) return '랭킹 데이터를 불러오는 중입니다.'
+      if (this.loadError) return this.loadError
+      if (this.rows.length === 0) return '표시할 랭킹 데이터가 없습니다.'
       return '검색 결과가 없습니다.'
     },
     rankedStudents() {
@@ -296,12 +302,114 @@ export default {
       this.currentPage = 1
     },
   },
+  created() {
+    this.fetchRankingRows()
+  },
   methods: {
     toCourseKey(course) {
       return `${course.year}-${course.semester}-${course.course_id}`
     },
     calculateScore(student) {
       return Number(student[DEFAULT_SCORE_METRIC] || 0)
+    },
+    async fetchRankingRows() {
+      this.loading = true
+      this.loadError = ''
+
+      try {
+        const response = await getRankingStudentCourseInfo()
+        this.rows = this.buildRankingRows(response.data || [])
+        this.applyInitialSelection()
+      } catch (error) {
+        console.error('Failed to fetch ranking data:', error)
+        this.rows = []
+        this.loadError = '랭킹 데이터를 불러오지 못했습니다.'
+        this.applyInitialSelection()
+      } finally {
+        this.loading = false
+      }
+    },
+    buildRankingRows(rawRows) {
+      const courseMap = new Map()
+
+      rawRows.forEach((row) => {
+        const year = String(row.year || '').trim()
+        const semester = String(row.semester || '').trim()
+        const courseId = String(row.course_id || '').trim()
+        const courseName = String(row.course_name || '').trim()
+
+        if (!year || !semester || !courseId || !courseName || courseName === '기타') {
+          return
+        }
+
+        const courseKey = `${year}-${semester}-${courseId}`
+        if (!courseMap.has(courseKey)) {
+          courseMap.set(courseKey, {
+            year,
+            semester,
+            course_id: courseId,
+            course_name: courseName,
+            prof: row.prof || '',
+            students: [],
+          })
+        }
+
+        const course = courseMap.get(courseKey)
+        const studentKey = String(row.id || row.github_id || row.name || '').trim()
+        if (!studentKey) return
+
+        let student = course.students.find((item) => item.student_key === studentKey)
+        if (!student) {
+          student = {
+            student_key: studentKey,
+            student_id: row.id || '',
+            name: row.name || '',
+            department: row.department || '',
+            github: row.github_id || '',
+            commits: 0,
+            prs: 0,
+            issues: 0,
+            repos: 0,
+          }
+          course.students.push(student)
+        }
+
+        student.commits += Number(row.commit || 0)
+        student.prs += Number(row.pr || 0)
+        student.issues += Number(row.issue || 0)
+        student.repos += Number(row.num_repos || 0)
+      })
+
+      return Array.from(courseMap.values())
+        .map((course) => ({
+          ...course,
+          students: course.students.map(({ student_key, ...student }) => student),
+        }))
+        .sort((a, b) => {
+          if (Number(b.year) !== Number(a.year)) return Number(b.year) - Number(a.year)
+          if (Number(b.semester) !== Number(a.semester)) return Number(b.semester) - Number(a.semester)
+          return `${a.course_name}${a.course_id}`.localeCompare(`${b.course_name}${b.course_id}`, 'ko', {
+            numeric: true,
+            sensitivity: 'base',
+          })
+        })
+    },
+    applyInitialSelection() {
+      const firstCourse = this.rows[0]
+      if (!firstCourse) {
+        this.selectedYear = ''
+        this.selectedSemester = ''
+        this.selectedCourseKey = ''
+        this.searchKeyword = ''
+        this.currentPage = 1
+        return
+      }
+
+      this.selectedYear = firstCourse.year
+      this.selectedSemester = firstCourse.semester
+      this.selectedCourseKey = this.toCourseKey(firstCourse)
+      this.searchKeyword = ''
+      this.currentPage = 1
     },
     syncSelection() {
       if (this.rows.length === 0) {
