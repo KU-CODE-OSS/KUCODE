@@ -11,10 +11,20 @@ from rest_framework import status
 
 from datetime import datetime, timedelta
 from django.utils.dateparse import parse_datetime
-from django.utils.timezone import make_aware
-from django.db.models import Sum
+from django.utils.timezone import make_aware, now as timezone_now
+from django.db.models import Sum, Count, Q
 
-from repo.models import Repository, Repo_contributor, Repo_issue,Repo_pr, Repo_commit
+from repo.models import (
+    Repository,
+    Repo_contributor,
+    Repo_issue,
+    Repo_pr,
+    Repo_commit,
+    RepositorySnapshot,
+    RepoCommitFileChange,
+    RepoReviewComment,
+    RepoDependabotAlert,
+)
 from account.models import Student
 from account.api.views import get_students_for_crawling
 from login.models import Student as LoginStudent
@@ -198,6 +208,13 @@ def get_sync_scope(request):
     return 'all' if is_full_sync_requested(request) else 'changed'
 
 
+def github_timestamp_for_api(value):
+    parsed = parse_github_timestamp(value)
+    if parsed is None:
+        return GITHUB_BASELINE_TIMESTAMP
+    return parsed.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
 def fetch_remote_repo_payloads(github_id):
     response = requests.get(
         f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/user/repos",
@@ -364,6 +381,7 @@ def sync_repo_db(request):
                     'name': repo['name'],
                     'updated_at': repo.get('updated_at'),
                     'pushed_at': repo.get('pushed_at'),
+                    'default_branch': repo.get('default_branch'),
                 }
                 for repo in data
             ]
@@ -458,6 +476,7 @@ def sync_repo_db(request):
                         defaults={
                             'name': repo_name,
                             'url': repo_data.get('url'),
+                            'default_branch': repo_data.get('default_branch') or repo.get('default_branch'),
                             'created_at': repo_data.get('created_at'),
                             'updated_at': repo_data.get('updated_at'),
                             'pushed_at': repo_data.get('pushed_at') or repo.get('pushed_at'),
@@ -590,7 +609,14 @@ def sync_repo_db_optional(request):
                 continue
 
             total_repo_count = len(data)
-            repo_list = [{'id': repo['id'], 'name': repo['name']} for repo in data]
+            repo_list = [
+                {
+                    'id': repo['id'],
+                    'name': repo['name'],
+                    'default_branch': repo.get('default_branch'),
+                }
+                for repo in data
+            ]
 
             
             # 5. Compare the list of repositories stored in the DB with the list from the API to find repositories to delete.
@@ -664,6 +690,7 @@ def sync_repo_db_optional(request):
                         defaults={
                             'name': repo_name,
                             'url': repo_data.get('url'),
+                            'default_branch': repo_data.get('default_branch') or repo.get('default_branch'),
                             'created_at': repo_data.get('created_at'),
                             'updated_at': repo_data.get('updated_at'),
                             'forked': repo_data.get('forked'),
@@ -757,6 +784,18 @@ def remove_repository(github_id, repository):
         deleted_commits, _ = Repo_commit.objects.filter(repo=repository.id).delete()
         print(f"  Deleted {deleted_commits} commit(s) for repo ID: {repository.id}")
 
+        deleted_file_changes, _ = RepoCommitFileChange.objects.filter(repo=repository.id).delete()
+        print(f"  Deleted {deleted_file_changes} commit file change(s) for repo ID: {repository.id}")
+
+        deleted_snapshots, _ = RepositorySnapshot.objects.filter(repo=repository.id).delete()
+        print(f"  Deleted {deleted_snapshots} repository snapshot(s) for repo ID: {repository.id}")
+
+        deleted_review_comments, _ = RepoReviewComment.objects.filter(repo=repository.id).delete()
+        print(f"  Deleted {deleted_review_comments} review comment(s) for repo ID: {repository.id}")
+
+        deleted_dependabot_alerts, _ = RepoDependabotAlert.objects.filter(repo=repository.id).delete()
+        print(f"  Deleted {deleted_dependabot_alerts} Dependabot alert(s) for repo ID: {repository.id}")
+
         # 3. Finally, delete the Repository object itself
         try:
             repository_obj = Repository.objects.get(owner_github_id=github_id, id=repository.id)
@@ -837,6 +876,7 @@ def repo_read_db(request):
                 'url': r.url,
                 'student_id': student.id,
                 'owner_github_id': r.owner_github_id,
+                'default_branch': r.default_branch,
                 'created_at': r.created_at,
                 'updated_at': r.updated_at,
                 'fork_count': r.fork_count,
@@ -1037,11 +1077,14 @@ def sync_repo_issue_db(request):
                         id=issue_data.get('id'),
                         defaults={
                             'repo_id': repo_id,
-                            'repo_url': issue_data.get('repo_url'),
+                            'issue_number': issue_data.get('issue_number'),
+                            'repo_url': issue_data.get('repo_url') or issue_data.get('repository_url'),
                             'owner_github_id': issue_data.get('contributed_github_id'),
                             'state': issue_data.get('state'),
                             'title': issue_data.get('title'),
                             'publisher_github_id': issue_data.get('publisher_github_id'),
+                            'created_at': parse_github_timestamp(issue_data.get('created_at')),
+                            'closed_at': parse_github_timestamp(issue_data.get('closed_at')),
                             'last_update': issue_data.get('last_update')
                         }
                     )
@@ -1084,11 +1127,14 @@ def repo_issue_read_db(request):
         issue_list = list(Repo_issue.objects.values(
             'id',
             'repo_id',
+            'issue_number',
             'repo_url',
             'owner_github_id',
             'state',
             'title',
             'publisher_github_id',
+            'created_at',
+            'closed_at',
             'last_update'
         ))
         
@@ -1154,10 +1200,15 @@ def sync_repo_pr_db(request):
                         id=pr_data.get('id'),
                         defaults={
                             'repo_id': repo_id,
-                            'repo_url': pr_data.get('repo_url'),
+                            'pr_number': pr_data.get('pr_number'),
+                            'repo_url': pr_data.get('repo_url') or pr_data.get('repository_url'),
                             'owner_github_id': pr_data.get('contributed_github_id'),
                             'title': pr_data.get('title'),
                             'requester_id': pr_data.get('requester_id'),
+                            'created_at': parse_github_timestamp(pr_data.get('created_at')),
+                            'closed_at': parse_github_timestamp(pr_data.get('closed_at')),
+                            'merged_at': parse_github_timestamp(pr_data.get('merged_at')),
+                            'merged_by': pr_data.get('merged_by'),
                             'published_date': pr_data.get('published_date'),
                             'state': pr_data.get('state'),
                             'last_update': pr_data.get('last_update')
@@ -1202,10 +1253,15 @@ def repo_pr_read_db(request):
         pr_list = list(Repo_pr.objects.values(
             'id',
             'repo_id',
+            'pr_number',
             'repo_url',
             'owner_github_id',
             'title',
             'requester_id',
+            'created_at',
+            'closed_at',
+            'merged_at',
+            'merged_by',
             'published_date',
             'state',
             'last_update'
@@ -1249,7 +1305,12 @@ def sync_repo_commit_db(request):
                 # 3b. Fetch commit data from the API.
                 response = requests.get(
                     f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/commit",
-                    params={'github_id': github_id, 'repo_name': repo_name, 'since': since}
+                    params={
+                        'github_id': github_id,
+                        'repo_name': repo_name,
+                        'since': since,
+                        'include_files': True,
+                    }
                 )
                 response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
                 commit_data_list = response.json()
@@ -1277,9 +1338,11 @@ def sync_repo_commit_db(request):
                             'author_github_id': commit_data.get('author_github_id'),
                             'added_lines': commit_data.get('added_lines'),
                             'deleted_lines': commit_data.get('deleted_lines'),
+                            'committed_at': parse_github_timestamp(commit_data.get('committed_at') or commit_data.get('last_update')),
                             'last_update': commit_data.get('last_update')
                         }
                     )
+                    sync_commit_file_changes(repo_id, commit_data)
 
                 success_repo_count += 1
                 print(f'  [SUCCESS] Finished processing commits for repo: {repo_name}.')
@@ -1324,6 +1387,7 @@ def repo_commit_read_db(request):
             'author_github_id',
             'added_lines',
             'deleted_lines',
+            'committed_at',
             'last_update'
         ))
         
@@ -1335,9 +1399,363 @@ def repo_commit_read_db(request):
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 # -----------------------------------------------------
 
-# ------------Course_reated REPO READ--------------#
-from django.db.models import Count
 
+def sync_commit_file_changes(repo_id, commit_data):
+    files = commit_data.get('files') or []
+    if not isinstance(files, list):
+        return 0
+
+    synced_count = 0
+    committed_at = parse_github_timestamp(commit_data.get('committed_at') or commit_data.get('last_update'))
+    sha = commit_data.get('sha')
+    if not sha:
+        return synced_count
+
+    for file_data in files:
+        path = file_data.get('path')
+        if not path:
+            continue
+        RepoCommitFileChange.objects.update_or_create(
+            repo_id=repo_id,
+            sha=sha,
+            path=path,
+            defaults={
+                'committed_at': parse_github_timestamp(file_data.get('committed_at')) or committed_at,
+                'filename': file_data.get('filename'),
+                'extension': file_data.get('extension'),
+                'status': file_data.get('status'),
+                'additions': file_data.get('additions'),
+                'deletions': file_data.get('deletions'),
+                'changes': file_data.get('changes'),
+                'is_workflow_yaml': bool(file_data.get('is_workflow_yaml')),
+                'is_test_file': bool(file_data.get('is_test_file')),
+                'is_readme': bool(file_data.get('is_readme')),
+                'is_dependency_manifest': bool(file_data.get('is_dependency_manifest')),
+            }
+        )
+        synced_count += 1
+    return synced_count
+
+
+def sync_repo_snapshot_db(request):
+    success_repo_count = 0
+    failure_repo_count = 0
+    failure_repo_details = []
+
+    try:
+        repositories, filter_summary = get_repositories_for_sync(request, 'snapshot')
+        repo_list = [{'id': repo.id, 'name': repo.name, 'github_id': repo.owner_github_id} for repo in repositories]
+
+        for i, repo in enumerate(repo_list, 1):
+            repo_id = repo['id']
+            repo_name = repo['name']
+            github_id = repo['github_id']
+            print(f'\n{"="*10} [{i}/{len(repo_list)}] Syncing 2026 snapshot for repo: {repo_name} {"="*10}')
+
+            try:
+                response = requests.get(
+                    f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/snapshot",
+                    params={'github_id': github_id, 'repo_name': repo_name},
+                    timeout=120,
+                )
+                response.raise_for_status()
+                snapshot_data = response.json()
+
+                RepositorySnapshot.objects.create(
+                    repo_id=repo_id,
+                    collected_at=parse_github_timestamp(snapshot_data.get('collected_at')) or timezone_now(),
+                    default_branch=snapshot_data.get('default_branch'),
+                    branch_count=snapshot_data.get('branch_count'),
+                    language_bytes=snapshot_data.get('language_bytes') or {},
+                    language_percentage=snapshot_data.get('language_percentage') or {},
+                    workflow_yaml_count=snapshot_data.get('workflow_yaml_count'),
+                    workflow_yaml_total_size=snapshot_data.get('workflow_yaml_total_size'),
+                    workflow_yaml_paths=snapshot_data.get('workflow_yaml_paths') or [],
+                    has_readme=snapshot_data.get('has_readme'),
+                    readme_dependency_mentioned=snapshot_data.get('readme_dependency_mentioned'),
+                    dependency_evidence=snapshot_data.get('dependency_evidence') or {},
+                    dependabot_config_present=snapshot_data.get('dependabot_config_present'),
+                )
+
+                Repository.objects.filter(id=repo_id).update(
+                    default_branch=snapshot_data.get('default_branch'),
+                    language_bytes=snapshot_data.get('language_bytes') or {},
+                    language_percentage=snapshot_data.get('language_percentage') or {},
+                    has_readme=snapshot_data.get('has_readme'),
+                )
+                success_repo_count += 1
+
+            except Exception as e:
+                message = f"Failed to process repo {repo_name} (ID: {repo_id}): {str(e)}"
+                print(f"  [ERROR] {message}")
+                failure_repo_count += 1
+                failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
+                continue
+
+        return JsonResponse({
+            "status": "OK",
+            "message": "Repository 2026 snapshots synchronized.",
+            "sync_scope": filter_summary['sync_scope'],
+            "candidate_repo_count": filter_summary['candidate_repo_count'],
+            "skipped_repo_count": filter_summary['skipped_repo_count'],
+            "skipped_repo_sample": filter_summary['skipped_repo_sample'],
+            "success_repo_count": success_repo_count,
+            "failure_repo_count": failure_repo_count,
+            "failure_repo_details": failure_repo_details,
+        })
+
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+
+def repo_snapshot_read_db(request):
+    try:
+        snapshot_list = list(RepositorySnapshot.objects.values(
+            'id',
+            'repo_id',
+            'collected_at',
+            'default_branch',
+            'branch_count',
+            'language_bytes',
+            'language_percentage',
+            'workflow_yaml_count',
+            'workflow_yaml_total_size',
+            'workflow_yaml_paths',
+            'has_readme',
+            'readme_dependency_mentioned',
+            'dependency_evidence',
+            'dependabot_config_present',
+        ))
+        return JsonResponse(snapshot_list, safe=False)
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+
+def repo_commit_file_change_read_db(request):
+    try:
+        file_change_list = list(RepoCommitFileChange.objects.values(
+            'id',
+            'repo_id',
+            'sha',
+            'committed_at',
+            'path',
+            'filename',
+            'extension',
+            'status',
+            'additions',
+            'deletions',
+            'changes',
+            'is_workflow_yaml',
+            'is_test_file',
+            'is_readme',
+            'is_dependency_manifest',
+        ))
+        return JsonResponse(file_change_list, safe=False)
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+
+def sync_repo_review_comment_db(request):
+    success_repo_count = 0
+    failure_repo_count = 0
+    failure_repo_details = []
+    success_comment_count = 0
+
+    try:
+        repositories, filter_summary = get_repositories_for_sync(request, 'review_comment')
+        repo_list = [{'id': repo.id, 'name': repo.name, 'github_id': repo.owner_github_id} for repo in repositories]
+
+        for i, repo in enumerate(repo_list, 1):
+            repo_id = repo['id']
+            repo_name = repo['name']
+            github_id = repo['github_id']
+            latest_comment = RepoReviewComment.objects.filter(repo_id=repo_id).order_by('-updated_at').first()
+            since = github_timestamp_for_api(latest_comment.updated_at if latest_comment else None)
+            print(f'\n{"="*10} [{i}/{len(repo_list)}] Syncing review comments for repo: {repo_name} {"="*10}')
+
+            try:
+                response = requests.get(
+                    f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/review-comments",
+                    params={'github_id': github_id, 'repo_name': repo_name, 'since': since},
+                    timeout=600,
+                )
+                response.raise_for_status()
+                comment_data_list = response.json()
+                if not isinstance(comment_data_list, list):
+                    raise ValueError("Invalid response format: API did not return a list.")
+
+                for comment_data in comment_data_list:
+                    comment_id = comment_data.get('comment_id')
+                    comment_type = comment_data.get('comment_type')
+                    if not comment_id or not comment_type:
+                        continue
+
+                    RepoReviewComment.objects.update_or_create(
+                        comment_type=comment_type,
+                        comment_id=comment_id,
+                        defaults={
+                            'repo_id': repo_id,
+                            'pr_id': comment_data.get('pr_id'),
+                            'pr_number': comment_data.get('pr_number'),
+                            'author_github_id': comment_data.get('author_github_id'),
+                            'created_at': parse_github_timestamp(comment_data.get('created_at')),
+                            'updated_at': parse_github_timestamp(comment_data.get('updated_at')),
+                            'path': comment_data.get('path'),
+                            'position': comment_data.get('position'),
+                            'state': comment_data.get('state'),
+                        }
+                    )
+                    success_comment_count += 1
+
+                success_repo_count += 1
+
+            except Exception as e:
+                message = f"Failed to process repo {repo_name} (ID: {repo_id}): {str(e)}"
+                print(f"  [ERROR] {message}")
+                failure_repo_count += 1
+                failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
+                continue
+
+        return JsonResponse({
+            "status": "OK",
+            "message": "Repository review comments synchronized.",
+            "sync_scope": filter_summary['sync_scope'],
+            "candidate_repo_count": filter_summary['candidate_repo_count'],
+            "skipped_repo_count": filter_summary['skipped_repo_count'],
+            "skipped_repo_sample": filter_summary['skipped_repo_sample'],
+            "success_repo_count": success_repo_count,
+            "success_comment_count": success_comment_count,
+            "failure_repo_count": failure_repo_count,
+            "failure_repo_details": failure_repo_details,
+        })
+
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+
+def repo_review_comment_read_db(request):
+    try:
+        comment_list = list(RepoReviewComment.objects.values(
+            'id',
+            'repo_id',
+            'pr_id',
+            'pr_number',
+            'comment_id',
+            'author_github_id',
+            'created_at',
+            'updated_at',
+            'path',
+            'position',
+            'comment_type',
+            'state',
+        ))
+        return JsonResponse(comment_list, safe=False)
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+
+def sync_repo_dependabot_alert_db(request):
+    success_repo_count = 0
+    failure_repo_count = 0
+    failure_repo_details = []
+    success_alert_count = 0
+
+    try:
+        repositories, filter_summary = get_repositories_for_sync(request, 'dependabot_alert')
+        repo_list = [{'id': repo.id, 'name': repo.name, 'github_id': repo.owner_github_id} for repo in repositories]
+
+        for i, repo in enumerate(repo_list, 1):
+            repo_id = repo['id']
+            repo_name = repo['name']
+            github_id = repo['github_id']
+            print(f'\n{"="*10} [{i}/{len(repo_list)}] Syncing Dependabot alerts for repo: {repo_name} {"="*10}')
+
+            try:
+                response = requests.get(
+                    f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/dependabot-alerts",
+                    params={'github_id': github_id, 'repo_name': repo_name},
+                    timeout=120,
+                )
+                response.raise_for_status()
+                payload = response.json()
+                if payload.get('error'):
+                    print(f"  [WARN] Dependabot alerts unavailable for {repo_name}: {payload.get('message')}")
+                    success_repo_count += 1
+                    continue
+
+                alert_data_list = payload.get('alerts') or []
+                if not isinstance(alert_data_list, list):
+                    raise ValueError("Invalid response format: API did not return an alerts list.")
+
+                for alert_data in alert_data_list:
+                    alert_number = alert_data.get('github_alert_number')
+                    if alert_number is None:
+                        continue
+
+                    RepoDependabotAlert.objects.update_or_create(
+                        repo_id=repo_id,
+                        github_alert_number=alert_number,
+                        defaults={
+                            'state': alert_data.get('state'),
+                            'package_name': alert_data.get('package_name'),
+                            'ecosystem': alert_data.get('ecosystem'),
+                            'manifest_path': alert_data.get('manifest_path'),
+                            'severity': alert_data.get('severity'),
+                            'created_at': parse_github_timestamp(alert_data.get('created_at')),
+                            'fixed_at': parse_github_timestamp(alert_data.get('fixed_at')),
+                            'dismissed_at': parse_github_timestamp(alert_data.get('dismissed_at')),
+                            'collected_at': parse_github_timestamp(alert_data.get('collected_at')) or timezone_now(),
+                        }
+                    )
+                    success_alert_count += 1
+
+                success_repo_count += 1
+
+            except Exception as e:
+                message = f"Failed to process repo {repo_name} (ID: {repo_id}): {str(e)}"
+                print(f"  [ERROR] {message}")
+                failure_repo_count += 1
+                failure_repo_details.append({"github_id": github_id, "repo_name": repo_name, "message": message})
+                continue
+
+        return JsonResponse({
+            "status": "OK",
+            "message": "Repository Dependabot alerts synchronized.",
+            "sync_scope": filter_summary['sync_scope'],
+            "candidate_repo_count": filter_summary['candidate_repo_count'],
+            "skipped_repo_count": filter_summary['skipped_repo_count'],
+            "skipped_repo_sample": filter_summary['skipped_repo_sample'],
+            "success_repo_count": success_repo_count,
+            "success_alert_count": success_alert_count,
+            "failure_repo_count": failure_repo_count,
+            "failure_repo_details": failure_repo_details,
+        })
+
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+
+def repo_dependabot_alert_read_db(request):
+    try:
+        alert_list = list(RepoDependabotAlert.objects.values(
+            'id',
+            'repo_id',
+            'github_alert_number',
+            'state',
+            'package_name',
+            'ecosystem',
+            'manifest_path',
+            'severity',
+            'created_at',
+            'fixed_at',
+            'dismissed_at',
+            'collected_at',
+        ))
+        return JsonResponse(alert_list, safe=False)
+    except Exception as e:
+        return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+# ------------Course_reated REPO READ--------------#
 def repo_course_read_db(request):
     try:
         # 1. Get the IDs of all repositories that are linked to a course project.
@@ -1361,6 +1779,7 @@ def repo_course_read_db(request):
                 'name': r.name,
                 'url': r.url,
                 'owner_github_id': r.owner_github_id,
+                'default_branch': r.default_branch,
                 'created_at': r.created_at,
                 'updated_at': r.updated_at,
                 'fork_count': r.fork_count,
@@ -1892,6 +2311,43 @@ def repo_account_read_db(request):
         owner_repo_ids = list(owner_repo_list.values_list('id', flat=True))
         contributor_repo_ids = list(contributor_repo_list.values_list('id', flat=True))
         all_repo_ids = list(set(owner_repo_ids + contributor_repo_ids))
+
+        latest_snapshots_by_repo = {}
+        for snapshot in RepositorySnapshot.objects.filter(repo_id__in=all_repo_ids).order_by('repo_id', '-collected_at'):
+            if snapshot.repo_id not in latest_snapshots_by_repo:
+                latest_snapshots_by_repo[snapshot.repo_id] = snapshot
+
+        file_metrics_by_repo = {
+            row['repo_id']: row
+            for row in RepoCommitFileChange.objects.filter(repo_id__in=all_repo_ids).values('repo_id').annotate(
+                workflow_yaml_commit_count=Count('id', filter=Q(is_workflow_yaml=True)),
+                test_file_commit_count=Count('id', filter=Q(is_test_file=True)),
+                dependency_manifest_commit_count=Count('id', filter=Q(is_dependency_manifest=True)),
+            )
+        }
+        repeated_file_modifications_by_repo = {}
+        repeated_rows = RepoCommitFileChange.objects.filter(repo_id__in=all_repo_ids).values(
+            'repo_id',
+            'path',
+        ).annotate(change_count=Count('id')).filter(change_count__gt=1)
+        for row in repeated_rows:
+            repeated_file_modifications_by_repo[row['repo_id']] = repeated_file_modifications_by_repo.get(row['repo_id'], 0) + 1
+
+        review_metrics_by_repo = {
+            row['repo_id']: row
+            for row in RepoReviewComment.objects.filter(repo_id__in=all_repo_ids).values('repo_id').annotate(
+                review_count=Count('id', filter=Q(comment_type='review')),
+                review_diff_comment_count=Count('id', filter=Q(comment_type='comment')),
+                review_comment_count=Count('id'),
+            )
+        }
+        dependabot_metrics_by_repo = {
+            row['repo_id']: row
+            for row in RepoDependabotAlert.objects.filter(repo_id__in=all_repo_ids).values('repo_id').annotate(
+                dependabot_alert_count=Count('id'),
+                open_dependabot_alert_count=Count('id', filter=Q(state='open')),
+            )
+        }
         
         today = datetime.now()
         one_year_ago = today - timedelta(days=365)
@@ -2102,6 +2558,29 @@ def repo_account_read_db(request):
             top_5_language_percentages['others'] = round(other_languages_percentage, 1)
 
             repo_monthly_commit_data = sorted(repo_monthly_commits.get(r.id, {}).items())
+            latest_snapshot = latest_snapshots_by_repo.get(r.id)
+            file_metrics = file_metrics_by_repo.get(r.id, {})
+            review_metrics = review_metrics_by_repo.get(r.id, {})
+            dependabot_metrics = dependabot_metrics_by_repo.get(r.id, {})
+            repo_github_2026_metrics = {
+                'branch_count': latest_snapshot.branch_count if latest_snapshot else None,
+                'snapshot_collected_at': latest_snapshot.collected_at if latest_snapshot else None,
+                'workflow_yaml_count': latest_snapshot.workflow_yaml_count if latest_snapshot else 0,
+                'workflow_yaml_total_size': latest_snapshot.workflow_yaml_total_size if latest_snapshot else 0,
+                'workflow_yaml_paths': latest_snapshot.workflow_yaml_paths if latest_snapshot else [],
+                'readme_dependency_mentioned': latest_snapshot.readme_dependency_mentioned if latest_snapshot else None,
+                'dependency_evidence': latest_snapshot.dependency_evidence if latest_snapshot else {},
+                'dependabot_config_present': latest_snapshot.dependabot_config_present if latest_snapshot else None,
+                'workflow_yaml_commit_count': file_metrics.get('workflow_yaml_commit_count', 0),
+                'test_file_commit_count': file_metrics.get('test_file_commit_count', 0),
+                'dependency_manifest_commit_count': file_metrics.get('dependency_manifest_commit_count', 0),
+                'repeated_file_modification_count': repeated_file_modifications_by_repo.get(r.id, 0),
+                'review_count': review_metrics.get('review_count', 0),
+                'review_diff_comment_count': review_metrics.get('review_diff_comment_count', 0),
+                'review_comment_count': review_metrics.get('review_comment_count', 0),
+                'dependabot_alert_count': dependabot_metrics.get('dependabot_alert_count', 0),
+                'open_dependabot_alert_count': dependabot_metrics.get('open_dependabot_alert_count', 0),
+            }
 
             repo_info = {
                 'is_owner': r.id in owner_repo_ids,
@@ -2113,6 +2592,7 @@ def repo_account_read_db(request):
                 'url': r.url,
                 'student_id': student.id,
                 'owner_github_id': r.owner_github_id,
+                'default_branch': r.default_branch,
                 'created_at': r.created_at,
                 'updated_at': r.updated_at,
                 'fork_count': r.fork_count,
@@ -2133,7 +2613,8 @@ def repo_account_read_db(request):
                 'project_introduction': r.repo_introduction or "",
                 'release_version': r.release_version,
                 'summary': r.summary,
-                'monthly_commits': repo_monthly_commit_data
+                'monthly_commits': repo_monthly_commit_data,
+                'github_2026_metrics': repo_github_2026_metrics
             }
             
             data.append(repo_info)
@@ -2149,6 +2630,15 @@ def repo_account_read_db(request):
             'owner_closed_pr_count': owner_closed_pr_count,
             'total_star_count': total_star_count,
             'total_fork_count': total_fork_count,
+            'workflow_yaml_commit_count': sum(row.get('workflow_yaml_commit_count', 0) for row in file_metrics_by_repo.values()),
+            'test_file_commit_count': sum(row.get('test_file_commit_count', 0) for row in file_metrics_by_repo.values()),
+            'dependency_manifest_commit_count': sum(row.get('dependency_manifest_commit_count', 0) for row in file_metrics_by_repo.values()),
+            'repeated_file_modification_count': sum(repeated_file_modifications_by_repo.values()),
+            'review_count': sum(row.get('review_count', 0) for row in review_metrics_by_repo.values()),
+            'review_diff_comment_count': sum(row.get('review_diff_comment_count', 0) for row in review_metrics_by_repo.values()),
+            'review_comment_count': sum(row.get('review_comment_count', 0) for row in review_metrics_by_repo.values()),
+            'dependabot_alert_count': sum(row.get('dependabot_alert_count', 0) for row in dependabot_metrics_by_repo.values()),
+            'open_dependabot_alert_count': sum(row.get('open_dependabot_alert_count', 0) for row in dependabot_metrics_by_repo.values()),
         })
 
         response_data = {

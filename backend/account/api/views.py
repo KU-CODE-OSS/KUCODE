@@ -134,11 +134,11 @@ def sync_student_db(request):
                 student_record, created = Student.objects.update_or_create(
                     github_id__iexact=github_id,
                     defaults={
-                        'follower_count': data.get('Follower_CNT'),
-                        'following_count': data.get('Following_CNT'),
-                        'public_repo_count': data.get('Public_repos_CNT'),
-                        'github_profile_create_at': data.get('Github_profile_Create_Date'),
-                        'github_profile_update_at': data.get('Github_profile_Update_Date'),
+                        'follower_count': data.get('follower_count', data.get('Follower_CNT')),
+                        'following_count': data.get('following_count', data.get('Following_CNT')),
+                        'public_repo_count': data.get('public_repos_count', data.get('Public_repos_CNT')),
+                        'github_profile_create_at': data.get('github_profile_create_date', data.get('Github_profile_Create_Date')),
+                        'github_profile_update_at': data.get('github_profile_update_date', data.get('Github_profile_Update_Date')),
                         'total_language_percentage': language_percentages,
                     }
                 )
@@ -1497,11 +1497,11 @@ def sync_student_db_test(request, student_id):
             student_record, created = Student.objects.update_or_create(
                 github_id__iexact=github_id,
                 defaults={
-                    'follower_count': data.get('Follower_CNT'),
-                    'following_count': data.get('Following_CNT'),
-                    'public_repo_count': data.get('Public_repos_CNT'),
-                    'github_profile_create_at': data.get('Github_profile_Create_Date'),
-                    'github_profile_update_at': data.get('Github_profile_Update_Date')
+                    'follower_count': data.get('follower_count', data.get('Follower_CNT')),
+                    'following_count': data.get('following_count', data.get('Following_CNT')),
+                    'public_repo_count': data.get('public_repos_count', data.get('Public_repos_CNT')),
+                    'github_profile_create_at': data.get('github_profile_create_date', data.get('Github_profile_Create_Date')),
+                    'github_profile_update_at': data.get('github_profile_update_date', data.get('Github_profile_Update_Date'))
                 }
             )
 

@@ -29,6 +29,15 @@ urlpatterns = [
   path("sync_repo_commit_db",views.sync_repo_commit_db, name="sync_repo_commit_db"),
   path("repo_commit_read_db", views.repo_commit_read_db, name="repo_commit_read_db"),
 
+# GitHub 2026 metrics CRUD
+  path("sync_repo_snapshot_db", views.sync_repo_snapshot_db, name="sync_repo_snapshot_db"),
+  path("repo_snapshot_read_db", views.repo_snapshot_read_db, name="repo_snapshot_read_db"),
+  path("repo_commit_file_change_read_db", views.repo_commit_file_change_read_db, name="repo_commit_file_change_read_db"),
+  path("sync_repo_review_comment_db", views.sync_repo_review_comment_db, name="sync_repo_review_comment_db"),
+  path("repo_review_comment_read_db", views.repo_review_comment_read_db, name="repo_review_comment_read_db"),
+  path("sync_repo_dependabot_alert_db", views.sync_repo_dependabot_alert_db, name="sync_repo_dependabot_alert_db"),
+  path("repo_dependabot_alert_read_db", views.repo_dependabot_alert_read_db, name="repo_dependabot_alert_read_db"),
+
   # test
   path('sync_repo_db_test/<int:student_id>/', views.sync_repo_db_test, name='sync_repo_db_test'),
   path('sync_repo_contributor_db_test/<int:student_id>/', views.sync_repo_contributor_db_test, name='sync_repo_contributor_db_test'),

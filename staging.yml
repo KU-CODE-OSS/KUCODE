@@ -18,7 +18,7 @@ services:
         condition: service_healthy
     env_file:
       - ./.env
-      - path: ./.envs/.production/django.env
+      - path: ./.envs/.staging/django.env
         required: false
 
   db:
@@ -26,7 +26,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     env_file:
-      - path: ./.envs/.production/postgres.env
+      - path: ./.envs/.staging/postgres.env
         required: false
     healthcheck:
       test: ["CMD", "pg_isready"]
@@ -37,15 +37,15 @@ services:
   nginx:
     build:
       context: .
-      dockerfile: ./compose/production/nginx/Dockerfile
+      dockerfile: ./compose/staging/nginx/Dockerfile
     ports:
-      - "80:80"
-      - "443:443"
+      - "8081:80"
+      - "8444:443"
     volumes:
       - static_volume:/home/app/web/static
       - media_volume:/home/app/web/media
-      - ./certs/prod.crt:/etc/nginx/certs/prod.crt:ro
-      - ./certs/prod.key:/etc/nginx/certs/prod.key:ro
+      - ./certs/staging.crt:/etc/nginx/certs/staging.crt:ro
+      - ./certs/staging.key:/etc/nginx/certs/staging.key:ro
     environment:
       - NODE_ENV=production
     depends_on:

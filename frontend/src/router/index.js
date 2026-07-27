@@ -1,14 +1,16 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
-import BoardList from '@/views/Board/BoardList.vue';
-import Board from '@/views/Board.vue';
-import Information from '@/views/Information.vue';
-import Statistics from '@/views/Statistics.vue';
-import Login from '@/views/Login.vue';
-import Register from '@/views/Register.vue';
-import EmailVerification from '@/views/EmailVerification.vue';
-import EProfile from '@/views/EProfile.vue';
 import { authGuard, guestGuard } from './guards'
+
+const BoardList = () => import('@/views/Board/BoardList.vue');
+const Board = () => import('@/views/Board.vue');
+const Information = () => import('@/views/Information.vue');
+const Statistics = () => import('@/views/Statistics.vue');
+const Login = () => import('@/views/Login.vue');
+const Register = () => import('@/views/Register.vue');
+const EmailVerification = () => import('@/views/EmailVerification.vue');
+const EProfile = () => import('@/views/EProfile.vue');
+const QnA = () => import('@/views/QnA.vue');
 
 const StatisticsCourse = () => import('@/views/StatisticsComponents/StatisticsCourse.vue');
 const StatisticsStudent = () => import('@/views/StatisticsComponents/StatisticsStudent.vue');
@@ -18,7 +20,6 @@ const InformationCourse = () => import('@/views/InformationComponents/Informatio
 const InformationRepos   = () => import('@/views/InformationComponents/InformationRepos.vue')
 const InformationStudent = () => import('@/views/InformationComponents/InformationStudent.vue')
 const Ranking = () => import('@/views/Ranking.vue')
-import QnA from '../views/QnA.vue'
 
 const routes = [
   {

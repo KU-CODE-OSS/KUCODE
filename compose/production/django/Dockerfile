@@ -1,4 +1,4 @@
-FROM python:3.9-slim-buster as builder
+FROM python:3.9-slim-bookworm AS builder
 
 WORKDIR /app
 
@@ -6,12 +6,13 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc
+    apt-get install -y --no-install-recommends gcc && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY ./backend/requirements ./requirements
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r ./requirements/production.txt
 
-FROM python:3.9-slim-buster
+FROM python:3.9-slim-bookworm
 
 RUN mkdir -p /home/app
 
@@ -24,7 +25,9 @@ RUN mkdir $APP_HOME/static
 RUN mkdir $APP_HOME/media
 WORKDIR $APP_HOME
 
-RUN apt-get update && apt-get install -y --no-install-recommends netcat
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends netcat-openbsd && \
+    rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/wheels /wheels
 COPY --from=builder /app/requirements ./requirements
 RUN pip install --upgrade pip

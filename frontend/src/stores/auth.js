@@ -16,9 +16,44 @@ export const useAuthStore = defineStore('auth', () => {
   const role = ref(null)
   const memberId = ref(null)
   const memberName = ref(null)
+  let sessionInitialized = false
+  let sessionCheckPromise = null
+  let roleFetchPromise = null
 
   const isAuthenticated = computed(() => !!user.value)
   const canWriteBoard = computed(() => ['ADMIN', 'PROFESSOR'].includes(role.value))
+
+  const setRoleData = (roleData) => {
+    if (!roleData) {
+      return
+    }
+
+    role.value = roleData.role
+    memberId.value = roleData.data.id
+    memberName.value = roleData.data.name
+
+    sessionStorage.setItem('userRole', role.value)
+    sessionStorage.setItem('memberId', memberId.value)
+    sessionStorage.setItem('memberName', memberName.value)
+  }
+
+  const fetchRoleOnce = async (uuid) => {
+    if (role.value && memberId.value && memberName.value) {
+      return
+    }
+
+    if (!roleFetchPromise) {
+      roleFetchPromise = postLoginRole(uuid)
+        .then((roleResponse) => {
+          setRoleData(roleResponse.data)
+        })
+        .finally(() => {
+          roleFetchPromise = null
+        })
+    }
+
+    return roleFetchPromise
+  }
 
   const login = async (email, password) => {
     try {
@@ -47,21 +82,14 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Fetch role information from backend
       try {
-        const roleResponse = await postLoginRole(firebaseUser.uid)
-        if (roleResponse.data) {
-          role.value = roleResponse.data.role
-          memberId.value = roleResponse.data.data.id
-          memberName.value = roleResponse.data.data.name
-
-          // Cache role data in sessionStorage
-          sessionStorage.setItem('userRole', role.value)
-          sessionStorage.setItem('memberId', memberId.value)
-          sessionStorage.setItem('memberName', memberName.value)
-        }
+        await fetchRoleOnce(firebaseUser.uid)
       } catch (roleErr) {
         console.error('Failed to fetch role:', roleErr)
         // Continue with login even if role fetch fails
       }
+
+      sessionInitialized = true
+      sessionCheckPromise = null
 
       return { success: true }
     } catch (err) {
@@ -83,11 +111,14 @@ export const useAuthStore = defineStore('auth', () => {
       role.value = null
       memberId.value = null
       memberName.value = null
+      roleFetchPromise = null
 
       // Clear cached data
       sessionStorage.removeItem('userRole')
       sessionStorage.removeItem('memberId')
       sessionStorage.removeItem('memberName')
+      sessionInitialized = false
+      sessionCheckPromise = null
     } catch (err) {
       console.error('Logout error:', err)
     } finally {
@@ -96,9 +127,19 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const checkSession = async () => {
-    return new Promise((resolve) => {
+    if (sessionInitialized) {
+      return
+    }
+
+    if (sessionCheckPromise) {
+      return sessionCheckPromise
+    }
+
+    sessionCheckPromise = new Promise((resolve) => {
       // Listen to Firebase auth state changes
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        unsubscribe() // Unsubscribe after first check
+
         if (firebaseUser && firebaseUser.emailVerified) {
           user.value = {
             id: firebaseUser.uid,
@@ -119,17 +160,7 @@ export const useAuthStore = defineStore('auth', () => {
           } else {
             // Cache miss - re-fetch from API
             try {
-              const roleResponse = await postLoginRole(firebaseUser.uid)
-              if (roleResponse.data) {
-                role.value = roleResponse.data.role
-                memberId.value = roleResponse.data.data.id
-                memberName.value = roleResponse.data.data.name
-
-                // Cache role data in sessionStorage
-                sessionStorage.setItem('userRole', role.value)
-                sessionStorage.setItem('memberId', memberId.value)
-                sessionStorage.setItem('memberName', memberName.value)
-              }
+              await fetchRoleOnce(firebaseUser.uid)
             } catch (roleErr) {
               console.error('Failed to fetch role during session check:', roleErr)
             }
@@ -140,10 +171,13 @@ export const useAuthStore = defineStore('auth', () => {
           memberId.value = null
           memberName.value = null
         }
-        unsubscribe() // Unsubscribe after first check
+        sessionInitialized = true
+        sessionCheckPromise = null
         resolve()
       })
     })
+
+    return sessionCheckPromise
   }
 
   return {
