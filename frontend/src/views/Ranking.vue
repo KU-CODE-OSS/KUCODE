@@ -65,47 +65,116 @@
               <h2>랭킹 목록</h2>
               <p>동점자는 이름 순으로 정렬됩니다.</p>
             </div>
-            <div class="search-box">
-              <input v-model="searchKeyword" type="search" placeholder="이름, 학번, Github 검색" :disabled="loading || rows.length === 0" />
+            <div class="table-tools">
+              <div class="search-box">
+                <input v-model="searchKeyword" type="search" placeholder="이름, 학번, Github 검색" :disabled="loading || rows.length === 0" />
+              </div>
+
+              <div ref="tableSettings" class="table-settings" @keydown.esc.stop="closeTableSettings">
+                <button
+                  class="settings-button"
+                  type="button"
+                  :aria-expanded="tableSettingsOpen"
+                  aria-controls="ranking-table-settings"
+                  aria-haspopup="dialog"
+                  :disabled="loading || rows.length === 0"
+                  @click.stop="toggleTableSettings"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4 7H14M18 7H20M4 17H10M14 17H20M14 4V10M10 14V20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  열/필터
+                </button>
+
+                <div
+                  v-if="tableSettingsOpen"
+                  id="ranking-table-settings"
+                  class="settings-menu"
+                  role="dialog"
+                  aria-label="랭킹 목록 열 및 필터 설정"
+                  @click.stop
+                >
+                  <div class="settings-header">
+                    <div>
+                      <strong>표 설정</strong>
+                      <p>점수 열은 현재 위치에 고정됩니다.</p>
+                    </div>
+                    <button type="button" class="settings-reset" @click="resetTableSettings">전체 초기화</button>
+                  </div>
+
+                  <section class="settings-section" aria-labelledby="visible-columns-title">
+                    <h3 id="visible-columns-title">표시할 열</h3>
+                    <p class="column-order-help">목록의 위에서 아래 순서대로 표의 왼쪽에서 오른쪽에 표시됩니다.</p>
+                    <div class="column-checklist">
+                      <label v-for="column in columnOptions" :key="column.key" class="column-check">
+                        <input
+                          type="checkbox"
+                          :checked="isColumnSelected(column.key)"
+                          :disabled="column.key === 'score'"
+                          @change="toggleColumn(column.key, $event.target.checked)"
+                        />
+                        <span>{{ column.label }}</span>
+                        <span v-if="column.key === 'score'" class="column-lock">고정</span>
+                      </label>
+                    </div>
+                  </section>
+
+                  <section class="settings-section filter-settings" aria-labelledby="row-filters-title">
+                    <div class="section-title-row">
+                      <h3 id="row-filters-title">목록 필터</h3>
+                      <button v-if="activeFilterCount" type="button" @click="resetRowFilters">필터 초기화</button>
+                    </div>
+                    <div class="filter-setting-grid">
+                      <label>
+                        <span>학과</span>
+                        <select v-model="selectedDepartment">
+                          <option value="">전체 학과</option>
+                          <option v-for="department in departments" :key="department" :value="department">{{ department }}</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span>재학 상태</span>
+                        <select v-model="selectedEnrollment">
+                          <option value="">전체 상태</option>
+                          <option v-for="enrollment in enrollments" :key="enrollment" :value="enrollment">{{ enrollment }}</option>
+                        </select>
+                      </label>
+                    </div>
+                  </section>
+
+                  <button type="button" class="settings-done" @click="closeTableSettings">완료</button>
+                </div>
+              </div>
             </div>
           </div>
 
-          <table class="ranking-table">
-            <thead>
-              <tr>
-                <th>순위</th>
-                <th>이름</th>
-                <th>학번</th>
-                <th>학과</th>
-                <th>Github</th>
-                <th>점수</th>
-                <th>Commits</th>
-                <th>PRs</th>
-                <th>Issues</th>
-                <th>Repos</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="student in paginatedStudents" :key="student.student_id" :class="{ podium: student.rank <= 3 }">
-                <td>
-                  <span class="rank-badge">{{ student.rank }}</span>
-                </td>
-                <td>{{ student.name }}</td>
-                <td>{{ student.student_id }}</td>
-                <td>{{ student.department }}</td>
-                <td>
-                  <a :href="`https://github.com/${student.github}`" target="_blank" rel="noopener">
-                    {{ student.github }}
-                  </a>
-                </td>
-                <td class="score-cell">{{ student.score }}</td>
-                <td>{{ student.commits }}</td>
-                <td>{{ student.prs }}</td>
-                <td>{{ student.issues }}</td>
-                <td>{{ student.repos }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="table-scroll">
+            <table class="ranking-table">
+              <thead>
+                <tr>
+                  <th v-for="column in displayColumns" :key="column.key" :class="columnClasses(column)">
+                    {{ column.label }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="student in paginatedStudents" :key="student.student_id" :class="{ podium: student.rank <= 3 }">
+                  <td v-for="column in displayColumns" :key="column.key" :class="columnClasses(column)">
+                    <span v-if="column.key === 'rank'" class="rank-badge">{{ student.rank }}</span>
+                    <a
+                      v-else-if="column.key === 'github' && student.github"
+                      :href="`https://github.com/${student.github}`"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      {{ student.github }}
+                    </a>
+                    <template v-else>{{ formatColumnValue(student, column) }}</template>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
           <div v-if="visibleStudents.length === 0" class="empty-state">
             {{ emptyStateMessage }}
@@ -157,6 +226,40 @@
 import { getRankingStudentCourseInfo } from '@/api.js'
 
 const DEFAULT_SCORE_METRIC = 'commits'
+const TABLE_PREFERENCES_KEY = 'kucode-ranking-table-preferences'
+
+const COLUMN_DEFINITIONS = {
+  rank: { key: 'rank', label: '순위', type: 'number' },
+  name: { key: 'name', label: '이름', type: 'text' },
+  student_id: { key: 'student_id', label: '학번', type: 'text' },
+  department: { key: 'department', label: '학과', type: 'text' },
+  github: { key: 'github', label: 'Github', type: 'text' },
+  enrollment: { key: 'enrollment', label: '재학 상태', type: 'text' },
+  score: { key: 'score', label: '점수', type: 'number' },
+  commits: { key: 'commits', label: 'Commits', type: 'number' },
+  prs: { key: 'prs', label: 'PRs', type: 'number' },
+  issues: { key: 'issues', label: 'Issues', type: 'number' },
+  repos: { key: 'repos', label: 'Repos', type: 'number' },
+  stars: { key: 'stars', label: 'Stars', type: 'number' },
+  contributors: { key: 'contributors', label: 'Contributors', type: 'number' },
+}
+
+const COLUMN_KEYS = [
+  'rank',
+  'name',
+  'student_id',
+  'department',
+  'github',
+  'score',
+  'enrollment',
+  'commits',
+  'prs',
+  'issues',
+  'repos',
+  'stars',
+  'contributors',
+]
+const DEFAULT_COLUMN_KEYS = ['rank', 'name', 'student_id', 'department', 'github', 'score', 'commits', 'prs', 'issues', 'repos']
 
 export default {
   name: 'Ranking',
@@ -171,9 +274,33 @@ export default {
       currentPage: 1,
       postsPerPage: 10,
       rows: [],
+      tableSettingsOpen: false,
+      selectedColumnKeys: [...DEFAULT_COLUMN_KEYS],
+      selectedDepartment: '',
+      selectedEnrollment: '',
     }
   },
   computed: {
+    columnOptions() {
+      return COLUMN_KEYS.map((key) => COLUMN_DEFINITIONS[key])
+    },
+    displayColumns() {
+      return this.columnOptions.filter((column) => this.selectedColumnKeys.includes(column.key))
+    },
+    departments() {
+      return [...new Set(this.rankedStudents.map((student) => student.department).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, 'ko'))
+    },
+    enrollments() {
+      return [...new Set(this.rankedStudents.map((student) => student.enrollment).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, 'ko'))
+    },
+    activeFilterCount() {
+      let count = 0
+      if (this.selectedDepartment) count += 1
+      if (this.selectedEnrollment) count += 1
+      return count
+    },
     years() {
       return [...new Set(this.rows.map((row) => row.year))].sort((a, b) => Number(b) - Number(a))
     },
@@ -207,7 +334,7 @@ export default {
       if (this.loading) return '랭킹 데이터를 불러오는 중입니다.'
       if (this.loadError) return this.loadError
       if (this.rows.length === 0) return '표시할 랭킹 데이터가 없습니다.'
-      return '검색 결과가 없습니다.'
+      return '검색 또는 필터 결과가 없습니다.'
     },
     rankedStudents() {
       if (!this.selectedCourse) return []
@@ -228,11 +355,14 @@ export default {
     },
     visibleStudents() {
       const keyword = this.searchKeyword.trim().toLowerCase()
-      if (!keyword) return this.rankedStudents
 
       return this.rankedStudents.filter((student) => {
-        return [student.name, student.student_id, student.github, student.department]
+        const matchesKeyword = !keyword || [student.name, student.student_id, student.github, student.department, student.enrollment]
           .some((value) => String(value).toLowerCase().includes(keyword))
+        const matchesDepartment = !this.selectedDepartment || student.department === this.selectedDepartment
+        const matchesEnrollment = !this.selectedEnrollment || student.enrollment === this.selectedEnrollment
+
+        return matchesKeyword && matchesDepartment && matchesEnrollment
       })
     },
     paginatedStudents() {
@@ -280,15 +410,109 @@ export default {
     selectedCourseKey() {
       this.currentPage = 1
       this.searchKeyword = ''
+      this.resetRowFilters()
     },
     searchKeyword() {
       this.currentPage = 1
     },
+    selectedDepartment() {
+      this.handleFilterChange()
+    },
+    selectedEnrollment() {
+      this.handleFilterChange()
+    },
   },
   created() {
+    this.loadTablePreferences()
     this.fetchRankingRows()
   },
+  mounted() {
+    document.addEventListener('click', this.handleDocumentClick)
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleDocumentClick)
+  },
   methods: {
+    loadTablePreferences() {
+      try {
+        const preferences = JSON.parse(localStorage.getItem(TABLE_PREFERENCES_KEY))
+        if (!preferences) return
+
+        let selectedKeys = preferences.selectedColumnKeys
+        if (!Array.isArray(selectedKeys) && Array.isArray(preferences.leadingColumnKeys) && Array.isArray(preferences.activityColumnKeys)) {
+          selectedKeys = ['rank', ...preferences.leadingColumnKeys, 'score', ...preferences.activityColumnKeys]
+        }
+
+        if (Array.isArray(selectedKeys)) {
+          const validKeys = COLUMN_KEYS.filter((key) => selectedKeys.includes(key) || key === 'score')
+          this.selectedColumnKeys = validKeys.length ? validKeys : [...DEFAULT_COLUMN_KEYS]
+        }
+      } catch (error) {
+        console.warn('Failed to load ranking table preferences:', error)
+      }
+    },
+    saveTablePreferences() {
+      try {
+        localStorage.setItem(TABLE_PREFERENCES_KEY, JSON.stringify({
+          selectedColumnKeys: this.selectedColumnKeys,
+        }))
+      } catch (error) {
+        console.warn('Failed to save ranking table preferences:', error)
+      }
+    },
+    toggleTableSettings() {
+      this.tableSettingsOpen = !this.tableSettingsOpen
+    },
+    closeTableSettings() {
+      this.tableSettingsOpen = false
+    },
+    handleDocumentClick(event) {
+      if (this.tableSettingsOpen && !this.$refs.tableSettings?.contains(event.target)) {
+        this.closeTableSettings()
+      }
+    },
+    isColumnSelected(columnKey) {
+      return this.selectedColumnKeys.includes(columnKey)
+    },
+    toggleColumn(columnKey, checked) {
+      if (!COLUMN_KEYS.includes(columnKey) || columnKey === 'score') return
+
+      const nextSelection = new Set(this.selectedColumnKeys)
+      if (checked) {
+        nextSelection.add(columnKey)
+      } else {
+        nextSelection.delete(columnKey)
+      }
+      nextSelection.add('score')
+      this.selectedColumnKeys = COLUMN_KEYS.filter((key) => nextSelection.has(key))
+      this.currentPage = 1
+      this.saveTablePreferences()
+    },
+    resetRowFilters() {
+      this.selectedDepartment = ''
+      this.selectedEnrollment = ''
+      this.currentPage = 1
+    },
+    resetTableSettings() {
+      this.selectedColumnKeys = [...DEFAULT_COLUMN_KEYS]
+      this.resetRowFilters()
+      this.saveTablePreferences()
+    },
+    handleFilterChange() {
+      this.currentPage = 1
+    },
+    columnClasses(column) {
+      return {
+        [`column-${column.key}`]: true,
+        'numeric-column': column.type === 'number',
+        'score-cell': column.key === 'score',
+      }
+    },
+    formatColumnValue(student, column) {
+      const value = student[column.key]
+      if (value === null || value === undefined || value === '') return '-'
+      return value
+    },
     toCourseKey(course) {
       return `${course.year}-${course.semester}-${course.course_id}`
     },
@@ -349,10 +573,13 @@ export default {
             name: row.name || '',
             department: row.department || '',
             github: row.github_id || '',
+            enrollment: row.enrollment || '',
             commits: 0,
             prs: 0,
             issues: 0,
             repos: 0,
+            stars: 0,
+            contributors: 0,
           }
           course.students.push(student)
         }
@@ -361,6 +588,8 @@ export default {
         student.prs += Number(row.pr || 0)
         student.issues += Number(row.issue || 0)
         student.repos += Number(row.num_repos || 0)
+        student.stars += Number(row.star_count || 0)
+        student.contributors += Number(row.total_contributors || 0)
       })
 
       return Array.from(courseMap.values())
@@ -508,7 +737,8 @@ export default {
 }
 
 .filter-field select,
-.search-box input {
+.search-box input,
+.settings-menu select {
   height: 44px;
   border: 1px solid #dce2ed;
   border-radius: 6px;
@@ -619,9 +849,204 @@ export default {
   margin: 0;
 }
 
+.table-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-box {
+  min-width: 0;
+}
+
 .search-box input {
   width: 260px;
   padding: 0 14px;
+}
+
+.table-settings {
+  position: relative;
+}
+
+.settings-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #dce2ed;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #616161;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.settings-button:hover:not(:disabled),
+.settings-button[aria-expanded="true"] {
+  border-color: #910024;
+  color: #910024;
+}
+
+.settings-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 20;
+  width: 430px;
+  max-height: min(680px, calc(100vh - 190px));
+  padding: 22px;
+  overflow-y: auto;
+  border: 1px solid #dce2ed;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 16px 40px rgba(38, 38, 38, 0.14);
+  color: #262626;
+}
+
+.settings-header,
+.section-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-header strong {
+  font-size: 18px;
+}
+
+.settings-header p {
+  margin: 5px 0 0;
+  color: #8a8a8a;
+  font-size: 12px;
+}
+
+.settings-reset,
+.section-title-row button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #910024;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.settings-section {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #eef1f5;
+}
+
+.settings-section h3 {
+  margin: 0 0 12px;
+  color: #616161;
+  font-size: 13px;
+}
+
+.filter-setting-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.filter-setting-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-setting-grid label > span {
+  color: #8a8a8a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.settings-menu select {
+  width: 100%;
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+.column-order-help {
+  margin: -4px 0 10px;
+  color: #8a8a8a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.column-checklist {
+  border-top: 1px solid #eef1f5;
+}
+
+.column-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 4px;
+  border-bottom: 1px solid #eef1f5;
+  color: #262626;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.column-check:hover {
+  background: #fff8fa;
+}
+
+.column-check input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #910024;
+  cursor: pointer;
+}
+
+.column-check input:disabled {
+  cursor: not-allowed;
+}
+
+.column-check:has(input:disabled) {
+  cursor: default;
+}
+
+.column-lock {
+  margin-left: auto;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #f8f1f3;
+  color: #910024;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.settings-done {
+  width: 100%;
+  height: 42px;
+  margin-top: 20px;
+  border: 1px solid #910024;
+  border-radius: 6px;
+  background: #910024;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.table-scroll {
+  overflow-x: auto;
 }
 
 .ranking-table {
@@ -655,26 +1080,24 @@ export default {
   padding: 0 10px;
 }
 
-.ranking-table th:first-child,
-.ranking-table td:first-child {
+.ranking-table .column-rank {
   width: 58px;
   text-align: center;
 }
 
-.ranking-table th:nth-child(2),
-.ranking-table td:nth-child(2) {
+.ranking-table .column-name {
   width: 90px;
 }
 
-.ranking-table th:nth-child(3),
-.ranking-table td:nth-child(3) {
+.ranking-table .column-student_id {
   width: 112px;
 }
 
-.ranking-table th:nth-child(6),
-.ranking-table td:nth-child(6),
-.ranking-table th:nth-child(n+7),
-.ranking-table td:nth-child(n+7) {
+.ranking-table .column-enrollment {
+  width: 90px;
+}
+
+.ranking-table .numeric-column {
   text-align: right;
 }
 
@@ -778,12 +1201,49 @@ export default {
     width: 100%;
   }
 
-  .ranking-table-card {
-    overflow-x: auto;
+  .table-tools {
+    width: 100%;
+  }
+
+  .search-box {
+    flex: 1;
   }
 
   .ranking-table {
     min-width: 920px;
+  }
+}
+
+@media (max-width: 600px) {
+  .ranking-page {
+    padding-top: 120px;
+  }
+
+  .ranking-shell {
+    width: min(100% - 28px, 1280px);
+  }
+
+  .ranking-table-card {
+    padding: 22px 18px 26px;
+  }
+
+  .table-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .settings-button {
+    width: 100%;
+  }
+
+  .settings-menu {
+    position: fixed;
+    top: auto;
+    right: 14px;
+    bottom: 14px;
+    left: 14px;
+    width: auto;
+    max-height: calc(100vh - 28px);
   }
 }
 </style>
