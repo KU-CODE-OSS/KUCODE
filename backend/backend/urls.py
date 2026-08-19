@@ -14,6 +14,7 @@ urlpatterns = [
     path(base_api_url + 'board/', include("board.api.urls")),
     path(base_api_url + 'login/',include("login.api.urls")),
     path(base_api_url + 'authentication/',include("authentication.api.urls")),
+    path(base_api_url + 'scoring/', include("scoring.api.urls")),
 ]
 
 if bool(settings.DEBUG):

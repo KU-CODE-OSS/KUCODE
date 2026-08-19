@@ -53,7 +53,7 @@ export function getCourseInfo() {
 }
 
 export function getRankingStudentCourseInfo() {
-  return ajax('/account/student_read_course_info', 'get');
+  return ajax('/scoring/course-ranking', 'get');
 }
 
 export function getCourseReadMinMaxAvg() {
