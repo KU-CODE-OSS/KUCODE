@@ -178,80 +178,129 @@
 
       <!-- Activity Section -->
       <section class="activity-section">
-        <!-- Activity Section Header -->
         <div class="activity-section-header">
           <div class="activity-header-content">
             <i class="icon-activity"></i>
             <h2 class="activity-title">개발 활동 패턴</h2>
           </div>
         </div>
-        
-        <div class="activity-charts">
-          <!-- Activity Trends Chart -->
-            <div class="chart-card">
-              <div class="chart-header">
-                <h3 class="chart-title-text">활동 추이 (최근 6개월)</h3>
-              <!-- <div class="chart-toggle">
-                <span 
-                  :class="{ 'toggle-active': activityViewMode === 'monthly', 'toggle-inactive': activityViewMode !== 'monthly' }"
-                  @click="switchActivityViewMode('monthly')"
-                >
-                  월간
-                </span>
-                <span 
-                  :class="{ 'toggle-active': activityViewMode === 'weekly', 'toggle-inactive': activityViewMode !== 'weekly' }"
-                  @click="switchActivityViewMode('weekly')"
-                >
-                  주간
-                </span>
-              </div> -->
-            </div>
-            <p class="chart-description">최근 대규모의 커밋량 변동이 많았습니다</p>
-            
-            <!-- Chart Legend -->
-            <div class="chart-legend-horizontal">
-              <div class="legend-item">
-                <div class="legend-dot" style="background: #C16179;"></div>
-                <span>커밋 횟수</span>
-              </div>
-              <div class="legend-item">
-                <div class="legend-dot" style="background: #FF176A;"></div>
-                <span>코드 생산량</span>
-              </div>
-              <!-- <div class="legend-item">
-                <div class="legend-dot" style="background: #FF90AB;"></div>
-                <span>Stars</span>
-              </div> -->
-            </div>
 
-            <!-- Activity Line Chart -->
-            <div class="activity-chart-container">
-              <canvas ref="activityChart" width="525" height="180"></canvas>
-            </div>
+        <div class="development-widget">
+          <div class="development-tabs" role="tablist" aria-label="개발 활동 및 역량 보기">
+            <button
+              v-for="tab in developmentTabs"
+              :key="tab.id"
+              type="button"
+              class="development-tab"
+              :class="{ active: activeDevelopmentTab === tab.id }"
+              :aria-selected="activeDevelopmentTab === tab.id"
+              @click="switchDevelopmentTab(tab.id)"
+            >
+              {{ tab.label }}
+            </button>
           </div>
 
-          <!-- Project Team Size Chart -->
-            <div class="chart-card">
+          <div class="development-panel">
+            <div v-if="activeDevelopmentTab === 'activity'" class="tab-chart-content">
+              <div class="chart-header">
+                <h3 class="chart-title-text">활동 추이 (최근 6개월)</h3>
+              </div>
+              <div class="chart-legend-horizontal">
+                <div class="legend-item">
+                  <div class="legend-dot" style="background: #C16179;"></div>
+                  <span>커밋 횟수</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background: #FF176A;"></div>
+                  <span>코드 생산량</span>
+                </div>
+              </div>
+              <div class="activity-chart-container centralized-chart-container">
+                <canvas ref="activityChart" width="1050" height="260"></canvas>
+              </div>
+            </div>
+
+            <div v-else-if="activeDevelopmentTab === 'team'" class="tab-chart-content">
               <div class="chart-header">
                 <h3 class="chart-title-text">팀 프로젝트 비율</h3>
               </div>
-            <p class="chart-description">{{ teamSizeDescription }}</p>
-            
-            <!-- Bar Chart Area -->
-            <div class="team-size-chart-container">
-              <canvas ref="teamSizeChart" width="525" height="200"></canvas>
+              <p class="chart-description">{{ teamSizeDescription }}</p>
+              <div class="team-size-chart-container centralized-chart-container">
+                <canvas ref="teamSizeChart" width="1050" height="260"></canvas>
+              </div>
+            </div>
+
+            <div v-else-if="activeDevelopmentTab === 'time'" class="tab-chart-content">
+              <div class="section-header centralized-section-header">
+                <h3 class="chart-title-text">활동 시간대</h3>
+              </div>
+              <EProfileHeatmap :heatmapData="heatmapData" />
+            </div>
+
+            <div v-else class="aptitude-panel">
+              <div v-if="aptitudeLoading" class="aptitude-state">역량 점수를 불러오는 중입니다.</div>
+              <div v-else-if="aptitudeError" class="aptitude-state aptitude-state-error">
+                {{ aptitudeError }}
+              </div>
+              <div v-else-if="!aptitude.available" class="aptitude-state">
+                아직 계산된 종합 역량 점수가 없습니다.
+              </div>
+              <template v-else>
+                <div class="aptitude-summary">
+                  <div class="aptitude-gauge-column">
+                    <div class="aptitude-gauge" :style="aptitudeGaugeStyle">
+                      <div class="aptitude-gauge-center">
+                        <strong>{{ formatAptitudeScore(aptitude.overall_score) }}</strong>
+                        <span>/ 100</span>
+                      </div>
+                    </div>
+                    <div class="aptitude-overall-label">종합 역량 점수</div>
+                  </div>
+
+                  <div class="aptitude-metrics">
+                    <div
+                      v-for="metric in aptitudeMetrics"
+                      :key="metric.key"
+                      class="aptitude-metric"
+                    >
+                      <div class="aptitude-metric-header">
+                        <span>{{ metric.label }}</span>
+                        <strong>{{ formatAptitudeScore(metric.value) }}</strong>
+                      </div>
+                      <div class="aptitude-bar-track">
+                        <div
+                          class="aptitude-bar-fill"
+                          :style="{ width: aptitudeBarWidth(metric.value) }"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="aptitude-meta">
+                  <div class="aptitude-meta-item">
+                    <span>반영 교과목</span>
+                    <strong>{{ aptitude.course_count }}개</strong>
+                  </div>
+                  <div class="aptitude-meta-item">
+                    <span>반영 프로젝트</span>
+                    <strong>{{ aptitude.project_count }}개</strong>
+                  </div>
+                  <div class="aptitude-meta-item">
+                    <span>보유 프로젝트</span>
+                    <strong>{{ aptitude.owned_repository_count }}개</strong>
+                  </div>
+                  <div class="aptitude-meta-item aptitude-meta-updated">
+                    <span>마지막 계산</span>
+                    <strong>{{ aptitudeUpdatedAt }}</strong>
+                  </div>
+                </div>
+                <p class="aptitude-note">
+                  최신 교과목별 산정 결과만 통합한 현재 역량입니다. 성장 궤적은 포함하지 않습니다.
+                </p>
+              </template>
             </div>
           </div>
-        </div>
-
-        <!-- Activity Time Pattern -->
-          <div class="time-pattern-card">
-            <div class="section-header">
-              <h3 class="chart-title-text">활동 시간대</h3>
-            </div>
-          
-          <!-- 히트맵 컴포넌트 -->
-          <EProfileHeatmap :heatmapData="heatmapData" />
         </div>
       </section>
 
@@ -515,7 +564,7 @@ import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import EProfileHeatmap from './EProfileComponents/EProfileHeatmap.vue'
 import RepoDetailModal from './EProfileComponents/RepoDetailModal.vue'
-import { getEProfileHeatmap, updateStudentIntroduction, updateStudentTechnologyStack } from '@/api.js'
+import { getEProfileHeatmap, getStudentAptitude, updateStudentIntroduction, updateStudentTechnologyStack } from '@/api.js'
 import { processActivityData, processAddedLinesData, estimateCommitLines } from './EProfileComponents/chartUtils/chartUtils.js'
 import { auth } from '../services/firebase'
 
@@ -559,6 +608,26 @@ export default {
       // Activity Chart Data - NEW ADDITIONS
       activityChart: null,
       activityViewMode: 'monthly', // 'monthly' or 'weekly'
+      activeDevelopmentTab: 'activity',
+      developmentTabs: [
+        { id: 'activity', label: '활동 추이' },
+        { id: 'team', label: '팀 프로젝트 비율' },
+        { id: 'time', label: '활동 시간대' },
+        { id: 'aptitude', label: '종합 역량' }
+      ],
+      aptitudeLoading: false,
+      aptitudeError: '',
+      aptitude: {
+        available: false,
+        overall_score: null,
+        productivity_score: null,
+        collaboration_score: null,
+        problem_solving_score: null,
+        project_count: 0,
+        course_count: 0,
+        owned_repository_count: 0,
+        updated_at: null
+      },
       // Sample activity data - replace with actual API data
       activityData: {
         monthly: {
@@ -663,6 +732,32 @@ export default {
     }
   },
   computed: {
+    aptitudeMetrics() {
+      return [
+        { key: 'productivity', label: '생산성', value: this.aptitude.productivity_score },
+        { key: 'collaboration', label: '협업', value: this.aptitude.collaboration_score },
+        { key: 'problem_solving', label: '문제 해결', value: this.aptitude.problem_solving_score }
+      ]
+    },
+
+    aptitudeGaugeStyle() {
+      const score = this.normalizedAptitudeScore(this.aptitude.overall_score)
+      return {
+        background: `conic-gradient(#FF176A ${score}%, #F4E7EB ${score}% 100%)`
+      }
+    },
+
+    aptitudeUpdatedAt() {
+      if (!this.aptitude.updated_at) return 'N/A'
+      return new Date(this.aptitude.updated_at).toLocaleString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    },
+
     teamSizeDescription() {
       if (!this.teamSizeData || !this.teamSizeData.data || this.teamSizeData.data.length === 0) {
         return '프로젝트 데이터가 없습니다'
@@ -814,13 +909,16 @@ export default {
     this.techStackDropdowns.forEach(dropdown => {
       dropdown.options = this.allTechOptions
     })
-    await this.loadHeatmapData(this.$router.options.history.state.student_num)
+    const studentNum = this.$router.options.history.state.student_num
+    await Promise.all([
+      this.loadHeatmapData(studentNum),
+      this.loadStudentAptitude(studentNum)
+    ])
 
     this.createTechStackChart()
     setTimeout(() => {
       this.createActivityChart()
     }, 50)
-    this.createTeamSizeChart()
 
     // Use arrow function to maintain 'this' context
     this.closeAllDropdowns = (event) => {
@@ -854,13 +952,65 @@ export default {
     document.removeEventListener('click', this.closeAllDropdowns)
   },
   methods: {
+    switchDevelopmentTab(tabId) {
+      if (this.activeDevelopmentTab === tabId) return
+
+      if (this.activityChart) {
+        this.activityChart.destroy()
+        this.activityChart = null
+      }
+      if (this.teamSizeChart) {
+        this.teamSizeChart.destroy()
+        this.teamSizeChart = null
+      }
+
+      this.activeDevelopmentTab = tabId
+      this.$nextTick(() => {
+        if (tabId === 'activity') this.createActivityChart()
+        if (tabId === 'team') this.createTeamSizeChart()
+      })
+    },
+    normalizedAptitudeScore(value) {
+      const number = Number(value)
+      if (!Number.isFinite(number)) return 0
+      return Math.min(100, Math.max(0, number))
+    },
+    formatAptitudeScore(value) {
+      if (value === null || value === undefined || value === '') return 'N/A'
+      return this.normalizedAptitudeScore(value).toFixed(1)
+    },
+    aptitudeBarWidth(value) {
+      return `${this.normalizedAptitudeScore(value)}%`
+    },
+    async loadStudentAptitude(studentNum) {
+      this.aptitudeLoading = true
+      this.aptitudeError = ''
+      try {
+        const response = await getStudentAptitude(
+          studentNum ? '' : this.student_uuid,
+          studentNum
+        )
+        this.aptitude = {
+          ...this.aptitude,
+          ...response.data
+        }
+      } catch (error) {
+        console.error('Failed to load student aptitude:', error)
+        this.aptitudeError = '종합 역량 점수를 불러오지 못했습니다.'
+      } finally {
+        this.aptitudeLoading = false
+      }
+    },
     async handleStudentChang() {
       const { student_num } = this.$router.options.history.state.student_num || {}
       const target = student_num || this.student_uuid
       if (!target) return
 
       this.resetCharts()
-      await this.loadHeatmapData(target)
+      await Promise.all([
+        this.loadHeatmapData(target),
+        this.loadStudentAptitude(target)
+      ])
     },
     resetCharts() {
       this.techStackChart?.destroy()
@@ -2748,6 +2898,216 @@ export default {
   margin-bottom: 40px;
 }
 
+.development-widget {
+  overflow: hidden;
+  background: #FFFFFF;
+  border: 1px solid #F1E6EA;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(70, 32, 45, 0.06);
+}
+
+.development-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 12px 16px 0;
+  overflow-x: auto;
+  border-bottom: 1px solid #F1E6EA;
+}
+
+.development-tab {
+  flex: 0 0 auto;
+  padding: 13px 18px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #777077;
+  font-family: 'Pretendard';
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.development-tab:hover {
+  color: #FF176A;
+  background: #FFF7F9;
+}
+
+.development-tab.active {
+  color: #FF176A;
+  border-bottom-color: #FF176A;
+  font-weight: 700;
+}
+
+.development-panel {
+  min-height: 390px;
+  padding: 30px 40px;
+  box-sizing: border-box;
+}
+
+.tab-chart-content {
+  min-height: 330px;
+}
+
+.centralized-chart-container {
+  width: 100%;
+  height: 270px;
+  min-height: 270px;
+  margin-top: 18px;
+}
+
+.centralized-section-header {
+  margin-bottom: 24px;
+}
+
+.aptitude-panel {
+  min-height: 330px;
+}
+
+.aptitude-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 330px;
+  color: #777077;
+  font-family: 'Pretendard';
+  font-size: 16px;
+}
+
+.aptitude-state-error {
+  color: #C4425D;
+}
+
+.aptitude-summary {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  align-items: center;
+  gap: 56px;
+}
+
+.aptitude-gauge-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.aptitude-gauge {
+  width: 172px;
+  height: 172px;
+  padding: 14px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.aptitude-gauge-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: inset 0 0 0 1px #F4E7EB;
+  font-family: 'Pretendard';
+}
+
+.aptitude-gauge-center strong {
+  color: #262626;
+  font-size: 38px;
+  line-height: 1.1;
+}
+
+.aptitude-gauge-center span {
+  margin-top: 4px;
+  color: #8B8185;
+  font-size: 13px;
+}
+
+.aptitude-overall-label {
+  color: #4E474A;
+  font-family: 'Pretendard';
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.aptitude-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.aptitude-metric-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 9px;
+  color: #4E474A;
+  font-family: 'Pretendard';
+  font-size: 15px;
+}
+
+.aptitude-metric-header strong {
+  color: #262626;
+  font-size: 16px;
+}
+
+.aptitude-bar-track {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #F4E7EB;
+}
+
+.aptitude-bar-fill {
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #C16179 0%, #FF176A 100%);
+  transition: width 0.5s ease;
+}
+
+.aptitude-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) 1.5fr;
+  gap: 10px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #F1E6EA;
+}
+
+.aptitude-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0 14px;
+  border-right: 1px solid #F1E6EA;
+  font-family: 'Pretendard';
+}
+
+.aptitude-meta-item:last-child {
+  border-right: 0;
+}
+
+.aptitude-meta-item span {
+  color: #8B8185;
+  font-size: 12px;
+}
+
+.aptitude-meta-item strong {
+  color: #3D3739;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.aptitude-note {
+  margin: 18px 0 0;
+  color: #8B8185;
+  font-family: 'Pretendard';
+  font-size: 12px;
+  text-align: right;
+}
+
 /* Activity Section Header */
 .activity-section-header {
   margin-bottom: 30px;
@@ -3583,6 +3943,49 @@ export default {
   
   .skills-stats {
     grid-template-columns: 1fr;
+  }
+
+  .development-tabs {
+    padding: 8px 10px 0;
+  }
+
+  .development-tab {
+    padding: 11px 13px;
+    font-size: 13px;
+  }
+
+  .development-panel {
+    min-height: 430px;
+    padding: 22px 18px;
+  }
+
+  .aptitude-summary {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .aptitude-gauge {
+    width: 145px;
+    height: 145px;
+  }
+
+  .aptitude-gauge-center strong {
+    font-size: 32px;
+  }
+
+  .aptitude-meta {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .aptitude-meta-item,
+  .aptitude-meta-item:last-child {
+    padding: 8px 10px;
+    border-right: 0;
+  }
+
+  .aptitude-note {
+    text-align: left;
+    line-height: 1.5;
   }
 }
 

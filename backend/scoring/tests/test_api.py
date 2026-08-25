@@ -4,11 +4,13 @@ from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
 from account.models import Student
+from login.models import Member, Student as LoginStudent
 from course.models import Course
-from scoring.api.views import course_ranking
+from scoring.api.views import course_ranking, student_aptitude
 from scoring.models import (
     ScoringParameterSet,
     ScoringRun,
+    StudentAptitudeScore,
     StudentCourseScore,
 )
 
@@ -97,5 +99,91 @@ class CourseRankingApiTests(TestCase):
 
     def test_rejects_non_get_requests(self):
         response = course_ranking(self.factory.post("/api/scoring/course-ranking"))
+
+        self.assertEqual(response.status_code, 405)
+
+
+class StudentAptitudeApiTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.student = Student.objects.create(
+            id="student-1",
+            name="Student One",
+            github_id="student-one",
+        )
+        self.score = StudentAptitudeScore.objects.create(
+            student=self.student,
+            overall_score=81.5,
+            productivity_score=80,
+            collaboration_score=75,
+            problem_solving_score=70,
+            project_count=3,
+            course_count=2,
+            source_run_ids=[2, 4],
+            component_details={
+                "project_average": 78.25,
+                "collaboration_stability": 94.5,
+                "owned_repository_count": 2,
+                "aggregation_scope": "canonical_course_runs_only",
+                "growth_included": False,
+            },
+        )
+        self.member = Member.objects.create(
+            id="firebase-uuid",
+            name="Student One",
+            email="student@example.com",
+        )
+        LoginStudent.objects.create(member=self.member, id=self.student.pk)
+
+    def test_returns_current_student_aptitude(self):
+        response = student_aptitude(
+            self.factory.get(
+                "/api/scoring/student-aptitude",
+                {"student_id": self.student.pk},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = json.loads(response.content)
+        self.assertTrue(payload["available"])
+        self.assertEqual(payload["overall_score"], 81.5)
+        self.assertEqual(payload["project_count"], 3)
+        self.assertFalse(payload["growth_included"])
+
+    def test_returns_unavailable_for_unscored_student(self):
+        unscored = Student.objects.create(id="student-2", name="Student Two")
+
+        response = student_aptitude(
+            self.factory.get(
+                "/api/scoring/student-aptitude",
+                {"student_id": unscored.pk},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(json.loads(response.content)["available"])
+
+    def test_resolves_logged_in_student_uuid(self):
+        response = student_aptitude(
+            self.factory.get(
+                "/api/scoring/student-aptitude",
+                {"uuid": self.member.pk},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content)["student_id"], self.student.pk)
+
+    def test_requires_student_identifier(self):
+        response = student_aptitude(
+            self.factory.get("/api/scoring/student-aptitude")
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_rejects_non_get_requests(self):
+        response = student_aptitude(
+            self.factory.post("/api/scoring/student-aptitude")
+        )
 
         self.assertEqual(response.status_code, 405)

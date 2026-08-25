@@ -95,6 +95,14 @@ export function getEProfileHeatmap(student_uuid, student_num) {
   });
 }
 
+export function getStudentAptitude(student_uuid, student_num) {
+  const params = student_num
+    ? { student_id: student_num }
+    : { uuid: student_uuid };
+
+  return ajax('/scoring/student-aptitude', 'get', { params });
+}
+
 // Authentication / Login 등
 export function checkStudentIdNumber(student_id, student_name) {
   return ajax('/authentication/studentIdNumber_verification', 'get', {
