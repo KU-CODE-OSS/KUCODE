@@ -55,7 +55,7 @@
               <strong>{{ student.name }}</strong>
               <span>{{ student.department }} · {{ student.student_id }}</span>
             </div>
-            <p>{{ student.score }}점</p>
+            <p>{{ formatScore(student.score) }}점</p>
           </article>
         </section>
 
@@ -97,7 +97,7 @@
                   <div class="settings-header">
                     <div>
                       <strong>표 설정</strong>
-                      <p>점수 열은 현재 위치에 고정됩니다.</p>
+                      <p>종합 점수 열은 현재 위치에 고정됩니다.</p>
                     </div>
                     <button type="button" class="settings-reset" @click="resetTableSettings">전체 초기화</button>
                   </div>
@@ -139,6 +139,35 @@
                           <option v-for="enrollment in enrollments" :key="enrollment" :value="enrollment">{{ enrollment }}</option>
                         </select>
                       </label>
+                    </div>
+
+                    <div class="score-filter-list">
+                      <p class="score-filter-help">세부 점수 필터는 입력한 경우에만 적용됩니다.</p>
+                      <div v-for="metric in scoreFilterOptions" :key="metric.key" class="score-filter-row">
+                        <strong>{{ metric.label }}</strong>
+                        <label>
+                          <span>최소</span>
+                          <input
+                            v-model="scoreFilters[metric.key].min"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            placeholder="0"
+                          />
+                        </label>
+                        <label>
+                          <span>최대</span>
+                          <input
+                            v-model="scoreFilters[metric.key].max"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            placeholder="100"
+                          />
+                        </label>
+                      </div>
                     </div>
                   </section>
 
@@ -225,8 +254,24 @@
 <script>
 import { getRankingStudentCourseInfo } from '@/api.js'
 
-const DEFAULT_SCORE_METRIC = 'commits'
 const TABLE_PREFERENCES_KEY = 'kucode-ranking-table-preferences'
+const SCORE_FILTER_OPTIONS = [
+  { key: 'productivity_score', label: '생산성 점수' },
+  { key: 'collaboration_score', label: '협업 점수' },
+  { key: 'problem_solving_score', label: '문제해결 점수' },
+]
+
+function createEmptyScoreFilters() {
+  return Object.fromEntries(
+    SCORE_FILTER_OPTIONS.map((metric) => [metric.key, { min: '', max: '' }]),
+  )
+}
+
+function nullableNumber(value) {
+  if (value === null || value === undefined || value === '') return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
 
 const COLUMN_DEFINITIONS = {
   rank: { key: 'rank', label: '순위', type: 'number' },
@@ -235,13 +280,15 @@ const COLUMN_DEFINITIONS = {
   department: { key: 'department', label: '학과', type: 'text' },
   github: { key: 'github', label: 'Github', type: 'text' },
   enrollment: { key: 'enrollment', label: '재학 상태', type: 'text' },
-  score: { key: 'score', label: '점수', type: 'number' },
-  commits: { key: 'commits', label: 'Commits', type: 'number' },
-  prs: { key: 'prs', label: 'PRs', type: 'number' },
-  issues: { key: 'issues', label: 'Issues', type: 'number' },
-  repos: { key: 'repos', label: 'Repos', type: 'number' },
-  stars: { key: 'stars', label: 'Stars', type: 'number' },
-  contributors: { key: 'contributors', label: 'Contributors', type: 'number' },
+  score: { key: 'score', label: '종합 점수', type: 'score' },
+  productivity_score: { key: 'productivity_score', label: '생산성 점수', type: 'score' },
+  collaboration_score: { key: 'collaboration_score', label: '협업 점수', type: 'score' },
+  problem_solving_score: { key: 'problem_solving_score', label: '문제해결 점수', type: 'score' },
+  commits: { key: 'commits', label: '개인 Commits', type: 'number' },
+  changed_lines: { key: 'changed_lines', label: '개인 변경 라인', type: 'number' },
+  repos: { key: 'repos', label: '기여 Repos', type: 'number' },
+  owned_repos: { key: 'owned_repos', label: '소유 Repos', type: 'number' },
+  representative_repos: { key: 'representative_repos', label: '대표 Repos', type: 'number' },
 }
 
 const COLUMN_KEYS = [
@@ -251,15 +298,17 @@ const COLUMN_KEYS = [
   'department',
   'github',
   'score',
+  'productivity_score',
+  'collaboration_score',
+  'problem_solving_score',
   'enrollment',
   'commits',
-  'prs',
-  'issues',
+  'changed_lines',
   'repos',
-  'stars',
-  'contributors',
+  'owned_repos',
+  'representative_repos',
 ]
-const DEFAULT_COLUMN_KEYS = ['rank', 'name', 'student_id', 'department', 'github', 'score', 'commits', 'prs', 'issues', 'repos']
+const DEFAULT_COLUMN_KEYS = ['rank', 'name', 'student_id', 'department', 'github', 'score', 'commits', 'repos']
 
 export default {
   name: 'Ranking',
@@ -278,9 +327,13 @@ export default {
       selectedColumnKeys: [...DEFAULT_COLUMN_KEYS],
       selectedDepartment: '',
       selectedEnrollment: '',
+      scoreFilters: createEmptyScoreFilters(),
     }
   },
   computed: {
+    scoreFilterOptions() {
+      return SCORE_FILTER_OPTIONS
+    },
     columnOptions() {
       return COLUMN_KEYS.map((key) => COLUMN_DEFINITIONS[key])
     },
@@ -299,6 +352,10 @@ export default {
       let count = 0
       if (this.selectedDepartment) count += 1
       if (this.selectedEnrollment) count += 1
+      SCORE_FILTER_OPTIONS.forEach((metric) => {
+        const filter = this.scoreFilters[metric.key]
+        if (filter.min !== '' || filter.max !== '') count += 1
+      })
       return count
     },
     years() {
@@ -340,10 +397,7 @@ export default {
       if (!this.selectedCourse) return []
 
       return this.selectedCourse.students
-        .map((student) => ({
-          ...student,
-          score: this.calculateScore(student),
-        }))
+        .map((student) => ({ ...student }))
         .sort((a, b) => {
           if (b.score !== a.score) return b.score - a.score
           return a.name.localeCompare(b.name, 'ko')
@@ -361,8 +415,9 @@ export default {
           .some((value) => String(value).toLowerCase().includes(keyword))
         const matchesDepartment = !this.selectedDepartment || student.department === this.selectedDepartment
         const matchesEnrollment = !this.selectedEnrollment || student.enrollment === this.selectedEnrollment
+        const matchesScores = this.matchesScoreFilters(student)
 
-        return matchesKeyword && matchesDepartment && matchesEnrollment
+        return matchesKeyword && matchesDepartment && matchesEnrollment && matchesScores
       })
     },
     paginatedStudents() {
@@ -420,6 +475,12 @@ export default {
     },
     selectedEnrollment() {
       this.handleFilterChange()
+    },
+    scoreFilters: {
+      deep: true,
+      handler() {
+        this.handleFilterChange()
+      },
     },
   },
   created() {
@@ -491,6 +552,7 @@ export default {
     resetRowFilters() {
       this.selectedDepartment = ''
       this.selectedEnrollment = ''
+      this.scoreFilters = createEmptyScoreFilters()
       this.currentPage = 1
     },
     resetTableSettings() {
@@ -504,20 +566,36 @@ export default {
     columnClasses(column) {
       return {
         [`column-${column.key}`]: true,
-        'numeric-column': column.type === 'number',
+        'numeric-column': column.type === 'number' || column.type === 'score',
         'score-cell': column.key === 'score',
       }
     },
     formatColumnValue(student, column) {
       const value = student[column.key]
       if (value === null || value === undefined || value === '') return '-'
+      if (column.type === 'score') return this.formatScore(value)
       return value
+    },
+    formatScore(value) {
+      const score = Number(value)
+      return Number.isFinite(score) ? score.toFixed(2) : '-'
+    },
+    matchesScoreFilters(student) {
+      return SCORE_FILTER_OPTIONS.every((metric) => {
+        const filter = this.scoreFilters[metric.key]
+        const hasMinimum = filter.min !== ''
+        const hasMaximum = filter.max !== ''
+        if (!hasMinimum && !hasMaximum) return true
+
+        const value = nullableNumber(student[metric.key])
+        if (value === null) return false
+        if (hasMinimum && value < Number(filter.min)) return false
+        if (hasMaximum && value > Number(filter.max)) return false
+        return true
+      })
     },
     toCourseKey(course) {
       return `${course.year}-${course.semester}-${course.course_id}`
-    },
-    calculateScore(student) {
-      return Number(student[DEFAULT_SCORE_METRIC] || 0)
     },
     async fetchRankingRows() {
       this.loading = true
@@ -537,66 +615,34 @@ export default {
       }
     },
     buildRankingRows(rawRows) {
-      const courseMap = new Map()
-
-      rawRows.forEach((row) => {
-        const year = String(row.year || '').trim()
-        const semester = String(row.semester || '').trim()
-        const courseId = String(row.course_id || '').trim()
-        const courseName = String(row.course_name || '').trim()
-
-        if (!year || !semester || !courseId || !courseName || courseName === '기타') {
-          return
-        }
-
-        const courseKey = `${year}-${semester}-${courseId}`
-        if (!courseMap.has(courseKey)) {
-          courseMap.set(courseKey, {
-            year,
-            semester,
-            course_id: courseId,
-            course_name: courseName,
-            prof: row.prof || '',
-            students: [],
-          })
-        }
-
-        const course = courseMap.get(courseKey)
-        const studentKey = String(row.id || row.github_id || row.name || '').trim()
-        if (!studentKey) return
-
-        let student = course.students.find((item) => item.student_key === studentKey)
-        if (!student) {
-          student = {
-            student_key: studentKey,
-            student_id: row.id || '',
-            name: row.name || '',
-            department: row.department || '',
-            github: row.github_id || '',
-            enrollment: row.enrollment || '',
-            commits: 0,
-            prs: 0,
-            issues: 0,
-            repos: 0,
-            stars: 0,
-            contributors: 0,
-          }
-          course.students.push(student)
-        }
-
-        student.commits += Number(row.commit || 0)
-        student.prs += Number(row.pr || 0)
-        student.issues += Number(row.issue || 0)
-        student.repos += Number(row.num_repos || 0)
-        student.stars += Number(row.star_count || 0)
-        student.contributors += Number(row.total_contributors || 0)
-      })
-
-      return Array.from(courseMap.values())
+      return rawRows
         .map((course) => ({
-          ...course,
-          students: course.students.map(({ student_key, ...student }) => student),
+          year: String(course.year || '').trim(),
+          semester: String(course.semester || '').trim(),
+          course_id: String(course.course_id || '').trim(),
+          course_name: String(course.course_name || '').trim(),
+          prof: course.prof || '',
+          run_id: course.run_id,
+          formula_version: course.formula_version || '',
+          scored_at: course.scored_at || null,
+          students: (course.students || []).map((student) => ({
+            student_id: student.student_id || '',
+            name: student.name || '',
+            department: student.department || '',
+            github: student.github || '',
+            enrollment: student.enrollment || '',
+            score: Number(student.overall_score || 0),
+            productivity_score: nullableNumber(student.productivity_score),
+            collaboration_score: nullableNumber(student.collaboration_score),
+            problem_solving_score: nullableNumber(student.problem_solving_score),
+            commits: Number(student.personal_commits || 0),
+            changed_lines: Number(student.personal_changed_lines || 0),
+            repos: Number(student.contributed_repository_count || 0),
+            owned_repos: Number(student.owned_repository_count || 0),
+            representative_repos: Number(student.representative_repository_count || 0),
+          })),
         }))
+        .filter((course) => course.year && course.semester && course.course_id && course.course_name)
         .sort((a, b) => {
           if (Number(b.year) !== Number(a.year)) return Number(b.year) - Number(a.year)
           if (Number(b.semester) !== Number(a.semester)) return Number(b.semester) - Number(a.semester)
@@ -970,6 +1016,60 @@ export default {
   color: #8a8a8a;
   font-size: 12px;
   font-weight: 700;
+}
+
+.score-filter-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #eef1f5;
+}
+
+.score-filter-help {
+  margin: 0 0 2px;
+  color: #8a8a8a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.score-filter-row {
+  display: grid;
+  grid-template-columns: minmax(105px, 1fr) repeat(2, minmax(0, 86px));
+  align-items: end;
+  gap: 8px;
+}
+
+.score-filter-row strong {
+  align-self: center;
+  color: #616161;
+  font-size: 12px;
+}
+
+.score-filter-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.score-filter-row label span {
+  color: #8a8a8a;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.score-filter-row input {
+  width: 100%;
+  height: 38px;
+  padding: 0 8px;
+  border: 1px solid #dce2ed;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.score-filter-row input:focus {
+  border-color: #910024;
+  outline: 2px solid rgba(145, 0, 36, 0.1);
 }
 
 .settings-menu select {

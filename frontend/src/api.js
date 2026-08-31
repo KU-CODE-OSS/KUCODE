@@ -53,7 +53,7 @@ export function getCourseInfo() {
 }
 
 export function getRankingStudentCourseInfo() {
-  return ajax('/account/student_read_course_info', 'get');
+  return ajax('/scoring/course-ranking', 'get');
 }
 
 export function getCourseReadMinMaxAvg() {
@@ -93,6 +93,14 @@ export function getEProfileHeatmap(student_uuid, student_num) {
     data,
     headers: { 'Content-Type': 'application/json' }
   });
+}
+
+export function getStudentAptitude(student_uuid, student_num) {
+  const params = student_num
+    ? { student_id: student_num }
+    : { uuid: student_uuid };
+
+  return ajax('/scoring/student-aptitude', 'get', { params });
 }
 
 // Authentication / Login 등

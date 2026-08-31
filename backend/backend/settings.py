@@ -79,6 +79,7 @@ LOCAL_APPS = [
     "account",
     "repo",
     "course",
+    "scoring",
     "login",
     "board",
 ]
