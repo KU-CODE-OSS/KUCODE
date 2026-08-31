@@ -2416,6 +2416,8 @@ def repo_account_read_db(request):
         heatmap_data = {day: {str(hour): 0 for hour in range(24)} for day in days_of_week.values()}
         
         # 5) 커밋 데이터 집계 (한 번만 순회)
+        # Reuse only successfully parsed user dates in every time-based chart.
+        user_commit_dates_by_repo = {}
         for commit in all_commits:
             if commit.author_github_id != github_id:
                 continue
@@ -2424,7 +2426,9 @@ def repo_account_read_db(request):
                 commit_datetime = datetime.strptime(commit.last_update, '%Y-%m-%dT%H:%M:%SZ')
             except (ValueError, TypeError):
                 continue
-            
+
+            user_commit_dates_by_repo.setdefault(commit.repo_id, []).append(commit_datetime)
+
             if commit_datetime >= one_year_ago:
                 month_key = commit_datetime.strftime('%Y-%m')
                 added = commit.added_lines if commit.added_lines is not None else 0
@@ -2442,27 +2446,17 @@ def repo_account_read_db(request):
         
         # 6) repo별 월별 커밋 계산
         for repo in owner_contributor_repo_list:
-            repo_commits = commits_by_repo.get(repo.id, [])
-            repo_user_commits = [c for c in repo_commits if c.author_github_id == github_id]
-            
-            if not repo_user_commits:
+            valid_commit_dates = user_commit_dates_by_repo.get(repo.id, [])
+            if not valid_commit_dates:
                 continue
-                
-            latest_commit_date = max(
-                (datetime.strptime(c.last_update, '%Y-%m-%dT%H:%M:%SZ') 
-                 for c in repo_user_commits if c.last_update),
-                default=datetime.now()
-            )
+
+            latest_commit_date = max(valid_commit_dates)
             repo_one_year_ago = latest_commit_date - timedelta(days=365)
-            
-            for commit in repo_user_commits:
-                try:
-                    commit_datetime = datetime.strptime(commit.last_update, '%Y-%m-%dT%H:%M:%SZ')
-                    if commit_datetime >= repo_one_year_ago:
-                        month_key = commit_datetime.strftime('%Y-%m')
-                        repo_monthly_commits[repo.id][month_key] = repo_monthly_commits[repo.id].get(month_key, 0) + 1
-                except (ValueError, TypeError):
-                    continue
+
+            for commit_datetime in valid_commit_dates:
+                if commit_datetime >= repo_one_year_ago:
+                    month_key = commit_datetime.strftime('%Y-%m')
+                    repo_monthly_commits[repo.id][month_key] = repo_monthly_commits[repo.id].get(month_key, 0) + 1
 
         # 데이터 정렬
         sorted_commit_counts = sorted(monthly_commit_counts.items())

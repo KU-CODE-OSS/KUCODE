@@ -176,6 +176,189 @@ class CourseScoringPipelineTests(TestCase):
             1,
         )
 
+    def test_one_commit_is_representative_eligible(self):
+        Repo_commit.objects.filter(repo=self.repository).exclude(sha="sha-0").delete()
+        Repo_contributor.objects.filter(repo=self.repository).update(
+            contribution_count=1
+        )
+
+        run = run_course_scoring(self.course)
+
+        personal_score = StudentRepositoryScore.objects.get(
+            run=run,
+            student=self.student,
+        )
+        self.assertEqual(personal_score.details["personal_commit_count"], 1)
+        self.assertGreaterEqual(personal_score.contribution_share, 0.0)
+        self.assertTrue(personal_score.representative_eligible)
+        self.assertEqual(personal_score.representative_rank, 1)
+
+    def test_claude_commits_are_shared_equally_between_human_contributors(self):
+        teammate = Student.objects.create(
+            id="student-2",
+            name="Student Two",
+            github_id="student-two",
+        )
+        Course_registration.objects.create(
+            course=self.course,
+            course_year=2026,
+            course_semester=1,
+            student=teammate,
+        )
+        Repo_contributor.objects.create(
+            repo=self.repository,
+            repo_url=self.repository.url,
+            owner_github_id="student-one",
+            contributor_id="student-two",
+            contribution_count=3,
+        )
+        Repo_contributor.objects.create(
+            repo=self.repository,
+            repo_url=self.repository.url,
+            owner_github_id="student-one",
+            contributor_id="cLaUdE",
+            contribution_count=5,
+        )
+        now = timezone.now()
+        for index in range(3):
+            Repo_commit.objects.create(
+                sha=f"teammate-{index}",
+                repo=self.repository,
+                repo_url=self.repository.url,
+                owner_github_id="student-one",
+                author_github_id="student-two",
+                added_lines=10,
+                deleted_lines=2,
+                committed_at=now,
+                last_update=now.isoformat(),
+            )
+        for index in range(5):
+            Repo_commit.objects.create(
+                sha=f"claude-{index}",
+                repo=self.repository,
+                repo_url=self.repository.url,
+                owner_github_id="student-one",
+                author_github_id="CLAUDE" if index % 2 else "claude",
+                added_lines=10,
+                deleted_lines=2,
+                committed_at=now,
+                last_update=now.isoformat(),
+            )
+
+        run = run_course_scoring(self.course)
+
+        first_score = StudentRepositoryScore.objects.get(
+            run=run, student=self.student
+        )
+        teammate_score = StudentRepositoryScore.objects.get(
+            run=run, student=teammate
+        )
+        repository_score = RepositoryScore.objects.get(run=run)
+
+        self.assertEqual(first_score.team_size, 2)
+        self.assertEqual(first_score.details["personal_commit_count"], 5)
+        self.assertEqual(first_score.details["claude_commit_count"], 5)
+        self.assertAlmostEqual(first_score.details["claude_commit_allocation"], 2.5)
+        self.assertAlmostEqual(first_score.details["credited_contribution_count"], 7.5)
+        self.assertAlmostEqual(first_score.contribution_share, 7.5 / 13)
+        self.assertAlmostEqual(teammate_score.details["credited_contribution_count"], 5.5)
+        self.assertAlmostEqual(teammate_score.contribution_share, 5.5 / 13)
+        self.assertEqual(
+            repository_score.component_details["collaboration"]["contributor_count"],
+            2,
+        )
+        self.assertEqual(
+            repository_score.component_details["collaboration"]["contribution_basis"],
+            "claude_redistributed",
+        )
+
+    def test_claude_match_is_exact_and_case_insensitive(self):
+        Repo_contributor.objects.create(
+            repo=self.repository,
+            repo_url=self.repository.url,
+            owner_github_id="student-one",
+            contributor_id="claude-helper",
+            contribution_count=2,
+        )
+        Repo_contributor.objects.create(
+            repo=self.repository,
+            repo_url=self.repository.url,
+            owner_github_id="student-one",
+            contributor_id="Claude",
+            contribution_count=1,
+        )
+        now = timezone.now()
+        Repo_commit.objects.create(
+            sha="claude-helper-sha",
+            repo=self.repository,
+            repo_url=self.repository.url,
+            owner_github_id="student-one",
+            author_github_id="claude-helper",
+            added_lines=1,
+            deleted_lines=0,
+            committed_at=now,
+            last_update=now.isoformat(),
+        )
+        Repo_commit.objects.create(
+            sha="claude-uppercase-sha",
+            repo=self.repository,
+            repo_url=self.repository.url,
+            owner_github_id="student-one",
+            author_github_id="CLAUDE",
+            added_lines=1,
+            deleted_lines=0,
+            committed_at=now,
+            last_update=now.isoformat(),
+        )
+
+        run = run_course_scoring(self.course)
+        repository_score = RepositoryScore.objects.get(run=run)
+        redistribution = repository_score.raw_metrics["claude_redistribution"]
+
+        self.assertEqual(redistribution["claude_commit_count"], 1)
+        self.assertEqual(redistribution["human_contributor_count"], 2)
+        self.assertAlmostEqual(redistribution["per_human_allocation"], 0.5)
+        adjusted_names = {
+            row["github_username"].casefold()
+            for row in redistribution["adjusted_contributors"]
+        }
+        self.assertIn("claude-helper", adjusted_names)
+        self.assertNotIn("claude", adjusted_names)
+
+    def test_claude_only_repository_records_warning_without_allocation(self):
+        Repo_commit.objects.filter(repo=self.repository).delete()
+        Repo_contributor.objects.filter(repo=self.repository).delete()
+        Repo_contributor.objects.create(
+            repo=self.repository,
+            repo_url=self.repository.url,
+            owner_github_id="student-one",
+            contributor_id="claude",
+            contribution_count=1,
+        )
+        now = timezone.now()
+        Repo_commit.objects.create(
+            sha="claude-only-sha",
+            repo=self.repository,
+            repo_url=self.repository.url,
+            owner_github_id="student-one",
+            author_github_id="Claude",
+            added_lines=1,
+            deleted_lines=0,
+            committed_at=now,
+            last_update=now.isoformat(),
+        )
+
+        run = run_course_scoring(self.course)
+
+        repository_score = RepositoryScore.objects.get(run=run)
+        self.assertIn(
+            "claude_commits_without_human_contributors",
+            repository_score.warnings,
+        )
+        self.assertEqual(
+            StudentRepositoryScore.objects.filter(run=run).count(), 0
+        )
+
     def test_rerun_keeps_history_but_only_latest_run_feeds_aptitude(self):
         first_run = run_course_scoring(self.course)
         second_run = run_course_scoring(self.course)
