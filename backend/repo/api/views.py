@@ -29,6 +29,7 @@ from account.models import Student
 from account.api.views import get_students_for_crawling
 from login.models import Student as LoginStudent
 from course.models import Course, Course_project, Course_registration
+from course.services import reconcile_repository_course_categories
 from operator import itemgetter
 import requests
 import json
@@ -98,6 +99,17 @@ def max_github_timestamp(*values):
             latest_dt = parsed
             latest_value = value
     return latest_value
+
+
+def six_month_keys_ending_at(value):
+    """Return six consecutive YYYY-MM keys ending at value's calendar month."""
+    end_month_index = value.year * 12 + value.month - 1
+    month_keys = []
+    for offset in range(5, -1, -1):
+        month_index = end_month_index - offset
+        year, zero_based_month = divmod(month_index, 12)
+        month_keys.append(f"{year:04d}-{zero_based_month + 1:02d}")
+    return month_keys
 
 
 def get_latest_model_timestamp(model, repo_id):
@@ -902,20 +914,15 @@ def repo_read_db(request):
 # ---------------------------------------------
 #-------------SYNC REPO CATEGORY-------------#
 def sync_repo_category(request):
-    updated_repos = []
-    repositories = Repository.objects.all()
-    for repo in repositories:
-        try:
-            course = Course.objects.get(course_repo_name=repo.name)
-            repo.category = course.name
-            repo.is_course = True 
-        except ObjectDoesNotExist:
-            repo.is_course = False
-            if repo.category is None:
-                repo.category = "-"
-        updated_repos.append(repo)
-    Repository.objects.bulk_update(updated_repos, ['category', 'is_course'])
-    return JsonResponse({"status": "200", "message": "Repository categories synchronized successfully."})
+    try:
+        result = reconcile_repository_course_categories()
+        return JsonResponse({
+            "status": "OK",
+            "message": "Repository categories synchronized from Course_project relationships.",
+            **result,
+        })
+    except Exception as exc:
+        return JsonResponse({"status": "Error", "message": str(exc)}, status=500)
 # ---------------------------------------------
 # ------------CONTRIBUTOR--------------#
 def sync_repo_contributor_db(request):
@@ -2418,6 +2425,7 @@ def repo_account_read_db(request):
         # 5) 커밋 데이터 집계 (한 번만 순회)
         # Reuse only successfully parsed user dates in every time-based chart.
         user_commit_dates_by_repo = {}
+        user_commits_with_dates = []
         for commit in all_commits:
             if commit.author_github_id != github_id:
                 continue
@@ -2428,21 +2436,40 @@ def repo_account_read_db(request):
                 continue
 
             user_commit_dates_by_repo.setdefault(commit.repo_id, []).append(commit_datetime)
+            user_commits_with_dates.append((commit, commit_datetime))
 
             if commit_datetime >= one_year_ago:
-                month_key = commit_datetime.strftime('%Y-%m')
-                added = commit.added_lines if commit.added_lines is not None else 0
-                deleted = commit.deleted_lines if commit.deleted_lines is not None else 0
-
-                monthly_commit_counts[month_key] = monthly_commit_counts.get(month_key, 0) + 1
-                monthly_added_lines[month_key] = monthly_added_lines.get(month_key, 0) + added
-                monthly_deleted_lines[month_key] = monthly_deleted_lines.get(month_key, 0) + deleted
-                monthly_changed_lines[month_key] = monthly_changed_lines.get(month_key, 0) + added + deleted
-
                 weekday_index = commit_datetime.weekday()
                 hour = commit_datetime.hour
                 day_name = days_of_week[weekday_index]
                 heatmap_data[day_name][str(hour)] += 1
+
+        # The central EProfile activity chart always shows six calendar months,
+        # ending at the student's latest valid commit month. A student without
+        # valid commit timestamps receives a zero-filled window ending today.
+        activity_anchor = (
+            max(commit_datetime for _, commit_datetime in user_commits_with_dates)
+            if user_commits_with_dates
+            else today
+        )
+        activity_month_keys = six_month_keys_ending_at(activity_anchor)
+        activity_month_key_set = set(activity_month_keys)
+        monthly_commit_counts = {month_key: 0 for month_key in activity_month_keys}
+        monthly_added_lines = {month_key: 0 for month_key in activity_month_keys}
+        monthly_deleted_lines = {month_key: 0 for month_key in activity_month_keys}
+        monthly_changed_lines = {month_key: 0 for month_key in activity_month_keys}
+
+        for commit, commit_datetime in user_commits_with_dates:
+            month_key = commit_datetime.strftime('%Y-%m')
+            if month_key not in activity_month_key_set:
+                continue
+
+            added = commit.added_lines if commit.added_lines is not None else 0
+            deleted = commit.deleted_lines if commit.deleted_lines is not None else 0
+            monthly_commit_counts[month_key] += 1
+            monthly_added_lines[month_key] += added
+            monthly_deleted_lines[month_key] += deleted
+            monthly_changed_lines[month_key] += added + deleted
         
         # 6) repo별 월별 커밋 계산
         for repo in owner_contributor_repo_list:
@@ -2459,10 +2486,10 @@ def repo_account_read_db(request):
                     repo_monthly_commits[repo.id][month_key] = repo_monthly_commits[repo.id].get(month_key, 0) + 1
 
         # 데이터 정렬
-        sorted_commit_counts = sorted(monthly_commit_counts.items())
-        sorted_added_lines = sorted(monthly_added_lines.items())
-        sorted_deleted_lines = sorted(monthly_deleted_lines.items())
-        sorted_changed_lines = sorted(monthly_changed_lines.items())
+        sorted_commit_counts = [(key, monthly_commit_counts[key]) for key in activity_month_keys]
+        sorted_added_lines = [(key, monthly_added_lines[key]) for key in activity_month_keys]
+        sorted_deleted_lines = [(key, monthly_deleted_lines[key]) for key in activity_month_keys]
+        sorted_changed_lines = [(key, monthly_changed_lines[key]) for key in activity_month_keys]
 
         # 7) 레포지토리별 상세 정보 (이미 prefetch된 데이터 사용)
         total_open_issue_count = 0

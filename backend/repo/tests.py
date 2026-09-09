@@ -54,10 +54,22 @@ class RepoAccountReadDbTimestampTests(TestCase):
 
         data = self.read_profile()
 
-        self.assertEqual(data["monthly_commits"]["total_count"], [["2026-08", 2]])
-        self.assertEqual(data["monthly_commits"]["added_lines"], [["2026-08", 6]])
-        self.assertEqual(data["monthly_commits"]["deleted_lines"], [["2026-08", 4]])
-        self.assertEqual(data["monthly_commits"]["changed_lines"], [["2026-08", 10]])
+        self.assertEqual(data["monthly_commits"]["total_count"], [
+            ["2026-03", 0], ["2026-04", 0], ["2026-05", 0],
+            ["2026-06", 0], ["2026-07", 0], ["2026-08", 2],
+        ])
+        self.assertEqual(data["monthly_commits"]["added_lines"], [
+            ["2026-03", 0], ["2026-04", 0], ["2026-05", 0],
+            ["2026-06", 0], ["2026-07", 0], ["2026-08", 6],
+        ])
+        self.assertEqual(data["monthly_commits"]["deleted_lines"], [
+            ["2026-03", 0], ["2026-04", 0], ["2026-05", 0],
+            ["2026-06", 0], ["2026-07", 0], ["2026-08", 4],
+        ])
+        self.assertEqual(data["monthly_commits"]["changed_lines"], [
+            ["2026-03", 0], ["2026-04", 0], ["2026-05", 0],
+            ["2026-06", 0], ["2026-07", 0], ["2026-08", 10],
+        ])
         self.assertEqual(data["repositories"][0]["monthly_commits"], [["2026-08", 2]])
         self.assertEqual(data["repositories"][0]["user_commit_count"], 7)
         self.assertEqual(data["total_stats"]["all_total_commits"], 8)
@@ -75,7 +87,10 @@ class RepoAccountReadDbTimestampTests(TestCase):
 
         self.assertEqual(data["repositories"][0]["monthly_commits"], [])
         self.assertEqual(data["repositories"][0]["user_commit_count"], 4)
-        self.assertEqual(data["monthly_commits"]["total_count"], [])
+        self.assertEqual(data["monthly_commits"]["total_count"], [
+            ["2026-03", 0], ["2026-04", 0], ["2026-05", 0],
+            ["2026-06", 0], ["2026-07", 0], ["2026-08", 0],
+        ])
         self.assertEqual(sum(sum(hours.values()) for hours in data["heatmap"].values()), 0)
 
     def test_repository_window_uses_latest_valid_user_commit(self):
@@ -86,7 +101,10 @@ class RepoAccountReadDbTimestampTests(TestCase):
 
         data = self.read_profile()
 
-        self.assertEqual(data["monthly_commits"]["total_count"], [])
+        self.assertEqual(data["monthly_commits"]["total_count"], [
+            ["2020-03", 0], ["2020-04", 0], ["2020-05", 0],
+            ["2020-06", 0], ["2020-07", 1], ["2020-08", 1],
+        ])
         self.assertEqual(data["repositories"][0]["monthly_commits"],
                          [["2020-07", 1], ["2020-08", 1]])
 
@@ -104,3 +122,7 @@ class RepoAccountReadDbTimestampTests(TestCase):
         self.assertEqual(repos[self.repo.id]["monthly_commits"], [])
         self.assertEqual(repos[contributed_repo.id]["monthly_commits"], [["2026-08", 1]])
         self.assertEqual(data["total_stats"]["contributor_total_commits"], 2)
+        self.assertEqual(data["monthly_commits"]["total_count"], [
+            ["2026-03", 0], ["2026-04", 0], ["2026-05", 0],
+            ["2026-06", 0], ["2026-07", 0], ["2026-08", 1],
+        ])

@@ -13,6 +13,10 @@ from rest_framework import status
 from datetime import datetime
 from account.models import User,Student,Administration
 from course.models import Course, Course_registration, Course_project
+from course.services import (
+    reconcile_repository_course_categories,
+    repositories_matching_course_name,
+)
 from repo.models import Repo_commit, Repo_pr ,Repo_issue, Repository,Repo_contributor
 from itertools import groupby
 from operator import itemgetter
@@ -200,7 +204,7 @@ def course_project_update(request):
         courses = Course.objects.all()
 
         for course in courses:
-            repos = Repository.objects.filter(name__icontains=course.course_repo_name)
+            repos = repositories_matching_course_name(course)
 
             for repo in repos:
                 # 이미 해당 course_id, year, semester, repo_id를 가지는 레코드가 있는지 확인
@@ -218,8 +222,12 @@ def course_project_update(request):
                 )
                 print(f"{repo.owner_github_id}'s {repo.name} has been created!")
 
-        
-        return JsonResponse({"status": "OK", "message": "course_project record created successfully"})
+        category_sync = reconcile_repository_course_categories()
+        return JsonResponse({
+            "status": "OK",
+            "message": "course_project records and repository categories updated successfully",
+            "category_sync": category_sync,
+        })
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
 
