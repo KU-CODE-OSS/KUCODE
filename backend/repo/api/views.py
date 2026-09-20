@@ -34,7 +34,9 @@ from operator import itemgetter
 import requests
 import json
 import os
-import base64
+import hashlib
+import random
+import secrets
 
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -191,6 +193,9 @@ def update_lightweight_repo_state(repo_record, repo_payload):
         return
 
     fields_to_update = []
+    if repo_record.github_availability != 'public':
+        repo_record.github_availability = 'public'
+        fields_to_update.append('github_availability')
     remote_pushed_at = repo_payload.get('pushed_at')
     if remote_pushed_at and repo_record.pushed_at != remote_pushed_at:
         repo_record.pushed_at = remote_pushed_at
@@ -514,6 +519,7 @@ def sync_repo_db(request):
                             'description': repo_data.get('description'),
                             'release_version': repo_data.get('release_version'),
                             'crawled_date': repo_data.get('crawled_date'),
+                            'github_availability': 'public',
                         }
                     )
                     
@@ -727,6 +733,7 @@ def sync_repo_db_optional(request):
                             'description': repo_data.get('description'),
                             'release_version': repo_data.get('release_version'),
                             'crawled_date': repo_data.get('crawled_date'),
+                            'github_availability': 'public',
                         }
                     )
                     
@@ -775,6 +782,9 @@ def remove_repository(github_id, repository):
 
     # 1. First, check if linked to a Course_project
     if Course_project.objects.filter(repo=repository.id).exists():
+        Repository.objects.filter(owner_github_id=github_id, id=repository.id).update(
+            github_availability='not_listed'
+        )
         print(f"  [Skipped] Repo ID {repository.id} ('{repository.name}') is part of a Course_project and will not be deleted.")
         return {
             "status": "Skipped",
@@ -1919,6 +1929,7 @@ def sync_repo_db_test(request, student_id):
                         'description': repo_data.get('description'),
                         'release_version': repo_data.get('release_version'),
                         'crawled_date': repo_data.get('crawled_date'),
+                        'github_availability': 'public',
                     }
                 )
                 action = "Created" if created else "Updated"
@@ -2634,6 +2645,10 @@ def repo_account_read_db(request):
                 'project_introduction': r.repo_introduction or "",
                 'release_version': r.release_version,
                 'summary': r.summary,
+                'summary_status': repository_summary_status(r),
+                'summary_source_kind': r.summary_source_kind,
+                'summary_generated_at': r.summary_generated_at,
+                'github_availability': r.github_availability,
                 'monthly_commits': repo_monthly_commit_data,
                 'github_2026_metrics': repo_github_2026_metrics
             }
@@ -2691,47 +2706,187 @@ def repo_account_read_db(request):
 # ========================================
 # LLM Summary
 # ========================================
+SUMMARY_PROMPT_VERSION = 2
+
+
+def repository_summary_fingerprint(repo, model_name):
+    """Identify the saved inputs used for a summary, not the crawl time."""
+    source = {
+        "prompt_version": SUMMARY_PROMPT_VERSION,
+        "model": model_name,
+        "id": repo.id,
+        "owner": repo.owner_github_id,
+        "name": repo.name,
+        "description": repo.description,
+        "language": repo.language,
+        "language_bytes": repo.language_bytes or {},
+        "default_branch": repo.default_branch,
+        "updated_at": repo.updated_at,
+        "pushed_at": repo.pushed_at,
+        "has_readme": repo.has_readme,
+        "github_availability": repo.github_availability,
+    }
+    encoded = json.dumps(source, sort_keys=True, ensure_ascii=False, default=str)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def repository_summary_status(repo):
+    if not repo.summary:
+        if repo.summary_last_error:
+            return "insufficient_data" if repo.summary_last_error.startswith("insufficient_data:") else "error"
+        return "missing"
+    if not repo.summary_source_fingerprint:
+        return "legacy"
+    if repo.summary_source_fingerprint != repository_summary_fingerprint(repo, RepoSummaryAnalyzer.MODEL):
+        return "stale"
+    return "limited" if repo.summary_source_kind == "database" else "ready"
+
+
+def repository_summary_refresh_kind(repo, model_name):
+    """Return why a repository needs a summary refresh, or None when current."""
+    if not repo.summary:
+        refresh_kind = "missing"
+    elif not repo.summary_source_fingerprint:
+        refresh_kind = "legacy"
+    elif repo.summary_source_fingerprint != repository_summary_fingerprint(repo, model_name):
+        refresh_kind = "stale"
+    else:
+        return None
+
+    # A failed attempt is deliberately placed after untouched work, regardless
+    # of whether the underlying summary is missing, legacy, or stale.
+    return "failed" if repo.summary_last_error else refresh_kind
+
+
+def repository_summary_refresh_priority(repo, model_name):
+    refresh_kind = repository_summary_refresh_kind(repo, model_name)
+    priority = {"missing": 0, "legacy": 1, "stale": 2, "failed": 3}
+    attempt_time = repo.summary_last_attempt_at or repo.summary_generated_at
+    return (
+        priority.get(refresh_kind, 4),
+        attempt_time.isoformat() if attempt_time else "",
+        str(repo.id),
+    )
+
+
 class RepoSummaryAnalyzer:
     """GitHub API와 OpenAI로 레포지토리를 분석합니다."""
 
-    def __init__(self, openai_key: str = None, github_token: str = None):
+    MODEL = "gpt-5.4-nano"
+    PRICING_VERSION = "2026-09-14"
+    INPUT_USD_PER_MILLION = 0.20
+    CACHED_INPUT_USD_PER_MILLION = 0.02
+    OUTPUT_USD_PER_MILLION = 1.25
+    SUMMARY_TEXT_CONFIG = {
+        "verbosity": "low",
+        "format": {
+            "type": "json_schema",
+            "name": "repository_summary",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "project_summary": {
+                        "type": "object",
+                        "properties": {
+                            "primary_language": {"type": "string"},
+                            "purpose": {"type": "string"},
+                            "tech_stack": {"type": "array", "items": {"type": "string"}},
+                            "key_functionalities": {"type": "array", "items": {"type": "string"}},
+                            "scale": {"type": "string", "enum": ["small", "medium", "large"]},
+                        },
+                        "required": [
+                            "primary_language", "purpose", "tech_stack",
+                            "key_functionalities", "scale",
+                        ],
+                        "additionalProperties": False,
+                    },
+                    "user_content": {
+                        "type": "object",
+                        "properties": {"description": {"type": "string"}},
+                        "required": ["description"],
+                        "additionalProperties": False,
+                    },
+                },
+                "required": ["project_summary", "user_content"],
+                "additionalProperties": False,
+            },
+        },
+    }
+
+    def __init__(self, openai_key: str = None):
         self.openai_key = openai_key or os.getenv("OPENAI_API_KEY")
-        self.github_token = github_token or os.getenv("GITHUB_TOKEN")
 
         if not self.openai_key:
             raise ValueError("OpenAI API 키가 필요합니다")
         
-        if not self.github_token:
-            raise ValueError("GitHub Token이 필요합니다")
-
         self.openai_client = OpenAI(api_key=self.openai_key)
-        self.github_headers = {
-            "Authorization": f"token {self.github_token}",
-            "Accept": "application/vnd.github.v3+json"
-        }
 
     def analyze_repository(
         self, repo_data: dict, include_frontend_data: bool = False
     ) -> dict:
         """GitHub API와 OpenAI를 활용한 실제 레포지토리 분석"""
+        owner = repo_data.get('owner_github_id')
+        repo_name = repo_data.get('name')
         try:
-            owner = repo_data.get('owner_github_id')
-            repo_name = repo_data.get('name')
+            source_kind = "github"
+            if repo_data.get("github_availability") == "not_listed":
+                repo_structure = {}
+                source_kind = "database"
+                readme_content = ""
+                key_files_content = {}
+            else:
+                summary_context = self._fetch_summary_context(owner, repo_name)
+                if summary_context.get("error"):
+                    if summary_context.get("http_status") != 404:
+                        raise ValueError(
+                            f"GitHub repository context unavailable: {summary_context['error']}"
+                        )
+                    repo_structure = {}
+                    source_kind = "database"
+                    readme_content = ""
+                    key_files_content = {}
+                else:
+                    files = summary_context.get("files", [])
+                    directories = summary_context.get("directories", [])
+                    repo_structure = {
+                        "total_files": len(files),
+                        "directories": directories,
+                        "file_analysis": self._analyze_file_structure(files),
+                        "project_structure": self._infer_project_structure(
+                            files, directories
+                        ),
+                    }
+                    readme_content = summary_context.get("readme_content", "")
+                    key_files_content = summary_context.get("key_files", {})
+
+            if source_kind == "database":
+                # A name or language alone is not evidence of project purpose.
+                if not (repo_data.get("description") or "").strip():
+                    raise ValueError("insufficient_data: GitHub unavailable and no saved description")
+            else:
+                if not repo_data.get("description") and not readme_content and not repo_structure.get("total_files"):
+                    raise ValueError("insufficient_data: repository has no description, README, or files")
             
-            repo_structure = self._fetch_repository_structure(owner, repo_name)
-            readme_content = self._fetch_readme_content(owner, repo_name)
-            key_files_content = self._fetch_key_files(owner, repo_name, repo_structure)
-            
-            llm_analysis = self._analyze_with_llm(
+            llm_result = self._analyze_with_llm(
                 repo_data, repo_structure, readme_content, key_files_content
             )
+            llm_analysis = llm_result["structured_summary"]
             
             result = {
-                "success": True,
+                "success": llm_result["success"],
                 "repository": f"{owner}/{repo_name}",
                 "structured_summary": llm_analysis,
                 "analyzed_at": datetime.now().isoformat(),
+                "usage": llm_result["usage"],
+                "cost_usd": llm_result["cost_usd"],
+                "response_id": llm_result.get("response_id"),
+                "response_model": llm_result.get("response_model"),
+                "source_kind": source_kind,
             }
+
+            if llm_result.get("error"):
+                result["error"] = llm_result["error"]
 
             if include_frontend_data:
                 frontend_summary = self._generate_frontend_summary(llm_analysis)
@@ -2751,101 +2906,100 @@ class RepoSummaryAnalyzer:
                 "repository": f"{owner}/{repo_name}",
                 "error": str(e),
                 "analyzed_at": datetime.now().isoformat(),
-                "structured_summary": fallback_summary
+                "structured_summary": fallback_summary,
+                "usage": self.empty_usage(),
+                "cost_usd": 0.0,
+                "response_id": None,
+                "response_model": None,
+                "source_kind": None,
             }
 
-    def _fetch_repository_structure(self, owner: str, repo_name: str) -> dict:
-        """GitHub API로 레포지토리 파일 구조 가져오기"""
+    @classmethod
+    def empty_usage(cls) -> dict:
+        return {
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0,
+            "reasoning_tokens": 0,
+            "total_tokens": 0,
+        }
+
+    @classmethod
+    def usage_from_response(cls, response) -> dict:
+        usage = getattr(response, "usage", None)
+        if not usage:
+            return cls.empty_usage()
+
+        input_details = getattr(usage, "input_tokens_details", None)
+        output_details = getattr(usage, "output_tokens_details", None)
+        return {
+            "input_tokens": int(getattr(usage, "input_tokens", 0) or 0),
+            "cached_input_tokens": int(
+                getattr(input_details, "cached_tokens", 0) or 0
+            ),
+            "output_tokens": int(getattr(usage, "output_tokens", 0) or 0),
+            "reasoning_tokens": int(
+                getattr(output_details, "reasoning_tokens", 0) or 0
+            ),
+            "total_tokens": int(getattr(usage, "total_tokens", 0) or 0),
+        }
+
+    @classmethod
+    def calculate_cost_usd(cls, usage: dict) -> float:
+        input_tokens = usage.get("input_tokens", 0)
+        cached_input_tokens = min(
+            usage.get("cached_input_tokens", 0), input_tokens
+        )
+        uncached_input_tokens = input_tokens - cached_input_tokens
+        cost = (
+            uncached_input_tokens * cls.INPUT_USD_PER_MILLION
+            + cached_input_tokens * cls.CACHED_INPUT_USD_PER_MILLION
+            + usage.get("output_tokens", 0) * cls.OUTPUT_USD_PER_MILLION
+        ) / 1_000_000
+        return round(cost, 8)
+
+    @staticmethod
+    def validate_structured_summary(summary: dict) -> None:
+        if not isinstance(summary, dict) or set(summary) != {"project_summary", "user_content"}:
+            raise ValueError("OpenAI summary has an unexpected top-level structure")
+        project = summary.get("project_summary")
+        user_content = summary.get("user_content")
+        if not isinstance(project, dict) or not isinstance(user_content, dict):
+            raise ValueError("OpenAI summary sections must be objects")
+        for value in (
+            project.get("primary_language"), project.get("purpose"),
+            user_content.get("description"),
+        ):
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError("OpenAI summary has an empty required text field")
+        for field in ("tech_stack", "key_functionalities"):
+            values = project.get(field)
+            if not isinstance(values, list) or any(
+                not isinstance(value, str) or not value.strip() for value in values
+            ):
+                raise ValueError(f"OpenAI summary has invalid {field}")
+        if project.get("scale") not in {"small", "medium", "large"}:
+            raise ValueError("OpenAI summary has invalid scale")
+
+    def _fetch_summary_context(self, owner: str, repo_name: str) -> dict:
+        """Fetch live summary evidence through the GitHub REST crawler service."""
         try:
-            url = f"https://api.github.com/repos/{owner}/{repo_name}/git/trees/HEAD?recursive=1"
-            response = requests.get(url, headers=self.github_headers)
+            response = requests.get(
+                f"http://{settings.PUBLIC_IP}:{settings.FASTAPI_PORT}/api/repos/summary-context",
+                params={"github_id": owner, "repo_name": repo_name},
+                timeout=120,
+            )
             if response.status_code != 200:
-                return {"error": f"GitHub API 요청 실패: {response.status_code}"}
-            
-            tree_data = response.json()
-            files, directories = [], set()
-            
-            for item in tree_data.get('tree', []):
-                if item['type'] == 'blob':
-                    files.append({'path': item['path'], 'size': item.get('size', 0)})
-                elif item['type'] == 'tree':
-                    directories.add(item['path'])
-            
-            file_analysis = self._analyze_file_structure(files)
-            
-            return {
-                "total_files": len(files),
-                "directories": list(directories),
-                "file_analysis": file_analysis,
-                "project_structure": self._infer_project_structure(files, directories)
-            }
+                return {
+                    "error": f"GitHub REST crawler request failed: {response.status_code}",
+                    "http_status": response.status_code,
+                }
+            context = response.json()
+            if not isinstance(context, dict):
+                return {"error": "GitHub REST crawler returned invalid summary context"}
+            return context
         except Exception as e:
-            return {"error": f"구조 분석 실패: {str(e)}"}
-
-    def _fetch_readme_content(self, owner: str, repo_name: str) -> str:
-        """README 파일 내용 가져오기"""
-        try:
-            readme_names = ['README.md', 'README.rst', 'README.txt', 'README', 'readme.md']
-            for readme_name in readme_names:
-                url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/{readme_name}"
-                response = requests.get(url, headers=self.github_headers)
-                if response.status_code == 200:
-                    content_data = response.json()
-                    if content_data.get('encoding') == 'base64' and content_data.get('content'):
-                        return base64.b64decode(content_data['content']).decode('utf-8', errors='ignore')[:3000]
-            return ""
-        except Exception:
-            return ""
-
-    def _fetch_key_files(self, owner: str, repo_name: str, repo_structure: dict) -> dict:
-        """주요 설정 파일들의 내용 분석"""
-        key_files = {'package.json': None, 'requirements.txt': None, '.github/workflows': []}
-        try:
-            file_analysis = repo_structure.get('file_analysis', {})
-            if 'package.json' in file_analysis.get('config_files', []):
-                content = self._fetch_file_content(owner, repo_name, 'package.json')
-                if content:
-                    try:
-                        package_data = json.loads(content)
-                        key_files['package.json'] = {
-                            'dependencies': list(package_data.get('dependencies', {}).keys())[:10],
-                            'devDependencies': list(package_data.get('devDependencies', {}).keys())[:10],
-                        }
-                    except json.JSONDecodeError: pass
-            for req_file in ['requirements.txt', 'requirements/base.txt', 'requirements/production.txt']:
-                if any(req_file in f for f in file_analysis.get('config_files', [])):
-                    content = self._fetch_file_content(owner, repo_name, req_file)
-                    if content:
-                        key_files['requirements.txt'] = [line.split('==')[0].strip() for line in content.split('\n') if line.strip() and not line.startswith('#')][:15]
-                        break
-            key_files['.github/workflows'] = self._fetch_github_workflows(owner, repo_name)
-            return key_files
-        except Exception:
-            return key_files
-
-    def _fetch_file_content(self, owner: str, repo_name: str, file_path: str) -> str:
-        """특정 파일의 내용 가져오기"""
-        try:
-            url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/{file_path}"
-            response = requests.get(url, headers=self.github_headers)
-            if response.status_code == 200:
-                content_data = response.json()
-                if content_data.get('encoding') == 'base64':
-                    return base64.b64decode(content_data['content']).decode('utf-8')
-            return ""
-        except Exception:
-            return ""
-
-    def _fetch_github_workflows(self, owner: str, repo_name: str) -> list:
-        """GitHub Actions 워크플로우 정보 가져오기"""
-        try:
-            url = f"https://api.github.com/repos/{owner}/{repo_name}/actions/workflows"
-            response = requests.get(url, headers=self.github_headers)
-            if response.status_code == 200:
-                return [{'name': w['name'], 'state': w['state']} for w in response.json().get('workflows', [])]
-            return []
-        except Exception:
-            return []
+            return {"error": f"GitHub REST crawler connection failed: {str(e)}"}
 
     def _analyze_file_structure(self, files: list) -> dict:
         """파일 구조 분석"""
@@ -2881,47 +3035,89 @@ class RepoSummaryAnalyzer:
 
     def _analyze_with_llm(self, repo_data: dict, repo_structure: dict, readme_content: str, key_files_content: dict) -> dict:
         """OpenAI를 사용한 종합 분석"""
-        # owner = repo_data.get('owner_github_id', 'unknown')
-        # repo_name = repo_data.get('name', 'unknown')
-        # try:
-        #     analysis_prompt = self._create_analysis_prompt(repo_data, repo_structure, readme_content, key_files_content)
-        #     logging.info(f"[LLM CALL] model=gpt-5-nano repo={owner}/{repo_name}")
-        #     response = self.openai_client.responses.create(
-        #         model="gpt-5-nano",
-        #         input=analysis_prompt,
-        #         reasoning={"effort": "low"},
-        #         text={"verbosity": "low"},
-        #     )
-        #     # GPT-5 Responses API는 output_text 필드에 결과를 담아 반환합니다.
-        #     output = getattr(response, 'output_text', None)
-        #     if not output:
-        #         logging.warning(f"[LLM EMPTY OUTPUT] repo={owner}/{repo_name}")
-        #         return self._create_fallback_analysis(repo_data, repo_structure, readme_content)
-        #     try:
-        #         return json.loads(output)
-        #     except Exception:
-        #         logging.warning(f"[LLM NON-JSON OUTPUT] repo={owner}/{repo_name} output_head={output[:120]}")
-        #         return self._create_fallback_analysis(repo_data, repo_structure, readme_content)
-        # except Exception as e:
-        #     logging.exception(f"[{owner}/{repo_name}] LLM 분석 실패: {e}")
-        #     return self._create_fallback_analysis(repo_data, repo_structure, readme_content)
-        return 0
+        owner = repo_data.get('owner_github_id', 'unknown')
+        repo_name = repo_data.get('name', 'unknown')
+        usage = self.empty_usage()
+        response_id = None
+        response_model = None
+        try:
+            analysis_prompt = self._create_analysis_prompt(
+                repo_data, repo_structure, readme_content, key_files_content
+            )
+            logging.info(f"[LLM CALL] model={self.MODEL} repo={owner}/{repo_name}")
+            response = self.openai_client.responses.create(
+                model=self.MODEL,
+                input=analysis_prompt,
+                reasoning={"effort": "low"},
+                text=self.SUMMARY_TEXT_CONFIG,
+                max_output_tokens=1200,
+                store=False,
+            )
+            response_id = getattr(response, "id", None)
+            response_model = getattr(response, "model", None)
+            usage = self.usage_from_response(response)
+            cost_usd = self.calculate_cost_usd(usage)
+
+            output = getattr(response, 'output_text', None)
+            if not output:
+                raise ValueError("OpenAI response did not contain output_text")
+
+            output = output.strip()
+            if output.startswith("```"):
+                output = output.split("\n", 1)[-1]
+                output = output.rsplit("```", 1)[0].strip()
+
+            try:
+                structured_summary = json.loads(output)
+            except json.JSONDecodeError as exc:
+                raise ValueError("OpenAI response was not valid JSON") from exc
+            self.validate_structured_summary(structured_summary)
+
+            return {
+                "success": True,
+                "structured_summary": structured_summary,
+                "usage": usage,
+                "cost_usd": cost_usd,
+                "response_id": response_id,
+                "response_model": response_model,
+            }
+        except Exception as exc:
+            logging.exception(f"[{owner}/{repo_name}] LLM 분석 실패: {exc}")
+            return {
+                "success": False,
+                "structured_summary": self._create_fallback_analysis(
+                    repo_data, repo_structure, readme_content
+                ),
+                "usage": usage,
+                "cost_usd": self.calculate_cost_usd(usage),
+                "error": str(exc),
+                "response_id": response_id,
+                "response_model": response_model,
+            }
 
     def _create_analysis_prompt(self, repo_data: dict, repo_structure: dict, readme_content: str, key_files_content: dict) -> str:
         """LLM 분석용 프롬프트 생성"""
+        saved_languages = repo_data.get('language_bytes') or repo_data.get('language') or {}
+        description = repo_data.get('description') or '설명 없음'
+        source_note = 'GitHub 파일 구조 및 저장된 DB 정보' if repo_structure else '저장된 DB 정보만 사용 (GitHub 접근 불가)'
         prompt = f"""
                 다음 레포지토리를 분석하고 결과를 한국어 JSON 형식으로 제공해주세요.
 
                 **레포지토리 정보:**
                 - 이름: {repo_data.get('owner_github_id')}/{repo_data.get('name')}
-                - 설명: {repo_data.get('description', '설명 없음')}
-                - 언어 분포: {repo_structure.get('file_analysis', {}).get('languages', {})}
+                - 설명: {description}
+                - 저장된 언어 정보: {saved_languages}
+                - GitHub 파일 언어 분포: {repo_structure.get('file_analysis', {}).get('languages', {})}
+                - 확인된 설정/의존성 파일: {key_files_content}
+                - 자료 출처: {source_note}
 
                 **README 내용:**
                 {readme_content[:1200] if readme_content else 'README 파일이 없거나 비어있습니다.'}
 
                 **요구사항:**
                 분석 결과를 반드시 다음 JSON 형식에 맞춰 한국어로 작성해주세요.
+                확인되지 않은 기술이나 기능을 추측하지 마세요. 확인할 수 없는 기술 스택이나 기능은 빈 배열로 적으세요.
+                DB 정보만 있을 때는 확인 가능한 내용만 요약하고 한계를 설명에 명시하세요.
 
                 {{
                     "project_summary": {{
@@ -2961,7 +3157,8 @@ class RepoSummaryAnalyzer:
             }
         }
 
-    def _generate_frontend_summary(self, llm_analysis: dict) -> dict:
+    @staticmethod
+    def _generate_frontend_summary(llm_analysis: dict) -> dict:
         """분석 결과를 프론트엔드 전달용으로 가공"""
         summary = llm_analysis.get("project_summary", {})
         user_content = llm_analysis.get("user_content", {})
@@ -2974,83 +3171,235 @@ class RepoSummaryAnalyzer:
 
 class GenerateRepoSummaryAPIView(APIView):
     """
-    레포지토리 분석을 실행하고 결과를 DB에 저장합니다.
-    요청 본문에 필터 조건이 없으면 모든 레포지토리를 대상으로 분석을 실행합니다.
+    Generate repository summaries or run a non-persistent live pricing sample.
     """
     def post(self, request, *args, **kwargs):
-        # analyzer = RepoSummaryAnalyzer()
+        expected_token = os.getenv("OPENAI_API_KEY")
+        provided_token = request.headers.get("X-KUOSS-Summary-Token", "")
+        if not expected_token:
+            return Response(
+                {"error": "OPENAI_API_KEY is not configured on the backend."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        if not secrets.compare_digest(provided_token, expected_token):
+            return Response(
+                {"error": "Invalid repository summary authorization token."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         queryset = Repository.objects.all()
 
-        # 요청 본문에서 필터 조건 가져오기
         student_ids = request.data.get("student_ids")
         repo_ids = request.data.get("repo_ids")
-        filter_type = request.data.get("filter")
+        filter_type = request.data.get("filter", "missing_summary")
+        test_report = request.data.get("test_report") is True
+        save_summaries = request.data.get("save", not test_report) is True
+        include_repository_details = request.data.get(
+            "include_repository_details", True
+        ) is not False
+        if test_report:
+            save_summaries = False
 
-        # 1. 학생 ID로 필터링
+        if filter_type not in {"missing_summary", "needs_refresh", "all"}:
+            return Response(
+                {"error": "filter must be 'missing_summary', 'needs_refresh', or 'all'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        raw_sample_size = request.data.get("sample_size")
+        if (test_report or filter_type == "needs_refresh") and raw_sample_size is None:
+            raw_sample_size = 100
+        try:
+            sample_size = int(raw_sample_size) if raw_sample_size is not None else None
+            if sample_size is not None and not 1 <= sample_size <= 500:
+                raise ValueError
+            sample_seed = int(request.data.get("sample_seed", 20260914))
+        except (TypeError, ValueError):
+            return Response(
+                {"error": "sample_size must be between 1 and 500 and sample_seed must be an integer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        raw_attempt_before = request.data.get("attempt_before")
+        try:
+            attempt_before = (
+                float(raw_attempt_before) if raw_attempt_before is not None else None
+            )
+        except (TypeError, ValueError):
+            return Response(
+                {"error": "attempt_before must be a Unix timestamp."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if student_ids:
             try:
-                # Student 모델에서 github_id 조회
                 github_ids = Student.objects.filter(id__in=student_ids).values_list('github_id', flat=True)
                 queryset = queryset.filter(owner_github_id__in=list(github_ids))
             except Exception as e:
                 return Response({"error": f"학생 ID 필터링 오류: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2. 레포지토리 ID로 필터링
         if repo_ids:
             queryset = queryset.filter(id__in=repo_ids)
 
-        # 3. 상태(filter_type)로 필터링
         if filter_type == "missing_summary":
             queryset = queryset.filter(summary__isnull=True)
-        elif filter_type == "outdated":
-            # 예: 30일 이상된 분석 결과 필터링
-            thirty_days_ago = make_aware(datetime.now() - timedelta(days=30))
-            # 이 부분은 summary 필드가 JSON 객체일 때를 가정하므로, 실제 필드 구조에 맞게 조정 필요
-            # queryset = queryset.filter(summary__analyzed_at__lte=thirty_days_ago.isoformat())
 
-        repositories = queryset.all()
-        total_requested = len(repositories)
-        
-        success_count, failure_count = 0, 0
+        queryset = queryset.order_by("id")
+        if filter_type == "needs_refresh":
+            eligible = [
+                repo for repo in queryset
+                if repository_summary_refresh_kind(repo, RepoSummaryAnalyzer.MODEL)
+            ]
+            eligible_repository_count = len(eligible)
+            if attempt_before is not None:
+                eligible = [
+                    repo for repo in eligible
+                    if repo.summary_last_attempt_at is None
+                    or repo.summary_last_attempt_at.timestamp() < attempt_before
+                ]
+            selectable_repository_count = len(eligible)
+            eligible.sort(
+                key=lambda repo: repository_summary_refresh_priority(
+                    repo, RepoSummaryAnalyzer.MODEL
+                )
+            )
+            repositories = eligible[:sample_size]
+        else:
+            eligible_repository_count = queryset.count()
+            selectable_repository_count = eligible_repository_count
+            if sample_size is not None:
+                candidate_ids = list(queryset.values_list("id", flat=True))
+                selected_ids = random.Random(sample_seed).sample(
+                    candidate_ids, min(sample_size, len(candidate_ids))
+                )
+                repositories_by_id = {
+                    repo.id: repo for repo in queryset.filter(id__in=selected_ids)
+                }
+                repositories = [repositories_by_id[repo_id] for repo_id in selected_ids]
+            else:
+                repositories = list(queryset)
+
+        try:
+            analyzer = RepoSummaryAnalyzer()
+        except Exception as exc:
+            return Response(
+                {"error": f"Repository summary analyzer initialization failed: {str(exc)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        success_count = 0
+        failure_count = 0
+        saved_count = 0
         failed_repositories = []
+        repository_reports = []
+        usage_totals = RepoSummaryAnalyzer.empty_usage()
+        actual_cost_usd = 0.0
+        billed_sample_count = 0
         
         for repo in repositories:
+            refresh_kind = repository_summary_refresh_kind(
+                repo, RepoSummaryAnalyzer.MODEL
+            )
             repo_data = {
                 'id': repo.id, 'name': repo.name, 'owner_github_id': repo.owner_github_id,
-                'description': repo.description, 'language_bytes': repo.language_bytes,
+                'description': repo.description, 'language': repo.language,
+                'language_bytes': repo.language_bytes,
+                'github_availability': repo.github_availability,
             }
-            
+
+            source_fingerprint = repository_summary_fingerprint(repo, RepoSummaryAnalyzer.MODEL)
             analysis_result = analyzer.analyze_repository(repo_data)
-            
-            # 실제 분석 내용인 structured_summary를 추출
             llm_summary = analysis_result.get("structured_summary")
-            
-            # llm_summary가 존재하면 성공/실패 여부와 무관하게 저장
-            if llm_summary:
-                # 성공 시, TextField에 유효한 JSON 문자열로 저장 (DB가 JSONB여도 캐스팅 가능)
-                repo.summary = json.dumps(llm_summary, ensure_ascii=False)
-                repo.save(update_fields=['summary'])
-                print(f"[SUMMARY SAVED] repo={repo.owner_github_id}/{repo.name} id={repo.id} len={len(repo.summary)}")
+            result_usage = analysis_result.get("usage") or RepoSummaryAnalyzer.empty_usage()
+            result_cost = float(analysis_result.get("cost_usd", 0.0) or 0.0)
+            for key in usage_totals:
+                usage_totals[key] += int(result_usage.get(key, 0) or 0)
+            actual_cost_usd += result_cost
+            if result_usage.get("total_tokens", 0):
+                billed_sample_count += 1
+
+            if analysis_result.get("success"):
                 success_count += 1
+                if save_summaries and llm_summary:
+                    repo.summary = json.dumps(llm_summary, ensure_ascii=False)
+                    repo.summary_generated_at = timezone_now()
+                    repo.summary_source_fingerprint = source_fingerprint
+                    repo.summary_source_kind = analysis_result.get("source_kind") or "github"
+                    repo.summary_last_attempt_at = repo.summary_generated_at
+                    repo.summary_last_error = None
+                    repo.save(update_fields=[
+                        'summary', 'summary_generated_at', 'summary_source_fingerprint',
+                        'summary_source_kind', 'summary_last_attempt_at', 'summary_last_error',
+                    ])
+                    saved_count += 1
+                    print(f"[SUMMARY SAVED] repo={repo.owner_github_id}/{repo.name} id={repo.id} len={len(repo.summary)}")
             else:
-                # 실패 시, 실패 카운트를 올리고 실패 목록에 추가
                 failure_count += 1
+                if save_summaries:
+                    repo.summary_last_attempt_at = timezone_now()
+                    repo.summary_last_error = analysis_result.get("error", "Unknown error")
+                    repo.save(update_fields=['summary_last_attempt_at', 'summary_last_error'])
                 failed_repositories.append({
                     "repository": f"{repo.owner_github_id}/{repo.name}",
                     "error": analysis_result.get("error", "Unknown error")
                 })
-                print(f"[SUMMARY NOT SAVED] repo={repo.owner_github_id}/{repo.name} id={repo.id} reason=no_summary")
-                # (선택) 실패 시 폴백 데이터를 저장하고 싶다면 아래 주석 해제
-                # if llm_summary:
-                #     repo.summary = json.dumps(llm_summary, ensure_ascii=False)
-                #     repo.save(update_fields=['summary'])
-                
+
+            repository_reports.append({
+                "id": repo.id,
+                "repository": f"{repo.owner_github_id}/{repo.name}",
+                "refresh_kind": refresh_kind,
+                "success": bool(analysis_result.get("success")),
+                "usage": result_usage,
+                "cost_usd": round(result_cost, 8),
+                "response_id": analysis_result.get("response_id"),
+                "response_model": analysis_result.get("response_model"),
+                "source_kind": analysis_result.get("source_kind"),
+                "structured_summary": llm_summary if analysis_result.get("success") else None,
+                "error": analysis_result.get("error"),
+            })
+
+        actual_cost_usd = round(actual_cost_usd, 8)
+        average_billed_cost_usd = (
+            actual_cost_usd / billed_sample_count if billed_sample_count else 0.0
+        )
+        projected_eligible_cost_usd = round(
+            average_billed_cost_usd * eligible_repository_count, 8
+        )
+
         return Response({
-            "message": "Repository analysis completed.",
-            "total_requested": total_requested,
+            "message": "Repository live test report completed." if test_report else "Repository analysis completed.",
+            "test_report": test_report,
+            "summaries_saved": save_summaries,
+            "model": RepoSummaryAnalyzer.MODEL,
+            "pricing": {
+                "version": RepoSummaryAnalyzer.PRICING_VERSION,
+                "currency": "USD",
+                "per_million_tokens": {
+                    "input": RepoSummaryAnalyzer.INPUT_USD_PER_MILLION,
+                    "cached_input": RepoSummaryAnalyzer.CACHED_INPUT_USD_PER_MILLION,
+                    "output": RepoSummaryAnalyzer.OUTPUT_USD_PER_MILLION,
+                },
+            },
+            "filter": filter_type,
+            "attempt_before": attempt_before,
+            "sample_seed": sample_seed if sample_size is not None else None,
+            "eligible_repository_count": eligible_repository_count,
+            "selectable_repository_count": selectable_repository_count,
+            "remaining_selectable_count": max(
+                selectable_repository_count - len(repositories), 0
+            ),
+            "sample_repository_count": len(repositories),
+            "total_requested": len(repositories),
             "processed": success_count,
             "failed": failure_count,
-            "failed_repositories": failed_repositories
+            "saved": saved_count,
+            "billed_sample_count": billed_sample_count,
+            "usage": usage_totals,
+            "actual_cost_usd": actual_cost_usd,
+            "average_billed_cost_usd": round(average_billed_cost_usd, 8),
+            "projected_eligible_cost_usd": projected_eligible_cost_usd,
+            "failed_repositories": failed_repositories,
+            "repositories": repository_reports if include_repository_details else [],
         }, status=status.HTTP_200_OK)
 
 class GetRepoSummaryAPIView(APIView):
@@ -3069,19 +3418,26 @@ class GetRepoSummaryAPIView(APIView):
             
         summary_text = repo.summary
         if not summary_text:
-            return Response({"error": "Analysis not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({
+                "error": "Analysis not found.",
+                "summary_status": repository_summary_status(repo),
+                "github_availability": repo.github_availability,
+            }, status=status.HTTP_404_NOT_FOUND)
         try:
             llm_analysis = json.loads(summary_text)
         except Exception:
             return Response({"error": "Analysis data is invalid."}, status=status.HTTP_404_NOT_FOUND)
 
-        analyzer = RepoSummaryAnalyzer()
-        frontend_data = analyzer._generate_frontend_summary(llm_analysis)
+        frontend_data = RepoSummaryAnalyzer._generate_frontend_summary(llm_analysis)
 
         return Response({
             "description": frontend_data.get("description"),
             "bullet_description": frontend_data.get("key_functionalities"),
             "tech_stack": frontend_data.get("tech_stack"),
+            "summary_status": repository_summary_status(repo),
+            "summary_source_kind": repo.summary_source_kind,
+            "summary_generated_at": repo.summary_generated_at,
+            "github_availability": repo.github_availability,
         }, status=status.HTTP_200_OK)
 
 # ---------------------------------------------
