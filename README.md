@@ -204,6 +204,74 @@ To crawl every repos of students in default order, run:
 nohup ./crawling.sh --scope=all --student-order=default > crawling.log 2>&1 &
 ```
 
+### Repository summary generation
+
+Repository summary generation uses the repository data saved in the database together with live GitHub context such as the file tree, README, workflows, and configuration files. It requires `OPENAI_API_KEY` in the root `.env` file and a running Django backend.
+
+Summary-only commands exit after the summary operation; they do not run the normal continuous GitHub crawling loop.
+
+#### Live pricing test without saving
+
+Run real summary API calls for a sample of 1 to 500 repositories and report token usage and estimated cost without changing `Repository.summary`:
+
+```bash
+./crawling.sh --summary-test=100
+```
+
+Use a different deterministic sample when required:
+
+```bash
+./crawling.sh --summary-test=100 --summary-seed=12345
+```
+
+Review `actual_cost_usd` and `projected_eligible_cost_usd` in the JSON response.
+
+#### Save a limited summary refresh batch
+
+Refresh and save up to 1 to 500 repositories that require summary work:
+
+```bash
+./crawling.sh --summary-update=100
+```
+
+Eligible repositories include:
+
+- repositories with no summary;
+- legacy summaries without a generation fingerprint;
+- summaries made stale by repository data, model, or prompt-version changes; and
+- repositories whose previous summary attempt failed.
+
+The backend prioritizes missing, legacy, stale, and previously failed summaries in that order. A failed attempt does not replace an existing saved summary; a repository with no successful summary remains `NULL` and can be retried.
+
+#### Save all required summary updates
+
+Process every currently eligible repository in batches of up to 500:
+
+```bash
+./crawling.sh --summary-update=all
+```
+
+Each eligible repository is attempted once during that execution. Successful batches are saved immediately. Run the same command again to retry repositories that failed.
+
+To run the full refresh in the background and follow its output:
+
+```bash
+nohup ./crawling.sh --summary-update=all > summary_update.log 2>&1 &
+tail -f summary_update.log
+```
+
+The output includes per-batch saved/failed counts, token usage, and estimated USD cost.
+
+#### Optional summary refresh during continuous crawling
+
+Set `SUMMARY_BATCH_SIZE` in `.env` to a value from 1 to 500 to run one summary refresh batch after each normal crawling cycle:
+
+```bash
+SUMMARY_BATCH_SIZE=100
+```
+
+Leave it unset or set it to `0` to keep summary generation separate from crawling.
+
 ## DB backup command
 In dev_db container, execute command below to create backup sql file.
 ```

@@ -225,3 +225,32 @@ class RepoDependabotAlert(models.Model):
 
     def __str__(self):
         return f"{self.repo_id}#{self.github_alert_number}"
+
+
+class StudentRepositoryTag(models.Model):
+    student = models.ForeignKey(
+        'account.Student',
+        on_delete=models.CASCADE,
+        related_name='repository_tags',
+    )
+    repository = models.ForeignKey(
+        Repository,
+        on_delete=models.CASCADE,
+        related_name='student_tags',
+    )
+    tag = models.CharField(max_length=30)
+    normalized_tag = models.CharField(max_length=30)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'repo_student_repository_tag'
+        ordering = ['created_at', 'id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['student', 'repository', 'normalized_tag'],
+                name='unique_student_repository_tag',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.student_id}:{self.repository_id}:{self.tag}"

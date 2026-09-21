@@ -10,6 +10,7 @@ from rest_framework.test import APIRequestFactory
 
 from account.models import Student
 from course.models import Course, Course_project
+from login.models import Member, Student as LoginStudent
 from repo.api.views import (
     GenerateRepoSummaryAPIView,
     RepoSummaryAnalyzer,
@@ -18,8 +19,9 @@ from repo.api.views import (
     repository_summary_status,
     remove_repository,
     repo_account_read_db,
+    update_student_repository_tags,
 )
-from repo.models import Repo_commit, Repository
+from repo.models import Repo_commit, Repository, StudentRepositoryTag
 
 
 class RepoAccountReadDbTimestampTests(TestCase):
@@ -114,10 +116,10 @@ class RepoAccountReadDbTimestampTests(TestCase):
 
         data = self.read_profile()
 
-        self.assertEqual(data["monthly_commits"]["total_count"], [
-            ["2020-03", 0], ["2020-04", 0], ["2020-05", 0],
-            ["2020-06", 0], ["2020-07", 1], ["2020-08", 1],
-        ])
+        activity = data["monthly_commits"]["total_count"]
+        self.assertEqual(activity[0], ["2018-01", 1])
+        self.assertEqual(activity[-2:], [["2020-07", 1], ["2020-08", 1]])
+        self.assertEqual(len(activity), 32)
         self.assertEqual(data["repositories"][0]["monthly_commits"],
                          [["2020-07", 1], ["2020-08", 1]])
 
@@ -139,6 +141,104 @@ class RepoAccountReadDbTimestampTests(TestCase):
             ["2026-03", 0], ["2026-04", 0], ["2026-05", 0],
             ["2026-06", 0], ["2026-07", 0], ["2026-08", 1],
         ])
+
+
+class StudentRepositoryTagTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.student = Student.objects.create(
+            id="tag-student",
+            name="Tag Student",
+            github_id="tag-user",
+        )
+        member = Member.objects.create(
+            id="firebase-tag-user",
+            name="Tag Student",
+            email="tag@example.com",
+        )
+        LoginStudent.objects.create(member=member, id=self.student.id)
+        self.repo = Repository.objects.create(
+            id="tag-repo",
+            name="Personal Repo",
+            owner_github_id=self.student.github_id,
+            is_course=False,
+            star_count=0,
+            fork_count=0,
+        )
+        self.course_repo = Repository.objects.create(
+            id="tag-course-repo",
+            name="Course Repo",
+            owner_github_id=self.student.github_id,
+            is_course=True,
+            category="COSE101",
+            star_count=0,
+            fork_count=0,
+        )
+
+    def update_tags(self, repository, tags):
+        request = self.factory.post(
+            "/repo/update_student_repository_tags",
+            json.dumps({
+                "uuid": "firebase-tag-user",
+                "repositories": [{"repo_id": repository.id, "tags": tags}],
+            }),
+            content_type="application/json",
+        )
+        return update_student_repository_tags(request)
+
+    def read_profile(self, uuid="firebase-tag-user"):
+        request = self.factory.post(
+            "/repo/repo_account_read_db",
+            json.dumps({"uuid": uuid, "student_num": self.student.id}),
+            content_type="application/json",
+        )
+        response = repo_account_read_db(request)
+        self.assertEqual(response.status_code, 200, response.content)
+        return json.loads(response.content)
+
+    def test_saves_personal_tags_and_returns_them_on_own_profile(self):
+        response = self.update_tags(self.repo, ["AI", "팀 프로젝트"])
+        self.assertEqual(response.status_code, 200, response.content)
+
+        data = self.read_profile()
+        repos = {repo["id"]: repo for repo in data["repositories"]}
+        self.assertTrue(data["can_edit_repository_tags"])
+        self.assertEqual(repos[self.repo.id]["personal_tags"], ["AI", "팀 프로젝트"])
+        self.assertEqual(repos[self.course_repo.id]["personal_tags"], [])
+
+    def test_viewing_another_student_profile_returns_tags_read_only(self):
+        StudentRepositoryTag.objects.create(
+            student=self.student,
+            repository=self.repo,
+            tag="백엔드",
+            normalized_tag="백엔드",
+        )
+
+        data = self.read_profile(uuid="empty")
+        repos = {repo["id"]: repo for repo in data["repositories"]}
+        self.assertFalse(data["can_edit_repository_tags"])
+        self.assertEqual(repos[self.repo.id]["personal_tags"], ["백엔드"])
+
+    def test_rejects_case_insensitive_duplicate_tags(self):
+        response = self.update_tags(self.repo, ["Python", "python"])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(StudentRepositoryTag.objects.count(), 0)
+
+    def test_rejects_course_repository_tags(self):
+        response = self.update_tags(self.course_repo, ["수정 금지"])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(StudentRepositoryTag.objects.count(), 0)
+
+    def test_rejects_repository_not_connected_to_student(self):
+        unavailable_repo = Repository.objects.create(
+            id="other-repo",
+            name="Other Repo",
+            owner_github_id="other-user",
+            is_course=False,
+        )
+        response = self.update_tags(unavailable_repo, ["태그"])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(StudentRepositoryTag.objects.count(), 0)
 
 
 class RepositorySummaryLiveReportTests(TestCase):

@@ -12,6 +12,7 @@ from rest_framework import status
 from datetime import datetime, timedelta
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import make_aware, now as timezone_now
+from django.db import transaction
 from django.db.models import Sum, Count, Q
 
 from repo.models import (
@@ -24,6 +25,7 @@ from repo.models import (
     RepoCommitFileChange,
     RepoReviewComment,
     RepoDependabotAlert,
+    StudentRepositoryTag,
 )
 from account.models import Student
 from account.api.views import get_students_for_crawling
@@ -112,6 +114,19 @@ def six_month_keys_ending_at(value):
         year, zero_based_month = divmod(month_index, 12)
         month_keys.append(f"{year:04d}-{zero_based_month + 1:02d}")
     return month_keys
+
+
+def month_keys_between(start_value, end_value):
+    """Return every YYYY-MM key from start_value through end_value."""
+    start_month_index = start_value.year * 12 + start_value.month - 1
+    end_month_index = end_value.year * 12 + end_value.month - 1
+    return [
+        f"{year:04d}-{zero_based_month + 1:02d}"
+        for year, zero_based_month in (
+            divmod(month_index, 12)
+            for month_index in range(start_month_index, end_month_index + 1)
+        )
+    ]
 
 
 def get_latest_model_timestamp(model, repo_id):
@@ -2330,6 +2345,13 @@ def repo_account_read_db(request):
         contributor_repo_ids = list(contributor_repo_list.values_list('id', flat=True))
         all_repo_ids = list(set(owner_repo_ids + contributor_repo_ids))
 
+        personal_tags_by_repo = {}
+        for personal_tag in StudentRepositoryTag.objects.filter(
+            student=student,
+            repository_id__in=all_repo_ids,
+        ).order_by('created_at', 'id'):
+            personal_tags_by_repo.setdefault(personal_tag.repository_id, []).append(personal_tag.tag)
+
         latest_snapshots_by_repo = {}
         for snapshot in RepositorySnapshot.objects.filter(repo_id__in=all_repo_ids).order_by('repo_id', '-collected_at'):
             if snapshot.repo_id not in latest_snapshots_by_repo:
@@ -2455,16 +2477,25 @@ def repo_account_read_db(request):
                 day_name = days_of_week[weekday_index]
                 heatmap_data[day_name][str(hour)] += 1
 
-        # The central EProfile activity chart always shows six calendar months,
-        # ending at the student's latest valid commit month. A student without
-        # valid commit timestamps receives a zero-filled window ending today.
+        # Return the student's complete continuous activity history. The series
+        # is padded to at least six months so the frontend can open on a stable
+        # six-month view and pan into older activity when it exists.
         activity_anchor = (
             max(commit_datetime for _, commit_datetime in user_commits_with_dates)
             if user_commits_with_dates
             else today
         )
-        activity_month_keys = six_month_keys_ending_at(activity_anchor)
-        activity_month_key_set = set(activity_month_keys)
+        six_month_start_key = six_month_keys_ending_at(activity_anchor)[0]
+        six_month_start = datetime.strptime(six_month_start_key, '%Y-%m')
+        activity_start = (
+            min(
+                min(commit_datetime for _, commit_datetime in user_commits_with_dates),
+                six_month_start,
+            )
+            if user_commits_with_dates
+            else six_month_start
+        )
+        activity_month_keys = month_keys_between(activity_start, activity_anchor)
         monthly_commit_counts = {month_key: 0 for month_key in activity_month_keys}
         monthly_added_lines = {month_key: 0 for month_key in activity_month_keys}
         monthly_deleted_lines = {month_key: 0 for month_key in activity_month_keys}
@@ -2472,9 +2503,6 @@ def repo_account_read_db(request):
 
         for commit, commit_datetime in user_commits_with_dates:
             month_key = commit_datetime.strftime('%Y-%m')
-            if month_key not in activity_month_key_set:
-                continue
-
             added = commit.added_lines if commit.added_lines is not None else 0
             deleted = commit.deleted_lines if commit.deleted_lines is not None else 0
             monthly_commit_counts[month_key] += 1
@@ -2621,6 +2649,7 @@ def repo_account_read_db(request):
                 'name': r.name,
                 'is_course': r.is_course,
                 'category': r.category,
+                'personal_tags': [] if r.is_course else personal_tags_by_repo.get(r.id, []),
                 'url': r.url,
                 'student_id': student.id,
                 'owner_github_id': r.owner_github_id,
@@ -2696,12 +2725,129 @@ def repo_account_read_db(request):
             'heatmap': heatmap_data,
             'student_introduction': student.account_introduction or "",
             'student_technology_stack': student.technology_stack or [],
+            'can_edit_repository_tags': uuid != 'empty',
         }
 
         return JsonResponse(response_data, safe=False)
      
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
+
+
+def student_can_access_repository(student, repository):
+    github_id = (student.github_id or '').strip()
+    if not github_id:
+        return False
+    if repository.owner_github_id == github_id:
+        return True
+    if Repo_contributor.objects.filter(
+        repo=repository,
+        contributor_id=github_id,
+    ).exists():
+        return True
+    contributor_ids = {
+        value.strip()
+        for value in (repository.contributors or '').split(',')
+        if value.strip()
+    }
+    return github_id in contributor_ids
+
+
+@csrf_exempt
+def update_student_repository_tags(request):
+    if request.method != 'POST':
+        return JsonResponse({"status": "Error", "message": "Only POST method is allowed"}, status=405)
+
+    try:
+        body_data = json.loads(request.body.decode('utf-8'))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"status": "Error", "message": "Invalid JSON format or character encoding"}, status=400)
+
+    uuid = body_data.get('uuid')
+    repository_entries = body_data.get('repositories')
+    if not uuid:
+        return JsonResponse({"status": "Error", "message": "uuid is required"}, status=400)
+    if not isinstance(repository_entries, list):
+        return JsonResponse({"status": "Error", "message": "repositories must be a list"}, status=400)
+
+    try:
+        login_student = LoginStudent.objects.get(member_id=uuid)
+        student = Student.objects.get(id=login_student.id)
+    except LoginStudent.DoesNotExist:
+        return JsonResponse({"status": "Error", "message": "Login student not found"}, status=404)
+    except Student.DoesNotExist:
+        return JsonResponse({"status": "Error", "message": "Account student not found"}, status=404)
+
+    validated_entries = []
+    seen_repository_ids = set()
+    for entry in repository_entries:
+        if not isinstance(entry, dict):
+            return JsonResponse({"status": "Error", "message": "Each repository entry must be an object"}, status=400)
+
+        repo_id = str(entry.get('repo_id') or '').strip()
+        tags = entry.get('tags')
+        if not repo_id or not isinstance(tags, list):
+            return JsonResponse({"status": "Error", "message": "Each entry requires repo_id and a tags list"}, status=400)
+        if repo_id in seen_repository_ids:
+            return JsonResponse({"status": "Error", "message": f"Duplicate repository entry: {repo_id}"}, status=400)
+        seen_repository_ids.add(repo_id)
+
+        try:
+            repository = Repository.objects.get(id=repo_id)
+        except Repository.DoesNotExist:
+            return JsonResponse({"status": "Error", "message": f"Repository not found: {repo_id}"}, status=404)
+
+        if repository.is_course:
+            return JsonResponse({"status": "Error", "message": f"Course repository tags are read-only: {repo_id}"}, status=400)
+        if not student_can_access_repository(student, repository):
+            return JsonResponse({"status": "Error", "message": f"Repository is not available to this student: {repo_id}"}, status=403)
+        if len(tags) > 10:
+            return JsonResponse({"status": "Error", "message": f"A repository can have at most 10 tags: {repo_id}"}, status=400)
+
+        normalized_tags = set()
+        cleaned_tags = []
+        for raw_tag in tags:
+            if not isinstance(raw_tag, str):
+                return JsonResponse({"status": "Error", "message": "Tags must be text"}, status=400)
+            tag = raw_tag.strip()
+            if not tag:
+                return JsonResponse({"status": "Error", "message": "Tags cannot be empty"}, status=400)
+            if len(tag) > 30:
+                return JsonResponse({"status": "Error", "message": f"Tags can contain at most 30 characters: {tag}"}, status=400)
+            normalized_tag = tag.casefold()
+            if normalized_tag in normalized_tags:
+                return JsonResponse({"status": "Error", "message": f"Duplicate tag: {tag}"}, status=400)
+            normalized_tags.add(normalized_tag)
+            cleaned_tags.append((tag, normalized_tag))
+
+        validated_entries.append((repository, cleaned_tags))
+
+    with transaction.atomic():
+        for repository, cleaned_tags in validated_entries:
+            StudentRepositoryTag.objects.filter(
+                student=student,
+                repository=repository,
+            ).delete()
+            StudentRepositoryTag.objects.bulk_create([
+                StudentRepositoryTag(
+                    student=student,
+                    repository=repository,
+                    tag=tag,
+                    normalized_tag=normalized_tag,
+                )
+                for tag, normalized_tag in cleaned_tags
+            ])
+
+    return JsonResponse({
+        "status": "OK",
+        "repositories": [
+            {
+                "repo_id": repository.id,
+                "tags": [tag for tag, _ in cleaned_tags],
+            }
+            for repository, cleaned_tags in validated_entries
+        ],
+    })
 
 # ========================================
 # LLM Summary

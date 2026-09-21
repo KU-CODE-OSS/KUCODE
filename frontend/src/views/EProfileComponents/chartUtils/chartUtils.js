@@ -26,10 +26,8 @@ export function processActivityData(totalCountArray) {
       const dateString = dataPoint[0] // e.g., "2024-08"
       const commitCount = dataPoint[1] // e.g., 11
       
-      // Convert date string to Korean month format
-      const monthLabel = convertDateToKoreanMonth(dateString)
-      
-      labels.push(monthLabel)
+      // Keep the year-month key unique so older years can be panned safely.
+      labels.push(dateString)
       values.push(commitCount)
     }
   })
@@ -89,10 +87,7 @@ export function processAddedLinesData(addedLinesArray) {
       const dateString = dataPoint[0] // e.g., "2024-08"
       const lineCount = dataPoint[1] // e.g., 1836
       
-      // Convert date string to Korean month format
-      const monthLabel = convertDateToKoreanMonth(dateString)
-      
-      labels.push(monthLabel)
+      labels.push(dateString)
       values.push(lineCount)
     }
   })

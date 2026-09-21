@@ -201,9 +201,17 @@
           </div>
 
           <div class="development-panel">
-            <div v-if="activeDevelopmentTab === 'activity'" class="tab-chart-content">
+            <div v-show="activeDevelopmentTab === 'activity'" class="tab-chart-content">
               <div class="chart-header">
-                <h3 class="chart-title-text">활동 추이 (최근 6개월)</h3>
+                <div>
+                  <h3 class="chart-title-text">활동 추이</h3>
+                  <p class="activity-chart-help">최근 6개월부터 표시됩니다. 드래그해 이전 기록을 보고, 휠 또는 버튼으로 확대·축소할 수 있습니다.</p>
+                </div>
+                <div class="activity-chart-controls" aria-label="활동 추이 차트 조작">
+                  <button type="button" title="확대" @click="zoomActivityChart(1.25)">+</button>
+                  <button type="button" title="축소" @click="zoomActivityChart(0.8)">−</button>
+                  <button type="button" class="activity-reset-button" @click="resetActivityChartZoom">최근 6개월</button>
+                </div>
               </div>
               <div class="chart-legend-horizontal">
                 <div class="legend-item">
@@ -220,7 +228,7 @@
               </div>
             </div>
 
-            <div v-else-if="activeDevelopmentTab === 'team'" class="tab-chart-content">
+            <div v-show="activeDevelopmentTab === 'team'" class="tab-chart-content">
               <div class="chart-header">
                 <h3 class="chart-title-text">팀 프로젝트 비율</h3>
               </div>
@@ -230,14 +238,14 @@
               </div>
             </div>
 
-            <div v-else-if="activeDevelopmentTab === 'time'" class="tab-chart-content">
+            <div v-show="activeDevelopmentTab === 'time'" class="tab-chart-content">
               <div class="section-header centralized-section-header">
                 <h3 class="chart-title-text">활동 시간대</h3>
               </div>
               <EProfileHeatmap :heatmapData="heatmapData" />
             </div>
 
-            <div v-else class="aptitude-panel">
+            <div v-show="activeDevelopmentTab === 'aptitude'" class="aptitude-panel">
               <div v-if="aptitudeLoading" class="aptitude-state">역량 점수를 불러오는 중입니다.</div>
               <div v-else-if="aptitudeError" class="aptitude-state aptitude-state-error">
                 {{ aptitudeError }}
@@ -365,38 +373,30 @@
             <div class="category-type">
               {{ repo.is_course ? '전공역량' : '자율활동' }}
             </div>
-            <!-- Show dropdown only for autonomous projects (is_course: false) -->
-            <div 
-              v-if="!repo.is_course"
-              class="category-dropdown"
-              :class="{ 
-                'dropdown-open': categoryDropdownOpen[repo.id],
-                'dropdown-up': shouldDropUp(repo.id),
-                'dropdown-disabled': !isEditingProfile
-              }"
-              @click.stop="isEditingProfile ? toggleCategoryDropdown(repo.id) : null"
-              :ref="`categoryDropdown_${repo.id}`"
-            >
-              <div class="category-dropdown-selected">
-                <span>{{ repo.category || 'N/A' }}</span>
-                <i class="icon-arrow-down" :class="{ 'rotated': categoryDropdownOpen[repo.id] }"></i>
+            <div v-if="!repo.is_course" class="repository-personal-tags">
+              <div v-if="repo.personal_tags.length" class="repository-tag-list">
+                <span v-for="tag in repo.personal_tags" :key="tag.toLocaleLowerCase()" class="repository-tag-chip">
+                  {{ tag }}
+                  <button
+                    v-if="isEditingProfile && canEditRepositoryTags"
+                    type="button"
+                    aria-label="태그 삭제"
+                    @click.stop="removeRepositoryTag(repo, tag)"
+                  >×</button>
+                </span>
               </div>
-              <div 
-                v-if="categoryDropdownOpen[repo.id] && isEditingProfile" 
-                class="category-dropdown-options"
-                :class="{ 'options-up': shouldDropUp(repo.id) }"
-              >
-                <div 
-                  v-for="option in categoryOptions" 
-                  :key="option"
-                  class="category-dropdown-option"
-                  @click.stop="selectCategoryOption(repo.id, option)"
-                >
-                  {{ option }}
-                </div>
-              </div>
+              <span v-else-if="!isEditingProfile || !canEditRepositoryTags" class="repository-tag-empty">태그 없음</span>
+              <input
+                v-if="isEditingProfile && canEditRepositoryTags && repo.personal_tags.length < 10"
+                v-model="repo.tagInput"
+                class="repository-tag-input"
+                type="text"
+                maxlength="30"
+                placeholder="태그 입력 후 Enter"
+                @click.stop
+                @keydown="handleRepositoryTagKeydown($event, repo)"
+              />
             </div>
-            <!-- Show static value for course projects (is_course: true) -->
             <div v-else class="category-static">
               {{ repo.category || 'N/A' }}
             </div>
@@ -559,12 +559,13 @@
 </template>
 
 <script>
+import { markRaw } from 'vue'
 import { Chart, registerables } from 'chart.js'
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import EProfileHeatmap from './EProfileComponents/EProfileHeatmap.vue'
 import RepoDetailModal from './EProfileComponents/RepoDetailModal.vue'
-import { getEProfileHeatmap, getStudentAptitude, updateStudentIntroduction, updateStudentTechnologyStack } from '@/api.js'
+import { getEProfileHeatmap, getStudentAptitude, updateStudentIntroduction, updateStudentTechnologyStack, updateStudentRepositoryTags } from '@/api.js'
 import { processActivityData, processAddedLinesData, estimateCommitLines } from './EProfileComponents/chartUtils/chartUtils.js'
 import { auth } from '../services/firebase'
 
@@ -607,6 +608,8 @@ export default {
       techStackChart: null,
       // Activity Chart Data - NEW ADDITIONS
       activityChart: null,
+      activityChartNavigation: null,
+      activityViewWindow: { start: 0, end: 0 },
       activityViewMode: 'monthly', // 'monthly' or 'weekly'
       activeDevelopmentTab: 'activity',
       developmentTabs: [
@@ -694,31 +697,12 @@ export default {
       repositoriesData: [],
       repositoriesLoading: false,
       repositoriesError: null,
+      canEditRepositoryTags: false,
       // Sorting state
       sortBy: '',
       sortDirection: 'asc', // 'asc' or 'desc'
       // githubId: "YeoJune", // 임시 테스트용 GitHub 아이디 - TODO: 실제 로그인된 사용자 ID로 변경 필요
       student_uuid: auth.currentUser.uid,
-      // Category dropdown state
-      categoryDropdownOpen: {},
-      categoryOptions: [
-        '자료구조',
-        '알고리즘',
-        '컴퓨터구조',
-        '운영체제',
-        '데이터베이스',
-        '네트워크',
-        '인공지능',
-        '컴파일러',
-        '소프트웨어공학',
-        '클라우드컴퓨팅',
-        '운영체제실습',
-        '네트워크실습',
-        '프로그래밍언어론',
-        '분산시스템',
-        '컴퓨터그래픽스',
-        '사이버보안'
-      ],
       // Pagination properties
       currentPage: 1,
       itemsPerPage: 10,
@@ -927,10 +911,6 @@ export default {
           dropdown.isOpen = false
         })
       }
-      
-      if (!event.target.closest('.category-dropdown')) {
-        this.closeCategoryDropdowns()
-      }
     }
     
     document.addEventListener('click', this.closeAllDropdowns)
@@ -939,6 +919,7 @@ export default {
     this.handleStudentChange().finally(() => next())
   },
   beforeUnmount() {
+    this.unbindActivityChartNavigation()
     if (this.techStackChart) {
       this.techStackChart.destroy()
     }
@@ -952,22 +933,24 @@ export default {
     document.removeEventListener('click', this.closeAllDropdowns)
   },
   methods: {
-    switchDevelopmentTab(tabId) {
+    async switchDevelopmentTab(tabId) {
       if (this.activeDevelopmentTab === tabId) return
 
-      if (this.activityChart) {
-        this.activityChart.destroy()
-        this.activityChart = null
-      }
-      if (this.teamSizeChart) {
-        this.teamSizeChart.destroy()
-        this.teamSizeChart = null
-      }
-
       this.activeDevelopmentTab = tabId
-      this.$nextTick(() => {
-        if (tabId === 'activity') this.createActivityChart()
-        if (tabId === 'team') this.createTeamSizeChart()
+      await this.$nextTick()
+      requestAnimationFrame(() => {
+        if (this.activeDevelopmentTab !== tabId) return
+        if (tabId === 'activity') {
+          if (!this.activityChart) this.createActivityChart()
+          else {
+            this.activityChart.resize()
+            this.activityChart.update('none')
+          }
+        }
+        if (tabId === 'team') {
+          if (!this.teamSizeChart) this.createTeamSizeChart()
+          else this.teamSizeChart.resize()
+        }
       })
     },
     normalizedAptitudeScore(value) {
@@ -1247,14 +1230,28 @@ export default {
       })
     },
     createActivityChart() {
+      if (!this.$refs.activityChart) return
+      this.unbindActivityChartNavigation()
+      if (this.activityChart) {
+        this.activityChart.destroy()
+        this.activityChart = null
+      }
       const ctx = this.$refs.activityChart.getContext('2d')
 
       const currentData = this.activityData[this.activityViewMode]
+      const labels = currentData.labels || []
+      const initialStartIndex = Math.max(0, labels.length - 6)
+      const initialEndIndex = Math.max(0, labels.length - 1)
+      this.activityViewWindow = {
+        start: initialStartIndex,
+        end: initialEndIndex
+      }
+      const visibleLabels = labels.slice(initialStartIndex, initialEndIndex + 1)
       
-      this.activityChart = new Chart(ctx, {
+      this.activityChart = markRaw(new Chart(ctx, {
         type: 'line',
         data: {
-          labels: currentData.labels,
+          labels: visibleLabels,
           datasets: [
             // {
             //   label: 'Repos',
@@ -1291,7 +1288,7 @@ export default {
             // }
             {
               label: 'Commit수',
-              data: currentData.commits,
+              data: currentData.commits.slice(initialStartIndex, initialEndIndex + 1),
               borderColor: '#C16179',
               backgroundColor: 'transparent',
               borderWidth: 2,
@@ -1302,7 +1299,7 @@ export default {
             },
             {
               label: 'Commit라인수',
-              data: currentData.commitLines,
+              data: currentData.commitLines.slice(initialStartIndex, initialEndIndex + 1),
               borderColor: '#FF176A',
               backgroundColor: 'transparent',
               borderWidth: 2,
@@ -1319,7 +1316,7 @@ export default {
           plugins: {
             legend: {
               display: false // We use our custom legend
-            }
+            },
           },
           scales: {
             x: {
@@ -1330,6 +1327,12 @@ export default {
                 display: false
               },
               ticks: {
+                callback: function(value) {
+                  const label = this.getLabelForValue(value)
+                  if (!label || !label.includes('-')) return label
+                  const [year, month] = label.split('-')
+                  return `${year}.${Number(month)}`
+                },
                 color: '#262626',
                 font: {
                   size: 12,
@@ -1376,7 +1379,100 @@ export default {
             duration: 1000
           }
         }
-      })
+      }))
+      this.bindActivityChartNavigation()
+    },
+    zoomActivityChart(factor) {
+      const total = this.activityData[this.activityViewMode]?.labels?.length || 0
+      if (!this.activityChart || total < 2) return
+      const { start, end } = this.activityViewWindow
+      const visible = end - start + 1
+      const targetVisible = factor > 1
+        ? Math.max(2, Math.floor(visible / factor))
+        : Math.min(total, Math.ceil(visible / factor))
+      const center = (start + end) / 2
+      let nextStart = Math.round(center - (targetVisible - 1) / 2)
+      let nextEnd = nextStart + targetVisible - 1
+      if (nextStart < 0) {
+        nextEnd -= nextStart
+        nextStart = 0
+      }
+      if (nextEnd >= total) {
+        nextStart -= nextEnd - total + 1
+        nextEnd = total - 1
+      }
+      this.setActivityChartWindow(Math.max(0, nextStart), nextEnd)
+    },
+    resetActivityChartZoom() {
+      const total = this.activityData[this.activityViewMode]?.labels?.length || 0
+      if (!total) return
+      this.setActivityChartWindow(Math.max(0, total - 6), total - 1)
+    },
+    setActivityChartWindow(start, end) {
+      const labels = this.activityData[this.activityViewMode]?.labels || []
+      if (!this.activityChart || !labels.length) return
+      const windowSize = Math.max(1, end - start + 1)
+      const boundedStart = Math.max(0, Math.min(start, labels.length - windowSize))
+      const boundedEnd = Math.min(labels.length - 1, boundedStart + windowSize - 1)
+      this.activityViewWindow = { start: boundedStart, end: boundedEnd }
+      const currentData = this.activityData[this.activityViewMode]
+      this.activityChart.data.labels = labels.slice(boundedStart, boundedEnd + 1)
+      this.activityChart.data.datasets[0].data = currentData.commits.slice(boundedStart, boundedEnd + 1)
+      this.activityChart.data.datasets[1].data = currentData.commitLines.slice(boundedStart, boundedEnd + 1)
+      this.activityChart.update('none')
+    },
+    bindActivityChartNavigation() {
+      this.unbindActivityChartNavigation()
+      const canvas = this.$refs.activityChart
+      if (!canvas) return
+
+      let dragState = null
+      const wheel = event => {
+        event.preventDefault()
+        this.zoomActivityChart(event.deltaY < 0 ? 1.25 : 0.8)
+      }
+      const pointerDown = event => {
+        const visible = this.activityViewWindow.end - this.activityViewWindow.start + 1
+        if (visible >= (this.activityData[this.activityViewMode]?.labels?.length || 0)) return
+        dragState = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          start: this.activityViewWindow.start,
+          end: this.activityViewWindow.end
+        }
+        canvas.setPointerCapture?.(event.pointerId)
+        canvas.classList.add('is-panning')
+      }
+      const pointerMove = event => {
+        if (!dragState || dragState.pointerId !== event.pointerId || !this.activityChart?.chartArea) return
+        const visible = dragState.end - dragState.start + 1
+        const pixelsPerMonth = this.activityChart.chartArea.width / Math.max(1, visible)
+        const shift = Math.round((dragState.startX - event.clientX) / Math.max(1, pixelsPerMonth))
+        this.setActivityChartWindow(dragState.start + shift, dragState.end + shift)
+      }
+      const pointerUp = event => {
+        if (!dragState || dragState.pointerId !== event.pointerId) return
+        canvas.releasePointerCapture?.(event.pointerId)
+        canvas.classList.remove('is-panning')
+        dragState = null
+      }
+
+      canvas.addEventListener('wheel', wheel, { passive: false })
+      canvas.addEventListener('pointerdown', pointerDown)
+      canvas.addEventListener('pointermove', pointerMove)
+      canvas.addEventListener('pointerup', pointerUp)
+      canvas.addEventListener('pointercancel', pointerUp)
+      this.activityChartNavigation = { canvas, wheel, pointerDown, pointerMove, pointerUp }
+    },
+    unbindActivityChartNavigation() {
+      const navigation = this.activityChartNavigation
+      if (!navigation) return
+      navigation.canvas.removeEventListener('wheel', navigation.wheel)
+      navigation.canvas.removeEventListener('pointerdown', navigation.pointerDown)
+      navigation.canvas.removeEventListener('pointermove', navigation.pointerMove)
+      navigation.canvas.removeEventListener('pointerup', navigation.pointerUp)
+      navigation.canvas.removeEventListener('pointercancel', navigation.pointerUp)
+      this.activityChartNavigation = null
     },
     createTeamSizeChart() {
       if (!this.$refs.teamSizeChart) return
@@ -1509,6 +1605,21 @@ export default {
         
         // 기술 스택 저장 (배열로 직접 전송)
         await updateStudentTechnologyStack(uuid, technology_stack)
+
+        if (this.canEditRepositoryTags) {
+          this.repositoriesData.forEach(repo => {
+            if (!repo.is_course && repo.tagInput?.trim()) {
+              this.addRepositoryTag(repo)
+            }
+          })
+          const repositories = this.repositoriesData
+            .filter(repo => !repo.is_course)
+            .map(repo => ({
+              repo_id: repo.id,
+              tags: repo.personal_tags
+            }))
+          await updateStudentRepositoryTags(uuid, repositories)
+        }
       }
       catch (error) {
         console.error('Failed to save profile data:', error)
@@ -1964,9 +2075,15 @@ export default {
         // Process the repositories data
         if (responseData && responseData.repositories) {
           // Handle case where repositories might be an array or single object
-          this.repositoriesData = Array.isArray(responseData.repositories) 
+          const repositories = Array.isArray(responseData.repositories)
             ? responseData.repositories 
             : [responseData.repositories]
+          this.repositoriesData = repositories.map(repo => ({
+            ...repo,
+            personal_tags: Array.isArray(repo.personal_tags) ? [...repo.personal_tags] : [],
+            tagInput: ''
+          }))
+          this.canEditRepositoryTags = Boolean(responseData.can_edit_repository_tags)
         } else {
           // Keep existing test data if no API data (don't clear it)
           console.log('No repository data from API, keeping existing data')
@@ -2043,53 +2160,47 @@ export default {
       return 0
     },
 
-    // Category dropdown methods
-    toggleCategoryDropdown(repoId) {
-      // Close all other category dropdowns
-      Object.keys(this.categoryDropdownOpen).forEach(id => {
-        if (id !== repoId.toString()) {
-          this.categoryDropdownOpen[id] = false
-        }
-      })
-      
-      // Toggle the clicked dropdown
-      this.categoryDropdownOpen[repoId] = !this.categoryDropdownOpen[repoId]
-      this.$forceUpdate() // Force reactivity update
-    },
-
-    selectCategoryOption(repoId, option) {
-      // Find the repository and update its category
-      const repo = this.repositoriesData.find(r => r.id === repoId)
-      if (repo) {
-        repo.category = option
+    handleRepositoryTagKeydown(event, repo) {
+      if (event.key === 'Enter' || event.key === ',') {
+        event.preventDefault()
+        this.addRepositoryTag(repo)
+      } else if (event.key === 'Backspace' && !repo.tagInput && repo.personal_tags.length) {
+        repo.personal_tags.pop()
       }
-      
-      // Close the dropdown
-      this.categoryDropdownOpen[repoId] = false
-      this.$forceUpdate() // Force reactivity update
     },
 
-    closeCategoryDropdowns() {
-      Object.keys(this.categoryDropdownOpen).forEach(id => {
-        this.categoryDropdownOpen[id] = false
-      })
-      this.$forceUpdate() // Force reactivity update
+    addRepositoryTag(repo) {
+      const tag = (repo.tagInput || '').trim()
+      if (!tag) return
+      if (tag.length > 30) {
+        alert('태그는 30자까지 입력할 수 있습니다.')
+        return
+      }
+      if (repo.personal_tags.length >= 10) {
+        alert('저장소당 태그는 최대 10개까지 추가할 수 있습니다.')
+        return
+      }
+      const normalizedTag = tag.toLocaleLowerCase()
+      if (repo.personal_tags.some(existing => existing.toLocaleLowerCase() === normalizedTag)) {
+        alert('이미 추가된 태그입니다.')
+        repo.tagInput = ''
+        return
+      }
+      repo.personal_tags.push(tag)
+      repo.tagInput = ''
     },
 
-    shouldDropUp(repoId) {
-      // Simple approach: check if this is one of the last few rows
-      const currentIndex = this.paginatedRepositoriesData.findIndex(repo => repo.id === repoId)
-      const totalRows = this.paginatedRepositoriesData.length
-
-      // If it's in the last 3 rows, drop up
-      return currentIndex >= totalRows - 3
+    removeRepositoryTag(repo, tag) {
+      const normalizedTag = tag.toLocaleLowerCase()
+      repo.personal_tags = repo.personal_tags.filter(
+        existing => existing.toLocaleLowerCase() !== normalizedTag
+      )
     },
 
     // Pagination methods
     goToPage(page) {
       if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
         this.currentPage = page
-        this.closeCategoryDropdowns()
       }
     },
 
@@ -3190,6 +3301,39 @@ export default {
   flex-shrink: 0;
 }
 
+.activity-chart-help {
+  margin: 6px 0 0;
+  color: #717989;
+  font-size: 12px;
+}
+
+.activity-chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.activity-chart-controls button {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #F1BAC7;
+  border-radius: 7px;
+  background: #FFFFFF;
+  color: #CB385C;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.activity-chart-controls button:hover {
+  background: #FFF4F6;
+}
+
+.activity-chart-controls .activity-reset-button {
+  font-size: 12px;
+}
+
 .chart-title {
   display: flex;
   align-items: center;
@@ -3296,6 +3440,12 @@ export default {
 .activity-chart-container canvas {
   width: 100% !important;
   height: 100% !important;
+  cursor: grab;
+  touch-action: none;
+}
+
+.activity-chart-container canvas.is-panning {
+  cursor: grabbing;
 }
 
 .chart-area,
@@ -3403,7 +3553,7 @@ export default {
   box-sizing: border-box;
   
   /* Column width variables - easily adjustable */
-  --col-category: 120px;
+  --col-category: 195px;
   --col-repository: 180px;
   --col-type: 100px;
   --col-commits: 90px;
@@ -3419,7 +3569,7 @@ export default {
   background: #F8F9FA;
   display: grid;
   grid-template-columns: 
-    var(--col-category, 120px)
+    var(--col-category, 195px)
     var(--col-repository, 180px) 
     var(--col-type, 100px)
     var(--col-commits, 90px) 
@@ -3467,7 +3617,7 @@ export default {
 .table-row {
   display: grid;
   grid-template-columns: 
-    var(--col-category, 120px)
+    var(--col-category, 195px)
     var(--col-repository, 180px) 
     var(--col-type, 100px)
     var(--col-commits, 90px) 
@@ -3632,6 +3782,63 @@ export default {
   text-align: center;
   background: #F8F9FA;
   color: #616161;
+}
+
+.repository-personal-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.repository-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+
+.repository-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #F2F5FA;
+  color: #507199;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.repository-tag-chip button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #7C8BA1;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.repository-tag-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 7px;
+  border: 1px solid #DCE2ED;
+  border-radius: 6px;
+  font-size: 11px;
+  text-align: center;
+}
+
+.repository-tag-input:focus {
+  outline: none;
+  border-color: #CB385C;
+  box-shadow: 0 0 0 2px rgba(203, 56, 92, 0.1);
+}
+
+.repository-tag-empty {
+  color: #949494;
+  font-size: 11px;
 }
 
 .category-column.autonomous .category-type {
