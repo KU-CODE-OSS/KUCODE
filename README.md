@@ -272,6 +272,37 @@ SUMMARY_BATCH_SIZE=100
 
 Leave it unset or set it to `0` to keep summary generation separate from crawling.
 
+## Scoring commands
+
+Run these Django management commands inside the backend container.
+
+### Score one course-semester
+
+```bash
+python manage.py score_course --course-id COSE341-01 --year 2026 --semester 1
+```
+
+Recalculates one course's scoring records and updates the affected students' E-Profile aptitude scores.
+
+### Score all or filtered courses
+
+```bash
+python manage.py score_all_courses
+python manage.py score_all_courses --year 2026 --semester 1
+python manage.py score_all_courses --course-id COSE341-01
+```
+
+Recalculates every matching course and updates the affected students' E-Profile aptitude scores.
+
+### Rebuild E-Profile aptitude scores
+
+```bash
+python manage.py rebuild_student_aptitudes
+python manage.py rebuild_student_aptitudes --formula-version prototype-v1
+```
+
+Rebuilds E-Profile aptitude aggregates from the currently saved canonical scoring records without rescoring courses.
+
 ## DB backup command
 In dev_db container, execute command below to create backup sql file.
 ```
