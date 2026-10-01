@@ -611,12 +611,12 @@ export default {
       activityChartNavigation: null,
       activityViewWindow: { start: 0, end: 0 },
       activityViewMode: 'monthly', // 'monthly' or 'weekly'
-      activeDevelopmentTab: 'activity',
+      activeDevelopmentTab: 'aptitude',
       developmentTabs: [
+        { id: 'aptitude', label: '종합 역량' },
         { id: 'activity', label: '활동 추이' },
         { id: 'team', label: '팀 프로젝트 비율' },
-        { id: 'time', label: '활동 시간대' },
-        { id: 'aptitude', label: '종합 역량' }
+        { id: 'time', label: '활동 시간대' }
       ],
       aptitudeLoading: false,
       aptitudeError: '',
@@ -900,10 +900,6 @@ export default {
     ])
 
     this.createTechStackChart()
-    setTimeout(() => {
-      this.createActivityChart()
-    }, 50)
-
     // Use arrow function to maintain 'this' context
     this.closeAllDropdowns = (event) => {
       if (!event.target.closest('.tech-dropdown')) {
