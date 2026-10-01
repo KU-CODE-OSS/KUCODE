@@ -52,7 +52,13 @@
           >
             <div class="winner-rank">{{ student.rank }}위</div>
             <div>
-              <strong>{{ student.name }}</strong>
+              <button
+                type="button"
+                class="winner-name-button"
+                @click="openEProfile(student.student_id)"
+              >
+                {{ student.name }}
+              </button>
               <span>{{ student.department }} · {{ student.student_id }}</span>
             </div>
             <p>{{ formatScore(student.score) }}점</p>
@@ -142,29 +148,29 @@
                     </div>
 
                     <div class="score-filter-list">
-                      <p class="score-filter-help">세부 점수 필터는 입력한 경우에만 적용됩니다.</p>
-                      <div v-for="metric in scoreFilterOptions" :key="metric.key" class="score-filter-row">
+                      <p class="score-filter-help">숫자 필터는 입력한 경우에만 적용됩니다.</p>
+                      <div v-for="metric in metricFilterOptions" :key="metric.key" class="score-filter-row">
                         <strong>{{ metric.label }}</strong>
                         <label>
                           <span>최소</span>
                           <input
-                            v-model="scoreFilters[metric.key].min"
+                            v-model="metricFilters[metric.key].min"
                             type="number"
                             min="0"
-                            max="100"
-                            step="0.01"
+                            :max="metric.max"
+                            :step="metric.step"
                             placeholder="0"
                           />
                         </label>
                         <label>
                           <span>최대</span>
                           <input
-                            v-model="scoreFilters[metric.key].max"
+                            v-model="metricFilters[metric.key].max"
                             type="number"
                             min="0"
-                            max="100"
-                            step="0.01"
-                            placeholder="100"
+                            :max="metric.max"
+                            :step="metric.step"
+                            :placeholder="metric.maximumPlaceholder"
                           />
                         </label>
                       </div>
@@ -181,8 +187,16 @@
             <table class="ranking-table">
               <thead>
                 <tr>
-                  <th v-for="column in displayColumns" :key="column.key" :class="columnClasses(column)">
-                    {{ column.label }}
+                  <th
+                    v-for="column in displayColumns"
+                    :key="column.key"
+                    :class="columnClasses(column)"
+                    :aria-sort="sortAriaValue(column)"
+                  >
+                    <button type="button" class="sort-button" @click="setSort(column.key)">
+                      <span>{{ column.label }}</span>
+                      <span class="sort-indicator" aria-hidden="true">{{ sortIndicator(column) }}</span>
+                    </button>
                   </th>
                 </tr>
               </thead>
@@ -190,6 +204,14 @@
                 <tr v-for="student in paginatedStudents" :key="student.student_id" :class="{ podium: student.rank <= 3 }">
                   <td v-for="column in displayColumns" :key="column.key" :class="columnClasses(column)">
                     <span v-if="column.key === 'rank'" class="rank-badge">{{ student.rank }}</span>
+                    <button
+                      v-else-if="column.key === 'name'"
+                      type="button"
+                      class="student-name-button"
+                      @click="openEProfile(student.student_id)"
+                    >
+                      {{ student.name }}
+                    </button>
                     <a
                       v-else-if="column.key === 'github' && student.github"
                       :href="`https://github.com/${student.github}`"
@@ -255,15 +277,19 @@
 import { getRankingStudentCourseInfo } from '@/api.js'
 
 const TABLE_PREFERENCES_KEY = 'kucode-ranking-table-preferences'
-const SCORE_FILTER_OPTIONS = [
-  { key: 'productivity_score', label: '생산성 점수' },
-  { key: 'collaboration_score', label: '협업 점수' },
-  { key: 'problem_solving_score', label: '문제해결 점수' },
+const METRIC_FILTER_OPTIONS = [
+  { key: 'productivity_score', label: '생산성 점수', max: 100, step: 0.01, maximumPlaceholder: '100' },
+  { key: 'collaboration_score', label: '협업 점수', max: 100, step: 0.01, maximumPlaceholder: '100' },
+  { key: 'problem_solving_score', label: '문제해결 점수', max: 100, step: 0.01, maximumPlaceholder: '100' },
+  { key: 'commits', label: '개인 Commits', step: 1, maximumPlaceholder: '제한 없음' },
+  { key: 'changed_lines', label: '개인 변경 라인', step: 1, maximumPlaceholder: '제한 없음' },
+  { key: 'personal_pr_count', label: '생성 PR', step: 1, maximumPlaceholder: '제한 없음' },
+  { key: 'personal_issue_count', label: '생성 Issues', step: 1, maximumPlaceholder: '제한 없음' },
 ]
 
-function createEmptyScoreFilters() {
+function createEmptyMetricFilters() {
   return Object.fromEntries(
-    SCORE_FILTER_OPTIONS.map((metric) => [metric.key, { min: '', max: '' }]),
+    METRIC_FILTER_OPTIONS.map((metric) => [metric.key, { min: '', max: '' }]),
   )
 }
 
@@ -286,6 +312,8 @@ const COLUMN_DEFINITIONS = {
   problem_solving_score: { key: 'problem_solving_score', label: '문제해결 점수', type: 'score' },
   commits: { key: 'commits', label: '개인 Commits', type: 'number' },
   changed_lines: { key: 'changed_lines', label: '개인 변경 라인', type: 'number' },
+  personal_pr_count: { key: 'personal_pr_count', label: '생성 PR', type: 'number' },
+  personal_issue_count: { key: 'personal_issue_count', label: '생성 Issues', type: 'number' },
   repos: { key: 'repos', label: '기여 Repos', type: 'number' },
   owned_repos: { key: 'owned_repos', label: '소유 Repos', type: 'number' },
   representative_repos: { key: 'representative_repos', label: '대표 Repos', type: 'number' },
@@ -304,6 +332,8 @@ const COLUMN_KEYS = [
   'enrollment',
   'commits',
   'changed_lines',
+  'personal_pr_count',
+  'personal_issue_count',
   'repos',
   'owned_repos',
   'representative_repos',
@@ -327,12 +357,14 @@ export default {
       selectedColumnKeys: [...DEFAULT_COLUMN_KEYS],
       selectedDepartment: '',
       selectedEnrollment: '',
-      scoreFilters: createEmptyScoreFilters(),
+      metricFilters: createEmptyMetricFilters(),
+      sortKey: 'score',
+      sortDirection: 'desc',
     }
   },
   computed: {
-    scoreFilterOptions() {
-      return SCORE_FILTER_OPTIONS
+    metricFilterOptions() {
+      return METRIC_FILTER_OPTIONS
     },
     columnOptions() {
       return COLUMN_KEYS.map((key) => COLUMN_DEFINITIONS[key])
@@ -352,8 +384,8 @@ export default {
       let count = 0
       if (this.selectedDepartment) count += 1
       if (this.selectedEnrollment) count += 1
-      SCORE_FILTER_OPTIONS.forEach((metric) => {
-        const filter = this.scoreFilters[metric.key]
+      METRIC_FILTER_OPTIONS.forEach((metric) => {
+        const filter = this.metricFilters[metric.key]
         if (filter.min !== '' || filter.max !== '') count += 1
       })
       return count
@@ -410,15 +442,16 @@ export default {
     visibleStudents() {
       const keyword = this.searchKeyword.trim().toLowerCase()
 
-      return this.rankedStudents.filter((student) => {
+      const filtered = this.rankedStudents.filter((student) => {
         const matchesKeyword = !keyword || [student.name, student.student_id, student.github, student.department, student.enrollment]
           .some((value) => String(value).toLowerCase().includes(keyword))
         const matchesDepartment = !this.selectedDepartment || student.department === this.selectedDepartment
         const matchesEnrollment = !this.selectedEnrollment || student.enrollment === this.selectedEnrollment
-        const matchesScores = this.matchesScoreFilters(student)
+        const matchesMetrics = this.matchesMetricFilters(student)
 
-        return matchesKeyword && matchesDepartment && matchesEnrollment && matchesScores
+        return matchesKeyword && matchesDepartment && matchesEnrollment && matchesMetrics
       })
+      return this.sortStudentRows(filtered)
     },
     paginatedStudents() {
       const start = (this.currentPage - 1) * this.postsPerPage
@@ -476,7 +509,7 @@ export default {
     selectedEnrollment() {
       this.handleFilterChange()
     },
-    scoreFilters: {
+    metricFilters: {
       deep: true,
       handler() {
         this.handleFilterChange()
@@ -552,11 +585,13 @@ export default {
     resetRowFilters() {
       this.selectedDepartment = ''
       this.selectedEnrollment = ''
-      this.scoreFilters = createEmptyScoreFilters()
+      this.metricFilters = createEmptyMetricFilters()
       this.currentPage = 1
     },
     resetTableSettings() {
       this.selectedColumnKeys = [...DEFAULT_COLUMN_KEYS]
+      this.sortKey = 'score'
+      this.sortDirection = 'desc'
       this.resetRowFilters()
       this.saveTablePreferences()
     },
@@ -580,9 +615,9 @@ export default {
       const score = Number(value)
       return Number.isFinite(score) ? score.toFixed(2) : '-'
     },
-    matchesScoreFilters(student) {
-      return SCORE_FILTER_OPTIONS.every((metric) => {
-        const filter = this.scoreFilters[metric.key]
+    matchesMetricFilters(student) {
+      return METRIC_FILTER_OPTIONS.every((metric) => {
+        const filter = this.metricFilters[metric.key]
         const hasMinimum = filter.min !== ''
         const hasMaximum = filter.max !== ''
         if (!hasMinimum && !hasMaximum) return true
@@ -592,6 +627,52 @@ export default {
         if (hasMinimum && value < Number(filter.min)) return false
         if (hasMaximum && value > Number(filter.max)) return false
         return true
+      })
+    },
+    sortStudentRows(students) {
+      const column = COLUMN_DEFINITIONS[this.sortKey]
+      if (!column) return students
+
+      return [...students].sort((leftStudent, rightStudent) => {
+        const left = leftStudent[this.sortKey]
+        const right = rightStudent[this.sortKey]
+        const leftMissing = left === null || left === undefined || left === ''
+        const rightMissing = right === null || right === undefined || right === ''
+
+        if (leftMissing && rightMissing) return leftStudent.rank - rightStudent.rank
+        if (leftMissing) return 1
+        if (rightMissing) return -1
+
+        const comparison = column.type === 'text'
+          ? String(left).localeCompare(String(right), 'ko', { numeric: true, sensitivity: 'base' })
+          : Number(left) - Number(right)
+
+        if (comparison === 0) return leftStudent.rank - rightStudent.rank
+        return this.sortDirection === 'asc' ? comparison : -comparison
+      })
+    },
+    setSort(columnKey) {
+      if (!COLUMN_DEFINITIONS[columnKey]) return
+      if (this.sortKey === columnKey) {
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
+      } else {
+        this.sortKey = columnKey
+        this.sortDirection = COLUMN_DEFINITIONS[columnKey].type === 'text' ? 'asc' : 'desc'
+      }
+      this.currentPage = 1
+    },
+    sortIndicator(column) {
+      if (this.sortKey !== column.key) return '↕'
+      return this.sortDirection === 'asc' ? '↑' : '↓'
+    },
+    sortAriaValue(column) {
+      if (this.sortKey !== column.key) return 'none'
+      return this.sortDirection === 'asc' ? 'ascending' : 'descending'
+    },
+    openEProfile(studentId) {
+      this.$router.push({
+        name: 'EProfile',
+        state: { student_num: studentId },
       })
     },
     toCourseKey(course) {
@@ -637,6 +718,8 @@ export default {
             problem_solving_score: nullableNumber(student.problem_solving_score),
             commits: Number(student.personal_commits || 0),
             changed_lines: Number(student.personal_changed_lines || 0),
+            personal_pr_count: Number(student.personal_pr_count || 0),
+            personal_issue_count: Number(student.personal_issue_count || 0),
             repos: Number(student.contributed_repository_count || 0),
             owned_repos: Number(student.owned_repository_count || 0),
             representative_repos: Number(student.representative_repository_count || 0),
@@ -840,11 +923,17 @@ export default {
   border-radius: 6px;
 }
 
-.winner-card strong {
+.winner-name-button {
   display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
   margin-bottom: 5px;
   color: #262626;
   font-size: 18px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
 }
 
 .winner-card p {
@@ -1165,6 +1254,36 @@ export default {
   text-align: left;
 }
 
+.sort-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.numeric-column .sort-button {
+  justify-content: flex-end;
+}
+
+.sort-indicator {
+  color: #9aa2ad;
+  font-size: 12px;
+}
+
+[aria-sort='ascending'] .sort-indicator,
+[aria-sort='descending'] .sort-indicator {
+  color: #910024;
+}
+
 .ranking-table td {
   height: 54px;
   border-bottom: 1px solid #eef1f5;
@@ -1205,6 +1324,21 @@ export default {
   color: #910024;
   font-weight: 700;
   text-decoration: none;
+}
+
+.student-name-button {
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: #910024;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 .podium {

@@ -4,6 +4,7 @@ from django.http import JsonResponse
 
 from account.models import Student
 from login.models import Student as LoginStudent
+from repo.models import Repo_issue, Repo_pr
 from scoring.models import (
     FORMULA_VERSION,
     ScoringRun,
@@ -21,6 +22,56 @@ def _optional_integer_filter(request, name):
         return int(value)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"{name} must be an integer.") from exc
+
+
+def _normalized_github_username(value):
+    return (value or "").strip().lower()
+
+
+def _created_activity_by_student_run(runs, course_scores_by_run):
+    """Count student-created PRs/issues within each scoring run's repositories."""
+    run_ids_by_repository = defaultdict(set)
+    github_students_by_run = defaultdict(lambda: defaultdict(list))
+    activity = defaultdict(
+        lambda: {"personal_pr_count": 0, "personal_issue_count": 0}
+    )
+
+    for run in runs:
+        for repository_id in run.affected_repository_ids or []:
+            run_ids_by_repository[str(repository_id)].add(run.id)
+        for score in course_scores_by_run[run.id]:
+            username = _normalized_github_username(score.student.github_id)
+            if username:
+                github_students_by_run[run.id][username].append(score.student_id)
+
+    repository_ids = list(run_ids_by_repository)
+    if not repository_ids:
+        return activity
+
+    def add_counts(rows, username_field, count_field):
+        for row in rows:
+            username = _normalized_github_username(row[username_field])
+            if not username:
+                continue
+            for run_id in run_ids_by_repository.get(str(row["repo_id"]), ()):
+                for student_id in github_students_by_run[run_id].get(username, ()):
+                    activity[(run_id, student_id)][count_field] += 1
+
+    add_counts(
+        Repo_pr.objects.filter(repo_id__in=repository_ids).values(
+            "repo_id", "requester_id"
+        ),
+        "requester_id",
+        "personal_pr_count",
+    )
+    add_counts(
+        Repo_issue.objects.filter(repo_id__in=repository_ids).values(
+            "repo_id", "publisher_github_id"
+        ),
+        "publisher_github_id",
+        "personal_issue_count",
+    )
+    return activity
 
 
 def course_ranking(request):
@@ -75,6 +126,8 @@ def course_ranking(request):
             details.get("personal_changed_lines") or 0
         )
 
+    created_activity = _created_activity_by_student_run(runs, course_scores_by_run)
+
     payload = []
     for run in runs:
         course = run.course
@@ -83,6 +136,7 @@ def course_ranking(request):
             student = score.student
             details = score.component_details or {}
             activity = personal_activity_by_student_run[(run.id, student.pk)]
+            created = created_activity[(run.id, student.pk)]
             students.append(
                 {
                     "student_id": student.pk,
@@ -110,6 +164,8 @@ def course_ranking(request):
                     ),
                     "personal_commits": activity["personal_commits"],
                     "personal_changed_lines": activity["personal_changed_lines"],
+                    "personal_pr_count": created["personal_pr_count"],
+                    "personal_issue_count": created["personal_issue_count"],
                     "warnings": score.warnings or [],
                 }
             )

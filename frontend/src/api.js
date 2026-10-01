@@ -135,6 +135,13 @@ export function updateRepoIntroduction(uuid, repo_id, project_introduction) {
   });
 }
 
+export function updateStudentRepositoryTags(uuid, repositories) {
+  return ajax('/repo/update_student_repository_tags', 'post', {
+    data: { uuid, repositories },
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
 // Board Posts APIs
 export function getBoardPostsList(page = 1, size = 10, uuid) {
   return ajax('/board/read_posts_list', 'get', {

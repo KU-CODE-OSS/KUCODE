@@ -93,6 +93,7 @@
             </div>
           </div>
           <div class="summary-box">
+            <p v-for="notice in summaryNotices" :key="notice" class="summary-notice">{{ notice }}</p>
             <div v-if="parsedSummary" class="summary-content">
               <!-- 프로젝트 개요 (현재 JSON 스키마 기준) -->
               <div class="summary-grid">
@@ -112,18 +113,20 @@
                   <div class="label">핵심 기능</div>
                   <ul class="value list">
                     <li v-for="(f, idx) in parsedSummary.features" :key="idx">{{ f }}</li>
+                    <li v-if="!parsedSummary.features.length">확인할 수 없습니다.</li>
                   </ul>
                 </div>
                 <div class="summary-item full">
                   <div class="label">기술 스택</div>
                   <div class="value chips">
                     <span v-for="(t, idx) in parsedSummary.tech_stack" :key="idx" class="chip">{{ t }}</span>
+                    <span v-if="!parsedSummary.tech_stack.length">확인할 수 없습니다.</span>
                   </div>
                 </div>
               </div>
             </div>
             <div v-else class="summary-fallback">
-              <p>{{ repo?.summary || '프로젝트 설명이 없습니다.' }}</p>
+              <p>{{ summaryFallbackMessage }}</p>
             </div>
           </div>
         </div>
@@ -439,6 +442,34 @@ export default {
       return data
     },
     
+    summaryNotices() {
+      if (!this.repo) return []
+      const notices = []
+      if (this.repo.github_availability === 'not_listed') {
+        notices.push('현재 GitHub 공개 목록에서 확인되지 않아 저장된 레포지토리 정보를 표시합니다.')
+      }
+      if (this.repo.summary_status === 'stale') {
+        notices.push('레포지토리 변경 후 요약이 아직 갱신되지 않았습니다. 이전 요약입니다.')
+      } else if (this.repo.summary_status === 'limited') {
+        notices.push('GitHub 파일에 접근할 수 없어 저장된 레포지토리 정보만으로 만든 요약입니다.')
+      } else if (this.repo.summary_status === 'legacy') {
+        notices.push('이전 방식으로 생성된 요약으로, 최신 여부는 아직 확인되지 않았습니다.')
+      }
+      return notices
+    },
+
+    summaryFallbackMessage() {
+      if (!this.repo) return '레포지토리 정보가 없습니다.'
+      if (this.repo.summary_status === 'insufficient_data') {
+        return '요약을 만들기에 충분한 레포지토리 정보가 없습니다.'
+      }
+      if (this.repo.summary_status === 'error') {
+        return '요약 생성에 실패했습니다. 나중에 다시 시도할 수 있습니다.'
+      }
+      if (this.repo.summary) return '저장된 요약 데이터를 읽을 수 없습니다.'
+      return '프로젝트 요약이 아직 생성되지 않았습니다.'
+    },
+
     // 프로젝트 요약 데이터 파싱 (현재 백엔드 JSON 스키마 전용)
     parsedSummary() {
       if (!this.repo || !this.repo.summary) return null
@@ -1225,6 +1256,7 @@ export default {
 /* 프로젝트 요약 */
 .summary-box {
   display: flex;
+  flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
   padding: 25px 35px;
@@ -1246,6 +1278,14 @@ export default {
   line-height: 18px;
   color: #616161;
   margin: 0;
+}
+
+.summary-box .summary-notice {
+  width: auto;
+  height: auto;
+  color: #8a5360;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 /* 파싱된 요약 내용 스타일 */

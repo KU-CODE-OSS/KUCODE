@@ -37,6 +37,13 @@ from scoring.services.calculator import (
 )
 
 
+CODING_AGENT_USERNAME = "claude"
+
+
+def _normalized_username(username):
+    return (username or "").strip().casefold()
+
+
 def _closed_issue_resolution_days(repository_id):
     durations = []
     issues = Repo_issue.objects.filter(
@@ -49,6 +56,93 @@ def _closed_issue_resolution_days(repository_id):
         if seconds >= 0:
             durations.append(seconds / 86400.0)
     return durations
+
+
+def _build_scoring_contributions(repository, contributor_rows):
+    """Return human contribution counts after evenly redistributing Claude commits."""
+    raw_by_username = {}
+    display_names = {}
+    for row in contributor_rows:
+        display_name = (row["contributor_id"] or "").strip()
+        username = _normalized_username(display_name)
+        if not username:
+            continue
+        raw_by_username[username] = max(
+            raw_by_username.get(username, 0),
+            max(0, row["contribution_count"] or 0),
+        )
+        display_names.setdefault(username, display_name)
+
+    commit_counts = {}
+    for row in (
+        Repo_commit.objects.filter(repo=repository)
+        .exclude(author_github_id__isnull=True)
+        .values("author_github_id")
+        .annotate(commit_count=Count("id"))
+    ):
+        display_name = (row["author_github_id"] or "").strip()
+        username = _normalized_username(display_name)
+        if not username:
+            continue
+        commit_counts[username] = commit_counts.get(username, 0) + row["commit_count"]
+        display_names.setdefault(username, display_name)
+
+    claude_commit_count = commit_counts.get(CODING_AGENT_USERNAME, 0)
+    claude_contributor_count = raw_by_username.get(CODING_AGENT_USERNAME, 0)
+    agent_present = (
+        CODING_AGENT_USERNAME in raw_by_username
+        or CODING_AGENT_USERNAME in commit_counts
+    )
+
+    if agent_present:
+        # Commit rows cover contributors that may be missing from Repo_contributor.
+        human_contributions = {
+            username: count
+            for username, count in raw_by_username.items()
+            if username != CODING_AGENT_USERNAME and count > 0
+        }
+        for username, count in commit_counts.items():
+            if username != CODING_AGENT_USERNAME and count > 0:
+                human_contributions[username] = max(
+                    human_contributions.get(username, 0), count
+                )
+    else:
+        # Preserve the existing scoring behavior when no Claude author is present.
+        human_contributions = {
+            username: count
+            for username, count in raw_by_username.items()
+            if count > 0
+        }
+
+    human_contributor_count = len(human_contributions)
+    per_human_allocation = (
+        claude_commit_count / human_contributor_count
+        if claude_commit_count and human_contributor_count
+        else 0.0
+    )
+    adjusted_by_username = {
+        username: count + per_human_allocation
+        for username, count in human_contributions.items()
+    }
+    adjusted_contributors = [
+        {
+            "github_username": display_names.get(username, username),
+            "contribution_count": count,
+        }
+        for username, count in sorted(adjusted_by_username.items())
+    ]
+
+    return {
+        "agent_username": CODING_AGENT_USERNAME,
+        "agent_match_mode": "case_insensitive_exact",
+        "agent_present": agent_present,
+        "claude_commit_count": claude_commit_count,
+        "claude_contributor_count": claude_contributor_count,
+        "human_contributor_count": human_contributor_count,
+        "per_human_allocation": per_human_allocation,
+        "adjusted_by_username": adjusted_by_username,
+        "adjusted_contributors": adjusted_contributors,
+    }
 
 
 def collect_repository_metrics(repository):
@@ -76,6 +170,9 @@ def collect_repository_metrics(repository):
         Repo_contributor.objects.filter(repo=repository).values(
             "contributor_id", "contribution_count"
         )
+    )
+    scoring_contributions = _build_scoring_contributions(
+        repository, contributor_rows
     )
 
     snapshot = RepositorySnapshot.objects.filter(repo=repository).order_by("-collected_at").first()
@@ -110,6 +207,8 @@ def collect_repository_metrics(repository):
             statistics.fmean(resolution_days) if resolution_days else None
         ),
         "contributors": contributor_rows,
+        "scoring_contributors": scoring_contributions["adjusted_contributors"],
+        "claude_redistribution": scoring_contributions,
         "workflow_count": workflow_count or 0,
         "workflow_commit_count": workflow_commit_count,
         "has_snapshot": snapshot is not None,
@@ -146,12 +245,18 @@ def _create_parameter_set(course, metrics):
             "issue_cap": 5,
             "workflow_reference": 2,
             "workflow_update_reference": 3,
-            "representative_min_share": 0.15,
-            "representative_min_commits": 5,
+            "representative_min_share": 0.0,
+            "representative_min_commits": 1,
             "representative_limit": 7,
             "difficulty_mode": "language_only",
             "repeated_file_enabled": False,
             "course_activity_window_enabled": False,
+            "coding_agent_redistribution": {
+                "enabled": True,
+                "username": CODING_AGENT_USERNAME,
+                "match_mode": "case_insensitive_exact",
+                "allocation": "equal_across_human_contributors",
+            },
         },
     )
 
@@ -171,6 +276,12 @@ def _repository_warnings(metrics, problem_details, difficulty_details):
         warnings.append("missing_repository_snapshot")
     if difficulty_details["unmapped_languages"]:
         warnings.append("unmapped_languages_defaulted_to_1_0")
+    redistribution = metrics["claude_redistribution"]
+    if (
+        redistribution["claude_commit_count"] > 0
+        and redistribution["human_contributor_count"] == 0
+    ):
+        warnings.append("claude_commits_without_human_contributors")
     warnings.append("repeated_file_metric_deferred")
     return warnings
 
@@ -188,7 +299,7 @@ def _create_repository_score(run, repository, metrics, parameter_set):
     collaboration, collaboration_details = collaboration_score(
         metrics["merged_pr_count"],
         metrics["unmerged_pr_count"],
-        [row["contribution_count"] for row in metrics["contributors"]],
+        [row["contribution_count"] for row in metrics["scoring_contributors"]],
         metrics["issue_count"],
         parameter_set.pr_weighted_p95,
     )
@@ -212,6 +323,17 @@ def _create_repository_score(run, repository, metrics, parameter_set):
         }
         for row in metrics["contributors"]
     ]
+    redistribution = metrics["claude_redistribution"]
+    raw_metrics["claude_redistribution"] = {
+        key: value
+        for key, value in redistribution.items()
+        if key != "adjusted_by_username"
+    }
+    collaboration_details["contribution_basis"] = (
+        "claude_redistributed"
+        if redistribution["agent_present"]
+        else "raw_contributors"
+    )
     return RepositoryScore.objects.create(
         run=run,
         repository=repository,
@@ -237,7 +359,7 @@ def _create_student_repository_score(run, repository_score, metrics, student):
         return None
 
     contributor_by_username = {
-        (row["contributor_id"] or "").strip().lower(): max(0, row["contribution_count"] or 0)
+        _normalized_username(row["contributor_id"]): max(0, row["contribution_count"] or 0)
         for row in metrics["contributors"]
         if (row["contributor_id"] or "").strip()
     }
@@ -249,28 +371,50 @@ def _create_student_repository_score(run, repository_score, metrics, student):
         additions=Sum("added_lines"),
         deletions=Sum("deleted_lines"),
     )
-    recorded_contributions = contributor_by_username.get(github_username.lower(), 0)
+    normalized_github_username = _normalized_username(github_username)
+    recorded_contributions = contributor_by_username.get(normalized_github_username, 0)
     personal_commit_count = personal_commits["count"] or recorded_contributions
-    student_contributions = max(recorded_contributions, personal_commit_count)
-    if student_contributions <= 0:
+    raw_student_contributions = max(recorded_contributions, personal_commit_count)
+    redistribution = metrics["claude_redistribution"]
+    if redistribution["agent_present"]:
+        student_contributions = redistribution["adjusted_by_username"].get(
+            normalized_github_username, 0
+        )
+        total_contributions = sum(
+            redistribution["adjusted_by_username"].values()
+        )
+        team_size = max(1, redistribution["human_contributor_count"])
+        claude_allocation = (
+            redistribution["per_human_allocation"]
+            if normalized_github_username
+            in redistribution["adjusted_by_username"]
+            else 0.0
+        )
+    else:
+        student_contributions = raw_student_contributions
+        total_contributions = sum(contributor_by_username.values()) + max(
+            0, student_contributions - recorded_contributions
+        )
+        positive_contributors = sum(
+            1 for count in contributor_by_username.values() if count > 0
+        )
+        student_already_counted = recorded_contributions > 0
+        team_size = max(
+            1, positive_contributors + (0 if student_already_counted else 1)
+        )
+        claude_allocation = 0.0
+
+    if raw_student_contributions <= 0 or student_contributions <= 0:
         return None
 
-    total_contributions = sum(contributor_by_username.values()) + max(
-        0, student_contributions - recorded_contributions
-    )
     share = student_contributions / total_contributions if total_contributions > 0 else 0.0
-    positive_contributors = sum(
-        1 for count in contributor_by_username.values() if count > 0
-    )
-    student_already_counted = recorded_contributions > 0
-    team_size = max(1, positive_contributors + (0 if student_already_counted else 1))
     multiplier = personal_multiplier(share, team_size)
 
     personal_changed_lines = (personal_commits["additions"] or 0) + (
         personal_commits["deletions"] or 0
     )
     personal_activity = activity_score(personal_commit_count, personal_changed_lines)
-    eligible = share >= 0.15 and personal_commit_count >= 5
+    eligible = share >= 0.0 and personal_commit_count >= 1
 
     return StudentRepositoryScore.objects.create(
         run=run,
@@ -293,10 +437,20 @@ def _create_student_repository_score(run, repository_score, metrics, student):
         details={
             "personal_commit_count": personal_commit_count,
             "personal_changed_lines": personal_changed_lines,
+            "raw_contribution_count": raw_student_contributions,
+            "credited_contribution_count": student_contributions,
             "total_team_contributions": total_contributions,
+            "claude_commit_count": redistribution["claude_commit_count"],
+            "claude_commit_allocation": claude_allocation,
+            "human_contributor_count": redistribution["human_contributor_count"],
+            "coding_agent_rule": {
+                "username": CODING_AGENT_USERNAME,
+                "match_mode": "case_insensitive_exact",
+                "changed_lines_redistributed": False,
+            },
             "is_repository_owner": (
-                (repository_score.repository.owner_github_id or "").strip().lower()
-                == github_username.lower()
+                _normalized_username(repository_score.repository.owner_github_id)
+                == normalized_github_username
             ),
             "identity_mode": "github_username_only",
         },

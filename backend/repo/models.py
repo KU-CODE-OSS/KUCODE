@@ -34,6 +34,12 @@ class Repository(models.Model):
     etc = models.CharField(max_length=100,null=True)
     crawled_date = models.CharField(max_length=100,null=True)
     summary = models.TextField(null=True) 
+    summary_generated_at = models.DateTimeField(null=True, blank=True)
+    summary_source_fingerprint = models.CharField(max_length=64, null=True, blank=True)
+    summary_source_kind = models.CharField(max_length=20, null=True, blank=True)
+    summary_last_attempt_at = models.DateTimeField(null=True, blank=True)
+    summary_last_error = models.TextField(null=True, blank=True)
+    github_availability = models.CharField(max_length=20, default='unknown')
     is_course = models.BooleanField(null=True)
     category = models.CharField(max_length=50, null=True)
     repo_introduction = models.TextField(blank=True, null=True)
@@ -219,3 +225,32 @@ class RepoDependabotAlert(models.Model):
 
     def __str__(self):
         return f"{self.repo_id}#{self.github_alert_number}"
+
+
+class StudentRepositoryTag(models.Model):
+    student = models.ForeignKey(
+        'account.Student',
+        on_delete=models.CASCADE,
+        related_name='repository_tags',
+    )
+    repository = models.ForeignKey(
+        Repository,
+        on_delete=models.CASCADE,
+        related_name='student_tags',
+    )
+    tag = models.CharField(max_length=30)
+    normalized_tag = models.CharField(max_length=30)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'repo_student_repository_tag'
+        ordering = ['created_at', 'id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['student', 'repository', 'normalized_tag'],
+                name='unique_student_repository_tag',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.student_id}:{self.repository_id}:{self.tag}"

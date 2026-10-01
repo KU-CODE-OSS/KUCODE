@@ -6,6 +6,7 @@ from django.utils import timezone
 from account.models import Student
 from login.models import Member, Student as LoginStudent
 from course.models import Course
+from repo.models import Repo_issue, Repo_pr, Repository
 from scoring.api.views import course_ranking, student_aptitude
 from scoring.models import (
     ScoringParameterSet,
@@ -31,6 +32,16 @@ class CourseRankingApiTests(TestCase):
             github_id="student-one",
             department="Software",
         )
+        self.repository = Repository.objects.create(
+            id="repo-1",
+            name="Course Repository",
+            owner_github_id="owner",
+        )
+        self.unrelated_repository = Repository.objects.create(
+            id="repo-2",
+            name="Unrelated Repository",
+            owner_github_id="owner",
+        )
         parameters = ScoringParameterSet.objects.create(course=self.course)
         self.old_run = ScoringRun.objects.create(
             course=self.course,
@@ -45,6 +56,7 @@ class CourseRankingApiTests(TestCase):
             status=ScoringRun.Status.COMPLETED,
             completed_at=timezone.now(),
             is_canonical=True,
+            affected_repository_ids=[self.repository.pk],
         )
         StudentCourseScore.objects.create(
             run=self.old_run,
@@ -79,6 +91,69 @@ class CourseRankingApiTests(TestCase):
             payload[0]["students"][0]["contributed_repository_count"],
             2,
         )
+
+    def test_returns_student_created_pr_and_issue_counts_for_run_repositories(self):
+        Repo_pr.objects.create(
+            id="pr-1",
+            repo=self.repository,
+            owner_github_id="owner",
+            requester_id="STUDENT-ONE",
+            state="open",
+        )
+        Repo_pr.objects.create(
+            id="pr-other",
+            repo=self.repository,
+            owner_github_id="owner",
+            requester_id="someone-else",
+            state="open",
+        )
+        Repo_pr.objects.create(
+            id="pr-unrelated",
+            repo=self.unrelated_repository,
+            owner_github_id="owner",
+            requester_id="student-one",
+            state="open",
+        )
+        Repo_issue.objects.create(
+            id="issue-1",
+            repo=self.repository,
+            owner_github_id="owner",
+            publisher_github_id="Student-One",
+            state="open",
+        )
+        Repo_issue.objects.create(
+            id="issue-unrelated",
+            repo=self.unrelated_repository,
+            owner_github_id="owner",
+            publisher_github_id="student-one",
+            state="open",
+        )
+
+        response = course_ranking(self.factory.get("/api/scoring/course-ranking"))
+
+        student = json.loads(response.content)[0]["students"][0]
+        self.assertEqual(student["personal_pr_count"], 1)
+        self.assertEqual(student["personal_issue_count"], 1)
+
+    def test_returns_zero_created_activity_without_github_username(self):
+        student_without_github = Student.objects.create(
+            id="student-2",
+            name="Student Two",
+        )
+        StudentCourseScore.objects.create(
+            run=self.canonical_run,
+            student=student_without_github,
+            overall_score=0,
+        )
+
+        response = course_ranking(self.factory.get("/api/scoring/course-ranking"))
+
+        students = json.loads(response.content)[0]["students"]
+        student = next(
+            row for row in students if row["student_id"] == student_without_github.pk
+        )
+        self.assertEqual(student["personal_pr_count"], 0)
+        self.assertEqual(student["personal_issue_count"], 0)
 
     def test_supports_course_filters(self):
         response = course_ranking(
