@@ -69,7 +69,8 @@ export default {
       categories: [
         { value: 'events', label: '행사 정보' },
         { value: 'learning', label: '학습 자료' },
-        { value: 'opensource', label: '오픈소스 Repos' }
+        { value: 'opensource', label: '오픈소스 Repos' },
+        { value: 'qna', label: 'Q&A' }
       ],
       post: {
         id: null,

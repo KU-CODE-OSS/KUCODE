@@ -21,9 +21,6 @@
           <router-link to="/board" class="default-router">게시판</router-link>
         </div>
         <div class="menu-item">
-          <router-link to="/qna" class="default-router">QnA</router-link>
-        </div>
-        <div class="menu-item">
           <router-link to="/eprofile" class="default-router">e-Profile</router-link>
         </div>
       </div>

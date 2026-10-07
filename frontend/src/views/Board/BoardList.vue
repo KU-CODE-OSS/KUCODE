@@ -53,7 +53,7 @@
             </div>
 
             <button
-              v-if="authStore.canWriteBoard && activeCategory !== 'opensource'"
+              v-if="activeCategory === 'qna' || (authStore.canWriteBoard && activeCategory !== 'opensource')"
               class="write-post-btn"
               @click="openWritePost"
             >
@@ -87,7 +87,7 @@
                 <div class="table-cell col-title">제목</div>
                 <div class="table-cell col-date">등록 일자</div>
                 <div class="table-cell col-author">작성자</div>
-                <div class="table-cell col-likes">좋아요</div>
+                <div class="table-cell col-likes">{{ activeCategory === 'qna' ? '답변' : '좋아요' }}</div>
                 <div class="table-cell col-views">조회수</div>
               </div>
             </div>
@@ -105,7 +105,8 @@
                 <div class="table-cell col-date">{{ post.date }}</div>
                 <div class="table-cell col-author">{{ post.author }}</div>
                 <div class="table-cell col-likes">
-                  <button
+                  <span v-if="activeCategory === 'qna'">{{ post.commentCount || 0 }}</span>
+                  <button v-else
                     class="like-btn"
                     :class="{ liked: post.is_liked }"
                     @click.stop="toggleLike(post)"
@@ -175,7 +176,8 @@ export default {
       categories: [
         { label: '행사 정보', value: 'events' },
         { label: '학습 자료', value: 'learning' },
-        { label: '오픈소스 Repos', value: 'opensource' }
+        { label: '오픈소스 Repos', value: 'opensource' },
+        { label: 'Q&A', value: 'qna' }
       ],
       noticeTabs: [
         { label: '기업', value: 'company' },
@@ -190,6 +192,7 @@ export default {
       error: null,
       eventPosts: [],
       learningPosts: [],
+      qnaPosts: [],
       companyRepos: [],
       trendingRepos: []
     }
@@ -204,6 +207,8 @@ export default {
         return this.eventPosts
       } else if (this.activeCategory === 'learning') {
         return this.learningPosts
+      } else if (this.activeCategory === 'qna') {
+        return this.qnaPosts
       }
       return []
     },
@@ -222,7 +227,7 @@ export default {
       this.error = null
 
       try {
-        const response = await getBoardPostsList(1, 100, this.authStore.user.id)
+        const response = await getBoardPostsList(1, 100, this.authStore.memberId)
         const posts = response.data.results || []
 
         // Separate posts by category
@@ -255,7 +260,23 @@ export default {
             views: 0,
             category: 'learning'
           }))
-        
+
+        this.qnaPosts = posts
+          .filter(post => post.category === 'QNA')
+          .sort((a, b) => a.id - b.id)
+          .map((post, index) => ({
+            id: post.id,
+            number: index + 1,
+            title: post.title,
+            date: this.formatDate(post.created_at),
+            author: post.author,
+            commentCount: post.comment_count || 0,
+            likeCount: post.like_count || 0,
+            is_liked: post.is_liked,
+            views: 0,
+            category: 'qna'
+          }))
+
         // TODO: DELETE THIS LATER, DUMMY DATA ----------------------------------------------
         // this.eventPosts = [
         //   { id: 1, number: '1', title: '2025학년도 1학기 오픈소스 SW 개발 설명회', date: '2025.11.15', author: '김OO', views: '0', category: 'events' },
@@ -368,6 +389,8 @@ export default {
         this.$router.push({ path: '/board/event/create', query: { from: this.activeCategory } })
       } else if (this.activeCategory === 'learning') {
         this.$router.push({ path: '/board/materials/create', query: { from: this.activeCategory } })
+      } else if (this.activeCategory === 'qna') {
+        this.$router.push({ path: '/board/qna/create', query: { from: this.activeCategory } })
       }
       // opensource category doesn't have create functionality
     },
@@ -377,6 +400,8 @@ export default {
         this.$router.push({ path: `/board/event/${postId}`, query: { from: this.activeCategory } })
       } else if (this.activeCategory === 'learning') {
         this.$router.push({ path: `/board/materials/${postId}`, query: { from: this.activeCategory } })
+      } else if (this.activeCategory === 'qna') {
+        this.$router.push({ path: `/board/qna/${postId}`, query: { from: this.activeCategory } })
       }
     },
     async toggleLike(post) {
@@ -400,7 +425,7 @@ export default {
     restoreCategoryFromQuery() {
       // Restore category from query parameter if present
       const categoryFromQuery = this.$route.query.category
-      if (categoryFromQuery && ['events', 'learning', 'opensource'].includes(categoryFromQuery)) {
+      if (categoryFromQuery && ['events', 'learning', 'opensource', 'qna'].includes(categoryFromQuery)) {
         this.activeCategory = categoryFromQuery
       }
     }
@@ -426,7 +451,7 @@ export default {
   },
   watch: {
     '$route.query.category': function(newCategory) {
-      if (newCategory && ['events', 'learning', 'opensource'].includes(newCategory)) {
+      if (newCategory && ['events', 'learning', 'opensource', 'qna'].includes(newCategory)) {
         this.activeCategory = newCategory
       }
     },

@@ -143,9 +143,9 @@ export function updateStudentRepositoryTags(uuid, repositories) {
 }
 
 // Board Posts APIs
-export function getBoardPostsList(page = 1, size = 10, uuid) {
+export function getBoardPostsList(page = 1, size = 10, uuid, category = null) {
   return ajax('/board/read_posts_list', 'get', {
-    params: { page, count: size, uuid }
+    params: { page, count: size, uuid, ...(category ? { category } : {}) }
   });
 }
 
