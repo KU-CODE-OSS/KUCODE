@@ -5,6 +5,7 @@ from django.test import RequestFactory, TestCase
 from board.api.views import (
     add_comment,
     read_comments_list,
+    read_posts_list,
     read_owner_candidates,
     read_post,
     update_post,
@@ -175,3 +176,66 @@ class BoardCommentApiTests(TestCase):
         nested_id = json.loads(self.add('Nested reply', parent_id=reply_id).content)['comment_id']
 
         self.assertEqual(Comment.objects.get(id=nested_id).parent_id, root_id)
+
+
+class QnaPostApiTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.member = Member.objects.create(
+            id='qna-author',
+            name='Q&A Author',
+            email='qna@example.com',
+            role=Role.STUDENT,
+        )
+
+    def test_student_can_create_qna_post(self):
+        response = update_post(
+            self.factory.post(
+                '/api/board/update_post',
+                data=json.dumps({
+                    'author': self.member.id,
+                    'owner_ids': [],
+                    'title': 'Question',
+                    'content': 'How does this work?',
+                    'category': 'QNA',
+                    'year': 2026,
+                    'semester': '1',
+                }),
+                content_type='application/json',
+            )
+        )
+
+        self.assertEqual(response.status_code, 201)
+        post = Post.objects.get()
+        self.assertEqual(post.category, 'QNA')
+        self.assertEqual(list(post.owners.values_list('id', flat=True)), [self.member.id])
+
+    def test_post_list_can_be_filtered_to_qna(self):
+        Post.objects.create(
+            author=self.member.id,
+            title='Question',
+            content='Q',
+            category='QNA',
+            year=2026,
+            semester='1',
+        )
+        Post.objects.create(
+            author=self.member.id,
+            title='Event',
+            content='E',
+            category='EVENT_INFO',
+            year=2026,
+            semester='1',
+        )
+
+        response = read_posts_list(
+            self.factory.get(
+                '/api/board/read_posts_list',
+                {'uuid': self.member.id, 'category': 'QNA'},
+            )
+        )
+        body = json.loads(response.content)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(body['total'], 1)
+        self.assertEqual(body['results'][0]['category'], 'QNA')

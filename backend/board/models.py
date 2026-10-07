@@ -10,6 +10,7 @@ class PostCategory(models.TextChoices):
     LEARNING_MATERIAL = 'LEARNING_MATERIAL', '학습 자료'
     OPENSOURCE_REPO = 'OPENSOURCE_REPO', '오픈소스 Repos'
     EVENT_INFO = 'EVENT_INFO', '행사 정보'
+    QNA = 'QNA', 'Q&A'
 
 class Post(models.Model):
     """게시글 및 학습 자료"""

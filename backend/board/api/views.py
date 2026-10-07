@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework import status
 import json
 
-from board.models import Post, File, CompanyRepo, TrendingRepo, Comment
+from board.models import Post, PostCategory, File, CompanyRepo, TrendingRepo, Comment
 from login.models import Member
 # from board.services.google_drive import GoogleDriveService, GoogleDriveServiceError
 
@@ -59,6 +59,7 @@ def read_posts_list(request):
         page_str = request.GET.get('page', '1')
         count_str = request.GET.get('count') or request.GET.get('size') or '10'
         uuid = request.GET.get('uuid')
+        category = request.GET.get('category')
         if not uuid:
             return JsonResponse({"status": "Error", "message": "uuid is required"}, status=400)
 
@@ -72,10 +73,15 @@ def read_posts_list(request):
             return JsonResponse({"status": "Error", "message": "page and count must be >= 1"}, status=400)
 
         offset = (page - 1) * count
-        total = Post.objects.count()
+        posts = Post.objects.all()
+        if category:
+            if category not in PostCategory.values:
+                return JsonResponse({"status": "Error", "message": "Invalid category"}, status=400)
+            posts = posts.filter(category=category)
+        total = posts.count()
 
         rows = list(
-            Post.objects.all()
+            posts
             .annotate(
                 like_count=Count('likes', distinct=True),
                 comment_count=Count('comments', distinct=True),
@@ -265,6 +271,9 @@ def update_post(request):
         missing = [k for k, v in required_fields.items() if v in [None, ""]]
         if missing:
             return JsonResponse({"status": "Error", "message": f"Missing required fields: {', '.join(missing)}"}, status=400)
+
+        if category not in PostCategory.values:
+            return JsonResponse({"status": "Error", "message": "Invalid category"}, status=400)
 
         try:
             year_int = int(year)
