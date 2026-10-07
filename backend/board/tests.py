@@ -212,7 +212,7 @@ class QnaPostApiTests(TestCase):
         self.assertEqual(list(post.owners.values_list('id', flat=True)), [self.member.id])
 
     def test_post_list_can_be_filtered_to_qna(self):
-        Post.objects.create(
+        qna_post = Post.objects.create(
             author=self.member.id,
             title='Question',
             content='Q',
@@ -228,6 +228,18 @@ class QnaPostApiTests(TestCase):
             year=2026,
             semester='1',
         )
+        answer = Comment.objects.create(
+            post=qna_post,
+            author=self.member,
+            content='Answer',
+        )
+        Comment.objects.create(
+            post=qna_post,
+            author=self.member,
+            content='Follow-up',
+            parent=answer,
+        )
+
 
         response = read_posts_list(
             self.factory.get(
@@ -242,6 +254,7 @@ class QnaPostApiTests(TestCase):
         self.assertEqual(body['results'][0]['category'], 'QNA')
 
 
+        self.assertEqual(body['results'][0]['answer_count'], 1)
 @override_settings(
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
     DEFAULT_FROM_EMAIL='notifications@example.com',

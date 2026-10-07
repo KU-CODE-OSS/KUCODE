@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_date
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Count, Exists, OuterRef
+from django.db.models import Count, Exists, OuterRef, Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -86,6 +86,7 @@ def read_posts_list(request):
             .annotate(
                 like_count=Count('likes', distinct=True),
                 comment_count=Count('comments', distinct=True),
+                answer_count=Count('comments', filter=Q(comments__parent__isnull=True), distinct=True),
                 is_liked=Exists(
                     Post.likes.through.objects.filter(post_id=OuterRef('pk'), member_id=uuid)
                 ),
@@ -100,7 +101,7 @@ def read_posts_list(request):
                     Post.owners.through.objects.filter(post_id=OuterRef('pk'), member_id=uuid)
                 ),
             )
-            .values('id', 'title', 'author', 'category', 'is_internal', 'year', 'semester', 'created_at', 'like_count', 'comment_count', 'is_liked', 'is_owner', 'is_author')[offset:offset+count]
+            .values('id', 'title', 'author', 'category', 'is_internal', 'year', 'semester', 'created_at', 'like_count', 'comment_count', 'answer_count', 'is_liked', 'is_owner', 'is_author')[offset:offset+count]
         )
 
         # created_at 직렬화 보정

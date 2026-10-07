@@ -270,7 +270,7 @@ export default {
             title: post.title,
             date: this.formatDate(post.created_at),
             author: post.author,
-            commentCount: post.comment_count || 0,
+            commentCount: post.answer_count || 0,
             likeCount: post.like_count || 0,
             is_liked: post.is_liked,
             views: 0,
