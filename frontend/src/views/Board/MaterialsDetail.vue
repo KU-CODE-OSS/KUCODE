@@ -50,6 +50,8 @@
             </a>
           </div>
         </div>
+
+        <PostComments v-if="post.id" :post-id="post.id" response-label="댓글" />
       </main>
     </div>
   </div>
@@ -57,9 +59,11 @@
 
 <script>
 import { getBoardPost } from '@/api.js'
+import PostComments from '@/components/PostComments.vue'
 
 export default {
   name: 'MaterialsDetail',
+  components: { PostComments },
   data() {
     return {
       categories: [

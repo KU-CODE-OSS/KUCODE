@@ -670,6 +670,10 @@ def add_comment(request):
             try:
                 # 해당 게시글에 속한 부모 댓글인지 확인하며 조회
                 parent_comment = Comment.objects.get(id=parent_id, post=post)
+                # The UI deliberately displays one reply level. Replies to a
+                # reply remain in the same visible thread under its root.
+                if parent_comment.parent_id:
+                    parent_comment = parent_comment.parent
             except Comment.DoesNotExist:
                 return JsonResponse({"status": "Error", "message": "parent comment not found in this post"}, status=404)
         
@@ -809,7 +813,8 @@ def read_comments_list(request):
                         "name": reply.author.name if reply.author else "Anonymous"
                     },
                     "created_at": reply.created_at.isoformat(),
-                    "updated_at": reply.updated_at.isoformat()
+                    "updated_at": reply.updated_at.isoformat(),
+                    "parent_id": comment.id,
                 })
                 
             results.append({
@@ -821,6 +826,7 @@ def read_comments_list(request):
                 },
                 "created_at": comment.created_at.isoformat(),
                 "updated_at": comment.updated_at.isoformat(),
+                "parent_id": None,
                 "replies": replies_data
             })
             

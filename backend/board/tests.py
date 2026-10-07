@@ -2,8 +2,14 @@ import json
 
 from django.test import RequestFactory, TestCase
 
-from board.api.views import read_owner_candidates, read_post, update_post
-from board.models import Post
+from board.api.views import (
+    add_comment,
+    read_comments_list,
+    read_owner_candidates,
+    read_post,
+    update_post,
+)
+from board.models import Comment, Post
 from login.models import Member, Role
 
 
@@ -112,3 +118,60 @@ class LegacyPostOwnershipTests(TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Post.objects.get().owners.count(), 0)
+
+
+class BoardCommentApiTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.author = Member.objects.create(
+            id='comment-author',
+            name='Comment Author',
+            email='comment@example.com',
+            role=Role.STUDENT,
+        )
+        self.post = Post.objects.create(
+            author='post-author',
+            title='Post',
+            content='Content',
+            category='EVENT_INFO',
+            year=2026,
+            semester='1',
+        )
+
+    def add(self, content, parent_id=None):
+        return add_comment(
+            self.factory.post(
+                '/api/board/add_comment',
+                data=json.dumps({
+                    'post_id': self.post.id,
+                    'author_id': self.author.id,
+                    'content': content,
+                    'parent_id': parent_id,
+                }),
+                content_type='application/json',
+            )
+        )
+
+    def test_comment_and_reply_are_returned_as_one_level_thread(self):
+        root_id = json.loads(self.add('Root').content)['comment_id']
+        reply_response = self.add('Reply', parent_id=root_id)
+
+        response = read_comments_list(
+            self.factory.get(
+                '/api/board/read_comments_list',
+                {'post_id': self.post.id},
+            )
+        )
+        body = json.loads(response.content)
+
+        self.assertEqual(reply_response.status_code, 201)
+        self.assertEqual(body['total'], 1)
+        self.assertEqual(body['results'][0]['content'], 'Root')
+        self.assertEqual(body['results'][0]['replies'][0]['content'], 'Reply')
+
+    def test_reply_to_reply_is_normalized_to_root_thread(self):
+        root_id = json.loads(self.add('Root').content)['comment_id']
+        reply_id = json.loads(self.add('Reply', parent_id=root_id).content)['comment_id']
+        nested_id = json.loads(self.add('Nested reply', parent_id=reply_id).content)['comment_id']
+
+        self.assertEqual(Comment.objects.get(id=nested_id).parent_id, root_id)
