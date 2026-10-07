@@ -20,7 +20,7 @@ class PostOwnershipApiTests(TestCase):
         self.factory = RequestFactory()
         self.creator = Member.objects.create(
             id='creator-uuid',
-            name='Creator',
+            name='홍길동',
             email='creator@example.com',
             role=Role.PROFESSOR,
         )
@@ -85,6 +85,8 @@ class PostOwnershipApiTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body['post']['is_owner'])
+        self.assertEqual(body['post']['author'], '홍*동')
+        self.assertEqual(body['post']['author_id'], self.creator.id)
         self.assertEqual(
             {owner['id'] for owner in body['post']['owners']},
             {self.creator.id, self.co_owner.id},
@@ -184,7 +186,7 @@ class QnaPostApiTests(TestCase):
         self.factory = RequestFactory()
         self.member = Member.objects.create(
             id='qna-author',
-            name='Q&A Author',
+            name='김민수',
             email='qna@example.com',
             role=Role.STUDENT,
         )
@@ -252,6 +254,8 @@ class QnaPostApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(body['total'], 1)
         self.assertEqual(body['results'][0]['category'], 'QNA')
+        self.assertEqual(body['results'][0]['author'], '김*수')
+        self.assertEqual(body['results'][0]['author_id'], self.member.id)
 
 
         self.assertEqual(body['results'][0]['answer_count'], 1)

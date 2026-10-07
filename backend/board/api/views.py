@@ -43,6 +43,17 @@ def read_owner_candidates(request):
     return JsonResponse({"status": "OK", "results": rows}, status=200)
 
 
+def _mask_member_name(name):
+    value = str(name or '').strip()
+    if not value:
+        return ''
+    if len(value) == 1:
+        return '*'
+    if len(value) == 2:
+        return f'{value[0]}*'
+    return f'{value[0]}{"*" * (len(value) - 2)}{value[-1]}'
+
+
 def _resolve_post_owners(author_id, owner_ids):
     normalized_ids = {str(value).strip() for value in (owner_ids or []) if str(value).strip()}
     if author_id and Member.objects.filter(id=author_id).exists():
@@ -104,8 +115,16 @@ def read_posts_list(request):
             .values('id', 'title', 'author', 'category', 'is_internal', 'year', 'semester', 'created_at', 'like_count', 'comment_count', 'answer_count', 'is_liked', 'is_owner', 'is_author')[offset:offset+count]
         )
 
-        # created_at 직렬화 보정
+        author_ids = {row['author'] for row in rows if row.get('author')}
+        author_names = dict(
+            Member.objects.filter(id__in=author_ids).values_list('id', 'name')
+        )
+
+        # Serialize dates and expose a masked account name without discarding
+        # the stored member UID used by legacy Post records.
         for r in rows:
+            r['author_id'] = r['author']
+            r['author'] = _mask_member_name(author_names[r['author']]) if r['author'] in author_names else r['author']
             dt = r.get('created_at')
             if dt is not None:
                 r['created_at'] = dt.isoformat()
@@ -148,10 +167,12 @@ def read_post(request):
 
         uuid = request.GET.get('uuid')
         owners = list(post.owners.order_by('name', 'id').values('id', 'name', 'role'))
+        author_name = Member.objects.filter(id=post.author).values_list('name', flat=True).first()
         
         data = {
             "id": post.id,
-            "author": post.author,
+            "author": _mask_member_name(author_name) if author_name else post.author,
+            "author_id": post.author,
             "owners": owners,
             "is_owner": post.is_owner(uuid) if uuid else False,
             "title": post.title,
