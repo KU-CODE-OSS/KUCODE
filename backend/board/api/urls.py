@@ -7,6 +7,7 @@ urlpatterns = [
   path("drive_config", views.get_drive_config, name="drive_config"),
   path("read_posts_list", views.read_posts_list, name="read_posts_list"),
   path("read_post", views.read_post, name="read_post"),
+  path("read_owner_candidates", views.read_owner_candidates, name="read_owner_candidates"),
   path("read_company_repos_list", views.read_company_repos_list, name="read_company_repos_list"),
   path("read_trending_repos_list", views.read_trending_repos_list, name="read_trending_repos_list"),
   path("update_post", views.update_post, name="update_post"),

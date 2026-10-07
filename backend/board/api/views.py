@@ -2,7 +2,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_date
 from django.conf import settings
-from django.db.models import Count, Case, When, Value, BooleanField
+from django.db import transaction
+from django.db.models import Count, Exists, OuterRef
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -30,6 +31,26 @@ def get_drive_config(request):
         "enable_drive_upload": settings.ENABLE_BOARD_DRIVE_UPLOAD
     }, status=200)
 
+def read_owner_candidates(request):
+    """Return registered members that may be selected as post owners."""
+    if request.method != 'GET':
+        return JsonResponse({"status": "Error", "message": "Only GET method is allowed"}, status=405)
+
+    rows = list(
+        Member.objects.order_by('name', 'id').values('id', 'name', 'role')
+    )
+    return JsonResponse({"status": "OK", "results": rows}, status=200)
+
+
+def _resolve_post_owners(author_id, owner_ids):
+    normalized_ids = {str(value).strip() for value in (owner_ids or []) if str(value).strip()}
+    if author_id and Member.objects.filter(id=author_id).exists():
+        normalized_ids.add(str(author_id))
+    owners = list(Member.objects.filter(id__in=normalized_ids))
+    found_ids = {str(owner.id) for owner in owners}
+    missing_ids = sorted(normalized_ids - found_ids)
+    return owners, missing_ids
+
 def read_posts_list(request):
     try:
         if request.method != 'GET':
@@ -56,19 +77,23 @@ def read_posts_list(request):
         rows = list(
             Post.objects.all()
             .annotate(
-                like_count=Count('likes'),
-                is_liked=Case(
-                    When(likes__id=uuid, then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField()
+                like_count=Count('likes', distinct=True),
+                comment_count=Count('comments', distinct=True),
+                is_liked=Exists(
+                    Post.likes.through.objects.filter(post_id=OuterRef('pk'), member_id=uuid)
                 ),
-                is_author=Case(
-                    When(author=uuid, then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField()
-                )
+                is_owner=Exists(
+                    Post.owners.through.objects.filter(post_id=OuterRef('pk'), member_id=uuid)
+                ),
             )
-            .values('id', 'title', 'author', 'category', 'is_internal', 'year', 'semester', 'created_at', 'like_count', 'is_liked', 'is_author')[offset:offset+count]
+            .annotate(
+                # Keep the response key used by the existing frontend while
+                # expanding its meaning to all post owners.
+                is_author=Exists(
+                    Post.owners.through.objects.filter(post_id=OuterRef('pk'), member_id=uuid)
+                ),
+            )
+            .values('id', 'title', 'author', 'category', 'is_internal', 'year', 'semester', 'created_at', 'like_count', 'comment_count', 'is_liked', 'is_owner', 'is_author')[offset:offset+count]
         )
 
         # created_at 직렬화 보정
@@ -114,10 +139,13 @@ def read_post(request):
             })
 
         uuid = request.GET.get('uuid')
+        owners = list(post.owners.order_by('name', 'id').values('id', 'name', 'role'))
         
         data = {
             "id": post.id,
             "author": post.author,
+            "owners": owners,
+            "is_owner": post.is_owner(uuid) if uuid else False,
             "title": post.title,
             "content": post.content,
             "category": post.category,
@@ -129,7 +157,7 @@ def read_post(request):
             "updated_at": post.updated_at.isoformat() if post.updated_at else None,
             "files": files_data,
             "like_count": post.like_count,  # like_count 추가
-            "is_author": post.is_author(uuid) if uuid else False,
+            "is_author": post.is_owner(uuid) if uuid else False,
             "is_liked": post.is_liked(uuid) if uuid else False
         }
 
@@ -228,6 +256,7 @@ def update_post(request):
         year = body.get('year')
         semester = body.get('semester')
         event_info = body.get('event_info')
+        owner_ids = body.get('owner_ids') or []
 
         required_fields = {
             'author': author, 'title': title, 'content': content,
@@ -242,21 +271,36 @@ def update_post(request):
         except Exception:
             return JsonResponse({"status": "Error", "message": "year must be an integer"}, status=400)
 
-        post = Post.objects.create(
-            author=author,
-            title=title,
-            content=content,
-            category=category,
-            is_internal=bool(is_internal),
-            year=year_int,
-            semester=semester,
-            event_info=event_info
-        )
+        if not isinstance(owner_ids, list):
+            return JsonResponse({"status": "Error", "message": "owner_ids must be a list"}, status=400)
+        owners, missing_owner_ids = _resolve_post_owners(author, owner_ids)
+        if missing_owner_ids:
+            return JsonResponse({
+                "status": "Error",
+                "message": "Unknown owner IDs",
+                "owner_ids": missing_owner_ids,
+            }, status=400)
+        if Member.objects.filter(id=author).exists() and not owners:
+            return JsonResponse({"status": "Error", "message": "The creator must be a post owner"}, status=400)
+
+        with transaction.atomic():
+            post = Post.objects.create(
+                author=author,
+                title=title,
+                content=content,
+                category=category,
+                is_internal=bool(is_internal),
+                year=year_int,
+                semester=semester,
+                event_info=event_info
+            )
+            post.owners.set(owners)
 
         return JsonResponse({
             "status": "OK",
             "message": "Post created",
-            "post_id": post.id
+            "post_id": post.id,
+            "owner_ids": [owner.id for owner in owners],
         }, status=201)
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)

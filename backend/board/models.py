@@ -45,6 +45,12 @@ class Post(models.Model):
         related_name='liked_posts',
         blank=True
     )
+    owners = models.ManyToManyField(
+        Member,
+        related_name='owned_posts',
+        blank=True,
+        help_text='Members who can manage this post and receive response notifications.'
+    )
     
     created_at = models.DateTimeField(auto_now_add=True, null=False)
     updated_at = models.DateTimeField(auto_now=True, null=False)
@@ -64,6 +70,10 @@ class Post(models.Model):
     def is_author(self, uuid):
         """해당 uuid가 게시글 작성자인지 확인"""
         return str(self.author) == str(uuid)
+
+    def is_owner(self, member_id):
+        """Return whether the member is one of this post's owners."""
+        return bool(member_id) and self.owners.filter(id=member_id).exists()
 
     def is_liked(self, member_id):
         """해당 member_id가 이 글에 좋아요를 눌렀는지 확인"""

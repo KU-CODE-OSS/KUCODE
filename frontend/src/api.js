@@ -149,10 +149,14 @@ export function getBoardPostsList(page = 1, size = 10, uuid) {
   });
 }
 
-export function getBoardPost(postId) {
+export function getBoardPost(postId, uuid = null) {
   return ajax('/board/read_post', 'get', {
-    params: { post_id: postId }
+    params: { post_id: postId, ...(uuid ? { uuid } : {}) }
   });
+}
+
+export function getPostOwnerCandidates() {
+  return ajax('/board/read_owner_candidates', 'get');
 }
 
 // Company Repos APIs

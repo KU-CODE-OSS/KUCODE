@@ -33,6 +33,13 @@
           </div>
         </div>
 
+        <div class="form-row">
+          <label class="form-label">공동 소유자</label>
+          <div class="form-input-wrapper">
+            <PostOwnerSelector v-model="formData.ownerIds" :creator-id="authStore.memberId || ''" />
+          </div>
+        </div>
+
         <!-- 첨부파일 Field -->
         <div class="form-row">
           <label class="form-label">첨부파일</label>
@@ -118,9 +125,16 @@
 
 <script>
 import { createOrUpdatePost, getDriveConfig, uploadFileToDrive, linkDriveFile } from '@/api.js'
+import PostOwnerSelector from '@/components/PostOwnerSelector.vue'
+import { useAuthStore } from '@/stores/auth'
 
 export default {
   name: 'EventCreate',
+  components: { PostOwnerSelector },
+  setup() {
+    const authStore = useAuthStore()
+    return { authStore }
+  },
   data() {
     return {
       formData: {
@@ -131,6 +145,7 @@ export default {
         driveUrl: '',
         uploadMethod: 'link', // 'link' or 'upload'
         author: '', // Will be set from user session or default
+        ownerIds: [],
         year: new Date().getFullYear(),
         semester: '1'
       },
@@ -141,6 +156,7 @@ export default {
     }
   },
   mounted() {
+    this.formData.author = this.authStore.memberId || ''
     this.fetchDriveConfig()
   },
   methods: {
@@ -170,9 +186,14 @@ export default {
       this.uploadProgress = null
 
       try {
+        const authorId = this.authStore.memberId || this.formData.author
+        if (!authorId) {
+          throw new Error('작성자 정보를 확인할 수 없습니다.')
+        }
         // Prepare post data according to API spec
         const postData = {
-          author: this.formData.author || 'Anonymous', // TODO: Get from user session
+          author: authorId,
+          owner_ids: this.formData.ownerIds,
           title: this.formData.title,
           content: this.formData.content,
           category: 'EVENT_INFO',
