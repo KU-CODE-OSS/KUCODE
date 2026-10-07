@@ -10,6 +10,7 @@ from rest_framework import status
 import json
 
 from board.models import Post, PostCategory, File, CompanyRepo, TrendingRepo, Comment
+from board.services.notifications import notify_post_owners
 from login.models import Member
 # from board.services.google_drive import GoogleDriveService, GoogleDriveServiceError
 
@@ -692,6 +693,7 @@ def add_comment(request):
             content=content,
             parent=parent_comment
         )
+        notify_post_owners(comment)
         
         return JsonResponse({
             "status": "OK",

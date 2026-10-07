@@ -1,6 +1,7 @@
 import json
 
-from django.test import RequestFactory, TestCase
+from django.core import mail
+from django.test import RequestFactory, TestCase, override_settings
 
 from board.api.views import (
     add_comment,
@@ -239,3 +240,80 @@ class QnaPostApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(body['total'], 1)
         self.assertEqual(body['results'][0]['category'], 'QNA')
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    DEFAULT_FROM_EMAIL='notifications@example.com',
+)
+class BoardOwnerNotificationTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.owner = Member.objects.create(
+            id='notified-owner',
+            name='Owner',
+            email='owner@example.com',
+            role=Role.PROFESSOR,
+        )
+        self.second_owner = Member.objects.create(
+            id='second-owner',
+            name='Second Owner',
+            email='second@example.com',
+            role=Role.ADMIN,
+        )
+        self.actor = Member.objects.create(
+            id='response-author',
+            name='Responder',
+            email='responder@example.com',
+            role=Role.STUDENT,
+        )
+        self.post = Post.objects.create(
+            author=self.owner.id,
+            title='Question',
+            content='Content',
+            category='QNA',
+            year=2026,
+            semester='1',
+        )
+        self.post.owners.set([self.owner, self.second_owner])
+
+    def add(self, author, content='Answer', parent_id=None):
+        return add_comment(
+            self.factory.post(
+                '/api/board/add_comment',
+                data=json.dumps({
+                    'post_id': self.post.id,
+                    'author_id': author.id,
+                    'content': content,
+                    'parent_id': parent_id,
+                }),
+                content_type='application/json',
+            )
+        )
+
+    def test_answer_emails_all_owners(self):
+        response = self.add(self.actor)
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            set(mail.outbox[0].to),
+            {'owner@example.com', 'second@example.com'},
+        )
+        self.assertIn('새 답변', mail.outbox[0].subject)
+
+    def test_owner_who_writes_response_is_excluded(self):
+        response = self.add(self.owner)
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(mail.outbox[0].to, ['second@example.com'])
+
+    def test_reply_uses_reply_notification_label(self):
+        root_response = self.add(self.actor)
+        root_id = json.loads(root_response.content)['comment_id']
+        mail.outbox.clear()
+
+        response = self.add(self.actor, content='Follow-up', parent_id=root_id)
+
+        self.assertEqual(response.status_code, 201)
+        self.assertIn('새 답글', mail.outbox[0].subject)
