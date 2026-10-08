@@ -35,25 +35,8 @@
               </button>
             </div>
 
-            <div class="filter-dropdown" @click="toggleYearDropdown">
-              <span>{{ selectedYear }}년</span>
-              <svg width="12" height="8" viewBox="0 0 12 8" fill="none" class="dropdown-icon">
-                <path d="M1 1.5L6 6.5L11 1.5" stroke="#616161" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <div v-if="showYearDropdown" class="dropdown-menu">
-                <div
-                  v-for="year in availableYears"
-                  :key="year"
-                  class="dropdown-option"
-                  @click.stop="selectYear(year)"
-                >
-                  {{ year }}년
-                </div>
-              </div>
-            </div>
-
             <button
-              v-if="activeCategory === 'qna' || (authStore.canWriteBoard && activeCategory !== 'opensource')"
+              v-if="authStore.isAuthenticated && activeCategory !== 'opensource'"
               class="write-post-btn"
               @click="openWritePost"
             >
@@ -64,17 +47,29 @@
               글 작성
             </button>
 
-            <div class="search-container">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="search-icon">
-                <circle cx="9" cy="9" r="5.75" stroke="#616161" stroke-width="1.5"/>
-                <path d="M13 13L16 16" stroke="#616161" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-            </div>
+            <form class="search-container" @submit.prevent="applySearch">
+              <input
+                v-model="searchInput"
+                type="search"
+                class="search-input"
+                :placeholder="searchPlaceholder"
+                aria-label="게시판 검색"
+              />
+              <button type="submit" class="search-button" aria-label="검색">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="search-icon">
+                  <circle cx="9" cy="9" r="5.75" stroke="#616161" stroke-width="1.5"/>
+                  <path d="M13 13L16 16" stroke="#616161" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button v-if="searchQuery" type="button" class="search-clear" @click="clearSearch">
+                초기화
+              </button>
+            </form>
           </div>
         </div>
 
         <div class="content-meta">
-          <span class="total-count">총 {{ filteredPosts.length }}건</span>
+          <span class="total-count">총 {{ visibleItemCount }}건</span>
         </div>
 
         <!-- Posts Table -->
@@ -185,9 +180,8 @@ export default {
       ],
       activeCategory: 'events',
       activeNoticeTab: 'company',
-      selectedYear: 2025,
-      showYearDropdown: false,
-      availableYears: [2025, 2024, 2023, 2022, 2021, 2020],
+      searchInput: '',
+      searchQuery: '',
       loading: false,
       error: null,
       eventPosts: [],
@@ -202,23 +196,47 @@ export default {
       const category = this.categories.find(cat => cat.value === this.activeCategory)
       return category ? category.label : ''
     },
+    searchPlaceholder() {
+      return this.activeCategory === 'opensource'
+        ? '기업명 또는 Github 주소 검색'
+        : '제목 또는 작성자 검색'
+    },
+    visibleItemCount() {
+      return this.activeCategory === 'opensource'
+        ? this.filteredRepos.length
+        : this.filteredPosts.length
+    },
     filteredPosts() {
+      let posts = []
       if (this.activeCategory === 'events') {
-        return this.eventPosts
+        posts = this.eventPosts
       } else if (this.activeCategory === 'learning') {
-        return this.learningPosts
+        posts = this.learningPosts
       } else if (this.activeCategory === 'qna') {
-        return this.qnaPosts
+        posts = this.qnaPosts
       }
-      return []
+
+      const keyword = this.searchQuery.trim().toLowerCase()
+      if (!keyword) return posts
+      return posts.filter(post =>
+        [post.title, post.author]
+          .some(value => String(value || '').toLowerCase().includes(keyword))
+      )
     },
     filteredRepos() {
+      let repos = []
       if (this.activeNoticeTab === 'company') {
-        return this.companyRepos
+        repos = this.companyRepos
       } else if (this.activeNoticeTab === 'trending') {
-        return this.trendingRepos
+        repos = this.trendingRepos
       }
-      return []
+
+      const keyword = this.searchQuery.trim().toLowerCase()
+      if (!keyword) return repos
+      return repos.filter(repo =>
+        [repo.company, repo.url]
+          .some(value => String(value || '').toLowerCase().includes(keyword))
+      )
     }
   },
   methods: {
@@ -364,6 +382,8 @@ export default {
 
     selectCategory(categoryValue) {
       this.activeCategory = categoryValue
+      this.searchInput = ''
+      this.searchQuery = ''
       // Update URL query to preserve category state
       this.$router.replace({ path: '/board', query: { category: categoryValue } })
 
@@ -376,12 +396,12 @@ export default {
         }
       }
     },
-    toggleYearDropdown() {
-      this.showYearDropdown = !this.showYearDropdown
+    applySearch() {
+      this.searchQuery = this.searchInput.trim()
     },
-    selectYear(year) {
-      this.selectedYear = year
-      this.showYearDropdown = false
+    clearSearch() {
+      this.searchInput = ''
+      this.searchQuery = ''
     },
     openWritePost() {
       // Navigate to appropriate create form based on active category
@@ -431,11 +451,6 @@ export default {
     }
   },
   mounted() {
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.filter-dropdown')) {
-        this.showYearDropdown = false
-      }
-    })
     // Restore category state when component mounts
     this.restoreCategoryFromQuery()
 
@@ -594,56 +609,6 @@ export default {
   color: #CB385C;
 }
 
-.filter-dropdown {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 20px;
-  width: 147px;
-  height: 38px;
-  box-sizing: border-box;
-  background: #FCFCFC;
-  border: 1px solid #CDCDCD;
-  border-radius: 10px;
-  cursor: pointer;
-  font-family: 'Pretendard', sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 17px;
-  color: #616161;
-}
-
-.dropdown-icon {
-  margin-left: auto;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  background: #FFFFFF;
-  border: 1px solid #DCE2ED;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  overflow: hidden;
-}
-
-.dropdown-option {
-  padding: 10px 20px;
-  font-family: 'Pretendard', sans-serif;
-  font-size: 14px;
-  color: #616161;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.dropdown-option:hover {
-  background: #F8F8F8;
-}
-
 .write-post-btn {
   display: flex;
   align-items: center;
@@ -688,21 +653,54 @@ export default {
 .search-container {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 44px;
+  width: 280px;
   height: 44px;
   background: #F8F8F8;
+  border: 1px solid transparent;
   border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s ease;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
-.search-container:hover {
-  background: #EFEFEF;
+.search-container:focus-within {
+  border-color: #CB385C;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 4px 0 14px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #616161;
+  font: inherit;
+}
+
+.search-button,
+.search-clear {
+  height: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.search-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
 }
 
 .search-icon {
   flex-shrink: 0;
+}
+
+.search-clear {
+  padding: 0 12px 0 4px;
+  color: #949494;
+  font-size: 12px;
 }
 
 .content-meta {

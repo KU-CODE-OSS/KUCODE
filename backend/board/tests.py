@@ -5,13 +5,14 @@ from django.test import RequestFactory, TestCase, override_settings
 
 from board.api.views import (
     add_comment,
+    link_drive_file,
     read_comments_list,
     read_posts_list,
     read_owner_candidates,
     read_post,
     update_post,
 )
-from board.models import Comment, Post
+from board.models import Comment, File, Post
 from login.models import Member, Role
 
 
@@ -259,6 +260,65 @@ class QnaPostApiTests(TestCase):
 
 
         self.assertEqual(body['results'][0]['answer_count'], 1)
+
+
+class GoogleDriveLinkApiTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.post = Post.objects.create(
+            author='author-id',
+            title='Materials',
+            content='Content',
+            category='LEARNING_MATERIAL',
+            year=2026,
+            semester='1',
+        )
+
+    def link(self, drive_url, file_name=None):
+        return link_drive_file(
+            self.factory.post(
+                '/api/board/link_drive_file',
+                data=json.dumps({
+                    'post_id': self.post.id,
+                    'drive_url': drive_url,
+                    'file_name': file_name,
+                }),
+                content_type='application/json',
+            )
+        )
+
+    def test_drive_file_link_is_normalized_and_saved(self):
+        response = self.link(
+            'https://drive.google.com/file/d/abc_DEF-123/view?usp=sharing',
+            'lecture.pdf',
+        )
+        body = json.loads(response.content)
+
+        self.assertEqual(response.status_code, 201)
+        attachment = File.objects.get()
+        self.assertEqual(attachment.file_name, 'lecture.pdf')
+        self.assertEqual(attachment.file_extension, 'pdf')
+        self.assertEqual(
+            attachment.storage_link,
+            'https://drive.google.com/file/d/abc_DEF-123/view',
+        )
+        self.assertEqual(body['file']['drive_file_id'], 'abc_DEF-123')
+
+    def test_google_docs_link_is_supported(self):
+        response = self.link(
+            'https://docs.google.com/document/d/document-file-id/edit',
+            'meeting notes',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(File.objects.get().file_extension, '')
+
+    def test_non_drive_url_is_rejected_without_file_record(self):
+        response = self.link('https://example.com/file.pdf', 'file.pdf')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(File.objects.exists())
+
 @override_settings(
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
     DEFAULT_FROM_EMAIL='notifications@example.com',

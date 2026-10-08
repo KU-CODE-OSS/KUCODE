@@ -42,68 +42,23 @@
 
         <!-- 첨부파일 Field -->
         <div class="form-row">
-          <label class="form-label">첨부파일</label>
+          <label class="form-label">Google Drive 링크</label>
           <div class="form-input-wrapper">
-            <!-- Upload Method Toggle -->
-            <div class="upload-method-toggle">
-              <label class="method-option">
-                <input
-                  type="radio"
-                  v-model="formData.uploadMethod"
-                  value="link"
-                  class="method-radio"
-                />
-                <span class="method-label">Google Drive 링크</span>
-              </label>
-              <label v-if="enableDriveUpload" class="method-option">
-                <input
-                  type="radio"
-                  v-model="formData.uploadMethod"
-                  value="upload"
-                  class="method-radio"
-                />
-                <span class="method-label">파일 업로드</span>
-              </label>
-            </div>
-
-            <!-- Option 1: Drive Link Input -->
-            <div v-if="formData.uploadMethod === 'link'" class="drive-link-section">
+            <div class="drive-link-section">
               <input
                 v-model="formData.driveUrl"
                 type="url"
                 class="form-input drive-url-input"
-                placeholder="Google Drive 링크를 입력하세요 (예: https://drive.google.com/file/d/...)"
+                placeholder="공유 가능한 Google Drive 링크를 입력하세요"
               />
               <input
                 v-model="formData.fileName"
                 type="text"
                 class="form-input file-name-input"
-                placeholder="파일 이름 (선택사항)"
+                placeholder="표시할 파일 이름 (선택사항)"
               />
             </div>
-
-            <!-- Option 2: File Upload -->
-            <div v-if="formData.uploadMethod === 'upload' && enableDriveUpload" class="file-input-wrapper">
-              <div class="file-input-content">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="file-icon">
-                  <path d="M11.6667 1.66669H5.00001C4.55798 1.66669 4.13406 1.84228 3.82149 2.15484C3.50893 2.4674 3.33334 2.89133 3.33334 3.33335V16.6667C3.33334 17.1087 3.50893 17.5326 3.82149 17.8452C4.13406 18.1578 4.55798 18.3334 5.00001 18.3334H15C15.442 18.3334 15.866 18.1578 16.1785 17.8452C16.4911 17.5326 16.6667 17.1087 16.6667 16.6667V6.66669L11.6667 1.66669Z" stroke="#616161" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M11.6667 1.66669V6.66669H16.6667" stroke="#616161" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <label for="file-upload" class="file-label">파일 선택하기</label>
-                <input
-                  id="file-upload"
-                  type="file"
-                  @change="handleFileChange"
-                  class="file-input-hidden"
-                />
-                <span v-if="formData.fileName" class="file-name">{{ formData.fileName }}</span>
-              </div>
-            </div>
-
-            <!-- Upload Progress -->
-            <div v-if="uploadProgress" class="upload-progress">
-              {{ uploadProgress }}
-            </div>
+            <p class="drive-help">파일의 공유 권한은 Google Drive에서 별도로 설정해야 합니다.</p>
           </div>
         </div>
 
@@ -124,7 +79,7 @@
 </template>
 
 <script>
-import { createOrUpdatePost, getDriveConfig, uploadFileToDrive, linkDriveFile } from '@/api.js'
+import { createOrUpdatePost, linkDriveFile } from '@/api.js'
 import PostOwnerSelector from '@/components/PostOwnerSelector.vue'
 import { useAuthStore } from '@/stores/auth'
 
@@ -140,42 +95,21 @@ export default {
       formData: {
         title: '',
         content: '',
-        file: null,
         fileName: '',
         driveUrl: '',
-        uploadMethod: 'link', // 'link' or 'upload'
         author: '', // Will be set from user session or default
         ownerIds: [],
         year: new Date().getFullYear(),
         semester: '1'
       },
       loading: false,
-      error: null,
-      enableDriveUpload: false,
-      uploadProgress: null
+      error: null
     }
   },
   mounted() {
     this.formData.author = this.authStore.memberId || ''
-    this.fetchDriveConfig()
   },
   methods: {
-    async fetchDriveConfig() {
-      try {
-        const response = await getDriveConfig()
-        this.enableDriveUpload = response.data.enable_drive_upload
-      } catch (error) {
-        console.error('Failed to fetch Drive config:', error)
-        this.enableDriveUpload = false
-      }
-    },
-    handleFileChange(event) {
-      const file = event.target.files[0]
-      if (file) {
-        this.formData.file = file
-        this.formData.fileName = file.name
-      }
-    },
     handleCancel() {
       // Preserve category state when going back
       this.$router.push({ path: '/board', query: { category: 'learning' } })
@@ -183,7 +117,6 @@ export default {
     async handleSubmit() {
       this.loading = true
       this.error = null
-      this.uploadProgress = null
 
       try {
         const authorId = this.authStore.memberId || this.formData.author
@@ -207,26 +140,12 @@ export default {
         const postId = response.data.post_id
         console.log('Post created:', postId)
 
-        // Handle file attachment if provided
-        if (this.formData.uploadMethod === 'upload' && this.formData.file && this.enableDriveUpload) {
-          // Option 1: Upload file to Drive
-          this.uploadProgress = 'Uploading file to Google Drive...'
-          try {
-            // await uploadFileToDrive(postId, this.formData.file)
-            console.log('File uploaded to Drive')
-          } catch (fileError) {
-            console.error('Failed to upload file:', fileError)
-            alert('게시글은 저장되었으나 파일 업로드에 실패했습니다.')
-          }
-        } else if (this.formData.uploadMethod === 'link' && this.formData.driveUrl) {
-          // Option 2: Link existing Drive file
-          this.uploadProgress = 'Linking Google Drive file...'
+        if (this.formData.driveUrl) {
           try {
             await linkDriveFile(postId, this.formData.driveUrl, this.formData.fileName || null)
-            console.log('Drive file linked')
           } catch (fileError) {
             console.error('Failed to link Drive file:', fileError)
-            alert('게시글은 저장되었으나 드라이브 링크 연결에 실패했습니다.')
+            alert('게시글은 저장되었으나 Google Drive 링크 저장에 실패했습니다.')
           }
         }
 
@@ -238,7 +157,6 @@ export default {
         alert('게시글 저장에 실패했습니다. 다시 시도해주세요.')
       } finally {
         this.loading = false
-        this.uploadProgress = null
       }
     }
   }
@@ -366,84 +284,6 @@ export default {
   border-bottom-color: #910024;
 }
 
-.file-input-wrapper {
-  display: flex;
-  align-items: center;
-  height: 40px;
-  background: #FCFCFC;
-  padding: 9px 16px;
-  box-sizing: border-box;
-}
-
-.file-input-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.file-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.file-label {
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 19px;
-  color: #616161;
-  cursor: pointer;
-}
-
-.file-label:hover {
-  color: #910024;
-}
-
-.file-input-hidden {
-  display: none;
-}
-
-.file-name {
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 17px;
-  color: #262626;
-  margin-left: 8px;
-}
-
-.upload-method-toggle {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 16px;
-  padding: 12px 0;
-}
-
-.method-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.method-radio {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: #910024;
-}
-
-.method-label {
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 17px;
-  color: #616161;
-  user-select: none;
-}
-
-.method-option:hover .method-label {
-  color: #910024;
-}
-
 .drive-link-section {
   display: flex;
   flex-direction: column;
@@ -458,14 +298,10 @@ export default {
   width: 100%;
 }
 
-.upload-progress {
-  margin-top: 12px;
-  padding: 8px 12px;
-  background: #F0F8FF;
-  border-left: 3px solid #910024;
+.drive-help {
+  margin: 10px 0 0;
   font-size: 14px;
-  color: #616161;
-  border-radius: 4px;
+  color: #949494;
 }
 
 .form-actions {

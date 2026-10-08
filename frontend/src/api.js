@@ -197,24 +197,6 @@ export function createOrUpdateTrendingRepo(repoData) {
   });
 }
 
-// Google Drive Configuration
-export function getDriveConfig() {
-  return ajax('/board/drive_config', 'get');
-}
-
-// Upload File to Google Drive
-export function uploadFileToDrive(postId, file, displayType = 'DOWNLOAD') {
-  const formData = new FormData();
-  formData.append('post_id', postId);
-  formData.append('file', file);
-  formData.append('display_type', displayType);
-
-  return ajax('/board/upload_file_to_drive', 'post', {
-    data: formData,
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
-}
-
 // Link Google Drive File
 export function linkDriveFile(postId, driveUrl, fileName = null, displayType = 'DOWNLOAD') {
   return ajax('/board/link_drive_file', 'post', {

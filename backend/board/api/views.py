@@ -1,18 +1,18 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_date
-from django.conf import settings
 from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 import json
+import re
+from urllib.parse import parse_qs, urlparse
 
-from board.models import Post, PostCategory, File, CompanyRepo, TrendingRepo, Comment
+from board.models import Post, PostCategory, File, FileDisplayType, CompanyRepo, TrendingRepo, Comment
 from board.services.notifications import notify_post_owners
 from login.models import Member
-# from board.services.google_drive import GoogleDriveService, GoogleDriveServiceError
 
 
 class HealthCheckAPIView(APIView):
@@ -21,16 +21,6 @@ class HealthCheckAPIView(APIView):
 
 def ping(request):
     return JsonResponse({"ok": True, "app": "board"})
-
-def get_drive_config(request):
-    """Return Google Drive feature configuration."""
-    if request.method != 'GET':
-        return JsonResponse({"status": "Error", "message": "Only GET method is allowed"}, status=405)
-
-    return JsonResponse({
-        "status": "OK",
-        "enable_drive_upload": settings.ENABLE_BOARD_DRIVE_UPLOAD
-    }, status=200)
 
 def read_owner_candidates(request):
     """Return registered members that may be selected as post owners."""
@@ -52,6 +42,35 @@ def _mask_member_name(name):
     if len(value) == 2:
         return f'{value[0]}*'
     return f'{value[0]}{"*" * (len(value) - 2)}{value[-1]}'
+
+
+def _extract_google_drive_file_id(value):
+    """Extract a Drive file ID from a supported, fully qualified URL."""
+    try:
+        parsed = urlparse(str(value or '').strip())
+    except ValueError:
+        return None
+
+    if parsed.scheme not in {'http', 'https'}:
+        return None
+
+    host = (parsed.hostname or '').lower()
+    file_id = None
+    if host == 'drive.google.com':
+        match = re.search(r'/file/d/([A-Za-z0-9_-]+)', parsed.path)
+        if match:
+            file_id = match.group(1)
+        else:
+            file_id = parse_qs(parsed.query).get('id', [None])[0]
+    elif host == 'docs.google.com':
+        match = re.search(
+            r'/(?:document|spreadsheets|presentation|forms)/d/([A-Za-z0-9_-]+)',
+            parsed.path,
+        )
+        if match:
+            file_id = match.group(1)
+
+    return file_id if file_id and re.fullmatch(r'[A-Za-z0-9_-]+', file_id) else None
 
 
 def _resolve_post_owners(author_id, owner_ids):
@@ -338,92 +357,10 @@ def update_post(request):
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
         
 @csrf_exempt
-# def upload_file_to_drive(request):
-#     """
-#     Upload a file to Google Drive and create a File record.
-#     Requires ENABLE_BOARD_DRIVE_UPLOAD to be True.
-#     """
-#     if request.method != 'POST':
-#         return JsonResponse({"status": "Error", "message": "Only POST method is allowed"}, status=405)
-
-#     # Check if Drive upload is enabled
-#     if not settings.ENABLE_BOARD_DRIVE_UPLOAD:
-#         return JsonResponse({
-#             "status": "Error",
-#             "message": "Google Drive upload is not enabled"
-#         }, status=403)
-
-#     try:
-#         # Get post_id from POST data
-#         post_id = request.POST.get('post_id')
-#         display_type = request.POST.get('display_type', 'DOWNLOAD')
-
-#         if not post_id:
-#             return JsonResponse({"status": "Error", "message": "post_id is required"}, status=400)
-
-#         # Verify post exists
-#         try:
-#             post = Post.objects.get(id=post_id)
-#         except Post.DoesNotExist:
-#             return JsonResponse({"status": "Error", "message": "post not found"}, status=404)
-
-#         # Get uploaded file
-#         if 'file' not in request.FILES:
-#             return JsonResponse({"status": "Error", "message": "No file provided"}, status=400)
-
-#         uploaded_file = request.FILES['file']
-#         if not uploaded_file.name:
-#             return JsonResponse({"status": "Error", "message": "File has no name"}, status=400)
-
-#         # Upload to Google Drive
-#         try:
-#             drive_service = GoogleDriveService()
-#             drive_result = drive_service.upload_file(
-#                 uploaded_file,
-#                 uploaded_file.name,
-#                 uploaded_file.content_type
-#             )
-#         except GoogleDriveServiceError as e:
-#             return JsonResponse({
-#                 "status": "Error",
-#                 "message": f"Failed to upload to Google Drive: {str(e)}"
-#             }, status=500)
-
-#         # Extract file extension
-#         file_extension = uploaded_file.name.rsplit('.', 1)[-1] if '.' in uploaded_file.name else ''
-
-#         # Create File record in database
-#         file_obj = File.objects.create(
-#             post=post,
-#             file_name=drive_result['name'],
-#             storage_link=drive_result['web_view_link'],
-#             file_extension=file_extension,
-#             display_type=display_type
-#         )
-
-#         return JsonResponse({
-#             "status": "OK",
-#             "message": "File uploaded successfully",
-#             "file": {
-#                 "id": file_obj.id,
-#                 "file_name": file_obj.file_name,
-#                 "storage_link": file_obj.storage_link,
-#                 "file_extension": file_obj.file_extension,
-#                 "display_type": file_obj.display_type,
-#                 "drive_file_id": drive_result['file_id'],
-#                 "file_size": drive_result['size']
-#             }
-#         }, status=201)
-
-#     except Exception as e:
-#         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
-
-
-@csrf_exempt
 def link_drive_file(request):
     """
-    Link an existing Google Drive file to a post by validating the Drive URL.
-    This endpoint is always available regardless of ENABLE_BOARD_DRIVE_UPLOAD setting.
+    Save an existing Google Drive URL as a post attachment.
+    This link-only flow does not call the Google Drive API.
     """
     if request.method != 'POST':
         return JsonResponse({"status": "Error", "message": "Only POST method is allowed"}, status=405)
@@ -451,32 +388,22 @@ def link_drive_file(request):
         except Post.DoesNotExist:
             return JsonResponse({"status": "Error", "message": "post not found"}, status=404)
 
-        # Validate Drive URL
-        is_valid, file_id_or_error = GoogleDriveService.validate_drive_link(drive_url)
-        if not is_valid:
+        file_id = _extract_google_drive_file_id(drive_url)
+        if not file_id:
             return JsonResponse({
                 "status": "Error",
-                "message": f"Invalid Google Drive URL: {file_id_or_error}"
+                "message": "Invalid Google Drive URL"
             }, status=400)
 
-        file_id = file_id_or_error
+        if display_type not in FileDisplayType.values:
+            return JsonResponse({"status": "Error", "message": "Invalid display_type"}, status=400)
 
-        # Try to get file metadata (optional, may fail if service not configured)
-        file_metadata = None
-        try:
-            drive_service = GoogleDriveService()
-            file_metadata = drive_service.get_file_metadata(file_id)
-        except GoogleDriveServiceError:
-            # If service is not configured, continue without metadata
-            pass
-
-        # Use metadata if available, otherwise use provided name or default
-        if file_metadata:
-            actual_file_name = file_metadata['name']
-            file_extension = actual_file_name.rsplit('.', 1)[-1] if '.' in actual_file_name else ''
-        else:
-            actual_file_name = file_name or "Linked File"
-            file_extension = actual_file_name.rsplit('.', 1)[-1] if '.' in actual_file_name else ''
+        actual_file_name = str(file_name or 'Google Drive file').strip()
+        if not actual_file_name or len(actual_file_name) > 255:
+            return JsonResponse({"status": "Error", "message": "Invalid file_name"}, status=400)
+        file_extension = actual_file_name.rsplit('.', 1)[-1].lower() if '.' in actual_file_name else ''
+        if len(file_extension) > 10:
+            file_extension = ''
 
         # Normalize the Drive URL to view link format
         normalized_url = f"https://drive.google.com/file/d/{file_id}/view"
@@ -502,10 +429,6 @@ def link_drive_file(request):
                 "drive_file_id": file_id
             }
         }
-
-        if file_metadata:
-            response_data['file']['file_size'] = file_metadata.get('size', '0')
-            response_data['file']['mime_type'] = file_metadata.get('mime_type', '')
 
         return JsonResponse(response_data, status=201)
 
