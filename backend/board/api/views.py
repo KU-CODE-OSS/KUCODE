@@ -1,16 +1,18 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_date
-from django.conf import settings
-from django.db.models import Count, Case, When, Value, BooleanField
+from django.db import transaction
+from django.db.models import Count, Exists, OuterRef, Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 import json
+import re
+from urllib.parse import parse_qs, urlparse
 
-from board.models import Post, File, CompanyRepo, TrendingRepo, Comment
+from board.models import Post, PostCategory, File, FileDisplayType, CompanyRepo, TrendingRepo, Comment
+from board.services.notifications import notify_post_owners
 from login.models import Member
-# from board.services.google_drive import GoogleDriveService, GoogleDriveServiceError
 
 
 class HealthCheckAPIView(APIView):
@@ -20,15 +22,65 @@ class HealthCheckAPIView(APIView):
 def ping(request):
     return JsonResponse({"ok": True, "app": "board"})
 
-def get_drive_config(request):
-    """Return Google Drive feature configuration."""
+def read_owner_candidates(request):
+    """Return registered members that may be selected as post owners."""
     if request.method != 'GET':
         return JsonResponse({"status": "Error", "message": "Only GET method is allowed"}, status=405)
 
-    return JsonResponse({
-        "status": "OK",
-        "enable_drive_upload": settings.ENABLE_BOARD_DRIVE_UPLOAD
-    }, status=200)
+    rows = list(
+        Member.objects.order_by('name', 'id').values('id', 'name', 'role')
+    )
+    return JsonResponse({"status": "OK", "results": rows}, status=200)
+
+
+def _mask_member_name(name):
+    value = str(name or '').strip()
+    if not value:
+        return ''
+    if len(value) == 1:
+        return '*'
+    if len(value) == 2:
+        return f'{value[0]}*'
+    return f'{value[0]}{"*" * (len(value) - 2)}{value[-1]}'
+
+
+def _extract_google_drive_file_id(value):
+    """Extract a Drive file ID from a supported, fully qualified URL."""
+    try:
+        parsed = urlparse(str(value or '').strip())
+    except ValueError:
+        return None
+
+    if parsed.scheme not in {'http', 'https'}:
+        return None
+
+    host = (parsed.hostname or '').lower()
+    file_id = None
+    if host == 'drive.google.com':
+        match = re.search(r'/file/d/([A-Za-z0-9_-]+)', parsed.path)
+        if match:
+            file_id = match.group(1)
+        else:
+            file_id = parse_qs(parsed.query).get('id', [None])[0]
+    elif host == 'docs.google.com':
+        match = re.search(
+            r'/(?:document|spreadsheets|presentation|forms)/d/([A-Za-z0-9_-]+)',
+            parsed.path,
+        )
+        if match:
+            file_id = match.group(1)
+
+    return file_id if file_id and re.fullmatch(r'[A-Za-z0-9_-]+', file_id) else None
+
+
+def _resolve_post_owners(author_id, owner_ids):
+    normalized_ids = {str(value).strip() for value in (owner_ids or []) if str(value).strip()}
+    if author_id and Member.objects.filter(id=author_id).exists():
+        normalized_ids.add(str(author_id))
+    owners = list(Member.objects.filter(id__in=normalized_ids))
+    found_ids = {str(owner.id) for owner in owners}
+    missing_ids = sorted(normalized_ids - found_ids)
+    return owners, missing_ids
 
 def read_posts_list(request):
     try:
@@ -38,6 +90,7 @@ def read_posts_list(request):
         page_str = request.GET.get('page', '1')
         count_str = request.GET.get('count') or request.GET.get('size') or '10'
         uuid = request.GET.get('uuid')
+        category = request.GET.get('category')
         if not uuid:
             return JsonResponse({"status": "Error", "message": "uuid is required"}, status=400)
 
@@ -51,28 +104,46 @@ def read_posts_list(request):
             return JsonResponse({"status": "Error", "message": "page and count must be >= 1"}, status=400)
 
         offset = (page - 1) * count
-        total = Post.objects.count()
+        posts = Post.objects.all()
+        if category:
+            if category not in PostCategory.values:
+                return JsonResponse({"status": "Error", "message": "Invalid category"}, status=400)
+            posts = posts.filter(category=category)
+        total = posts.count()
 
         rows = list(
-            Post.objects.all()
+            posts
             .annotate(
-                like_count=Count('likes'),
-                is_liked=Case(
-                    When(likes__id=uuid, then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField()
+                like_count=Count('likes', distinct=True),
+                comment_count=Count('comments', distinct=True),
+                answer_count=Count('comments', filter=Q(comments__parent__isnull=True), distinct=True),
+                is_liked=Exists(
+                    Post.likes.through.objects.filter(post_id=OuterRef('pk'), member_id=uuid)
                 ),
-                is_author=Case(
-                    When(author=uuid, then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField()
-                )
+                is_owner=Exists(
+                    Post.owners.through.objects.filter(post_id=OuterRef('pk'), member_id=uuid)
+                ),
             )
-            .values('id', 'title', 'author', 'category', 'is_internal', 'year', 'semester', 'created_at', 'like_count', 'is_liked', 'is_author')[offset:offset+count]
+            .annotate(
+                # Keep the response key used by the existing frontend while
+                # expanding its meaning to all post owners.
+                is_author=Exists(
+                    Post.owners.through.objects.filter(post_id=OuterRef('pk'), member_id=uuid)
+                ),
+            )
+            .values('id', 'title', 'author', 'category', 'is_internal', 'year', 'semester', 'created_at', 'like_count', 'comment_count', 'answer_count', 'is_liked', 'is_owner', 'is_author')[offset:offset+count]
         )
 
-        # created_at 직렬화 보정
+        author_ids = {row['author'] for row in rows if row.get('author')}
+        author_names = dict(
+            Member.objects.filter(id__in=author_ids).values_list('id', 'name')
+        )
+
+        # Serialize dates and expose a masked account name without discarding
+        # the stored member UID used by legacy Post records.
         for r in rows:
+            r['author_id'] = r['author']
+            r['author'] = _mask_member_name(author_names[r['author']]) if r['author'] in author_names else r['author']
             dt = r.get('created_at')
             if dt is not None:
                 r['created_at'] = dt.isoformat()
@@ -114,10 +185,15 @@ def read_post(request):
             })
 
         uuid = request.GET.get('uuid')
+        owners = list(post.owners.order_by('name', 'id').values('id', 'name', 'role'))
+        author_name = Member.objects.filter(id=post.author).values_list('name', flat=True).first()
         
         data = {
             "id": post.id,
-            "author": post.author,
+            "author": _mask_member_name(author_name) if author_name else post.author,
+            "author_id": post.author,
+            "owners": owners,
+            "is_owner": post.is_owner(uuid) if uuid else False,
             "title": post.title,
             "content": post.content,
             "category": post.category,
@@ -129,7 +205,7 @@ def read_post(request):
             "updated_at": post.updated_at.isoformat() if post.updated_at else None,
             "files": files_data,
             "like_count": post.like_count,  # like_count 추가
-            "is_author": post.is_author(uuid) if uuid else False,
+            "is_author": post.is_owner(uuid) if uuid else False,
             "is_liked": post.is_liked(uuid) if uuid else False
         }
 
@@ -228,6 +304,7 @@ def update_post(request):
         year = body.get('year')
         semester = body.get('semester')
         event_info = body.get('event_info')
+        owner_ids = body.get('owner_ids') or []
 
         required_fields = {
             'author': author, 'title': title, 'content': content,
@@ -237,117 +314,53 @@ def update_post(request):
         if missing:
             return JsonResponse({"status": "Error", "message": f"Missing required fields: {', '.join(missing)}"}, status=400)
 
+        if category not in PostCategory.values:
+            return JsonResponse({"status": "Error", "message": "Invalid category"}, status=400)
+
         try:
             year_int = int(year)
         except Exception:
             return JsonResponse({"status": "Error", "message": "year must be an integer"}, status=400)
 
-        post = Post.objects.create(
-            author=author,
-            title=title,
-            content=content,
-            category=category,
-            is_internal=bool(is_internal),
-            year=year_int,
-            semester=semester,
-            event_info=event_info
-        )
+        if not isinstance(owner_ids, list):
+            return JsonResponse({"status": "Error", "message": "owner_ids must be a list"}, status=400)
+        owners, missing_owner_ids = _resolve_post_owners(author, owner_ids)
+        if missing_owner_ids:
+            return JsonResponse({
+                "status": "Error",
+                "message": "Unknown owner IDs",
+                "owner_ids": missing_owner_ids,
+            }, status=400)
+        if Member.objects.filter(id=author).exists() and not owners:
+            return JsonResponse({"status": "Error", "message": "The creator must be a post owner"}, status=400)
+
+        with transaction.atomic():
+            post = Post.objects.create(
+                author=author,
+                title=title,
+                content=content,
+                category=category,
+                is_internal=bool(is_internal),
+                year=year_int,
+                semester=semester,
+                event_info=event_info
+            )
+            post.owners.set(owners)
 
         return JsonResponse({
             "status": "OK",
             "message": "Post created",
-            "post_id": post.id
+            "post_id": post.id,
+            "owner_ids": [owner.id for owner in owners],
         }, status=201)
     except Exception as e:
         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
         
 @csrf_exempt
-# def upload_file_to_drive(request):
-#     """
-#     Upload a file to Google Drive and create a File record.
-#     Requires ENABLE_BOARD_DRIVE_UPLOAD to be True.
-#     """
-#     if request.method != 'POST':
-#         return JsonResponse({"status": "Error", "message": "Only POST method is allowed"}, status=405)
-
-#     # Check if Drive upload is enabled
-#     if not settings.ENABLE_BOARD_DRIVE_UPLOAD:
-#         return JsonResponse({
-#             "status": "Error",
-#             "message": "Google Drive upload is not enabled"
-#         }, status=403)
-
-#     try:
-#         # Get post_id from POST data
-#         post_id = request.POST.get('post_id')
-#         display_type = request.POST.get('display_type', 'DOWNLOAD')
-
-#         if not post_id:
-#             return JsonResponse({"status": "Error", "message": "post_id is required"}, status=400)
-
-#         # Verify post exists
-#         try:
-#             post = Post.objects.get(id=post_id)
-#         except Post.DoesNotExist:
-#             return JsonResponse({"status": "Error", "message": "post not found"}, status=404)
-
-#         # Get uploaded file
-#         if 'file' not in request.FILES:
-#             return JsonResponse({"status": "Error", "message": "No file provided"}, status=400)
-
-#         uploaded_file = request.FILES['file']
-#         if not uploaded_file.name:
-#             return JsonResponse({"status": "Error", "message": "File has no name"}, status=400)
-
-#         # Upload to Google Drive
-#         try:
-#             drive_service = GoogleDriveService()
-#             drive_result = drive_service.upload_file(
-#                 uploaded_file,
-#                 uploaded_file.name,
-#                 uploaded_file.content_type
-#             )
-#         except GoogleDriveServiceError as e:
-#             return JsonResponse({
-#                 "status": "Error",
-#                 "message": f"Failed to upload to Google Drive: {str(e)}"
-#             }, status=500)
-
-#         # Extract file extension
-#         file_extension = uploaded_file.name.rsplit('.', 1)[-1] if '.' in uploaded_file.name else ''
-
-#         # Create File record in database
-#         file_obj = File.objects.create(
-#             post=post,
-#             file_name=drive_result['name'],
-#             storage_link=drive_result['web_view_link'],
-#             file_extension=file_extension,
-#             display_type=display_type
-#         )
-
-#         return JsonResponse({
-#             "status": "OK",
-#             "message": "File uploaded successfully",
-#             "file": {
-#                 "id": file_obj.id,
-#                 "file_name": file_obj.file_name,
-#                 "storage_link": file_obj.storage_link,
-#                 "file_extension": file_obj.file_extension,
-#                 "display_type": file_obj.display_type,
-#                 "drive_file_id": drive_result['file_id'],
-#                 "file_size": drive_result['size']
-#             }
-#         }, status=201)
-
-#     except Exception as e:
-#         return JsonResponse({"status": "Error", "message": str(e)}, status=500)
-
-
-@csrf_exempt
 def link_drive_file(request):
     """
-    Link an existing Google Drive file to a post by validating the Drive URL.
-    This endpoint is always available regardless of ENABLE_BOARD_DRIVE_UPLOAD setting.
+    Save an existing Google Drive URL as a post attachment.
+    This link-only flow does not call the Google Drive API.
     """
     if request.method != 'POST':
         return JsonResponse({"status": "Error", "message": "Only POST method is allowed"}, status=405)
@@ -375,32 +388,22 @@ def link_drive_file(request):
         except Post.DoesNotExist:
             return JsonResponse({"status": "Error", "message": "post not found"}, status=404)
 
-        # Validate Drive URL
-        is_valid, file_id_or_error = GoogleDriveService.validate_drive_link(drive_url)
-        if not is_valid:
+        file_id = _extract_google_drive_file_id(drive_url)
+        if not file_id:
             return JsonResponse({
                 "status": "Error",
-                "message": f"Invalid Google Drive URL: {file_id_or_error}"
+                "message": "Invalid Google Drive URL"
             }, status=400)
 
-        file_id = file_id_or_error
+        if display_type not in FileDisplayType.values:
+            return JsonResponse({"status": "Error", "message": "Invalid display_type"}, status=400)
 
-        # Try to get file metadata (optional, may fail if service not configured)
-        file_metadata = None
-        try:
-            drive_service = GoogleDriveService()
-            file_metadata = drive_service.get_file_metadata(file_id)
-        except GoogleDriveServiceError:
-            # If service is not configured, continue without metadata
-            pass
-
-        # Use metadata if available, otherwise use provided name or default
-        if file_metadata:
-            actual_file_name = file_metadata['name']
-            file_extension = actual_file_name.rsplit('.', 1)[-1] if '.' in actual_file_name else ''
-        else:
-            actual_file_name = file_name or "Linked File"
-            file_extension = actual_file_name.rsplit('.', 1)[-1] if '.' in actual_file_name else ''
+        actual_file_name = str(file_name or 'Google Drive file').strip()
+        if not actual_file_name or len(actual_file_name) > 255:
+            return JsonResponse({"status": "Error", "message": "Invalid file_name"}, status=400)
+        file_extension = actual_file_name.rsplit('.', 1)[-1].lower() if '.' in actual_file_name else ''
+        if len(file_extension) > 10:
+            file_extension = ''
 
         # Normalize the Drive URL to view link format
         normalized_url = f"https://drive.google.com/file/d/{file_id}/view"
@@ -426,10 +429,6 @@ def link_drive_file(request):
                 "drive_file_id": file_id
             }
         }
-
-        if file_metadata:
-            response_data['file']['file_size'] = file_metadata.get('size', '0')
-            response_data['file']['mime_type'] = file_metadata.get('mime_type', '')
 
         return JsonResponse(response_data, status=201)
 
@@ -626,6 +625,10 @@ def add_comment(request):
             try:
                 # 해당 게시글에 속한 부모 댓글인지 확인하며 조회
                 parent_comment = Comment.objects.get(id=parent_id, post=post)
+                # The UI deliberately displays one reply level. Replies to a
+                # reply remain in the same visible thread under its root.
+                if parent_comment.parent_id:
+                    parent_comment = parent_comment.parent
             except Comment.DoesNotExist:
                 return JsonResponse({"status": "Error", "message": "parent comment not found in this post"}, status=404)
         
@@ -635,6 +638,7 @@ def add_comment(request):
             content=content,
             parent=parent_comment
         )
+        notify_post_owners(comment)
         
         return JsonResponse({
             "status": "OK",
@@ -765,7 +769,8 @@ def read_comments_list(request):
                         "name": reply.author.name if reply.author else "Anonymous"
                     },
                     "created_at": reply.created_at.isoformat(),
-                    "updated_at": reply.updated_at.isoformat()
+                    "updated_at": reply.updated_at.isoformat(),
+                    "parent_id": comment.id,
                 })
                 
             results.append({
@@ -777,6 +782,7 @@ def read_comments_list(request):
                 },
                 "created_at": comment.created_at.isoformat(),
                 "updated_at": comment.updated_at.isoformat(),
+                "parent_id": None,
                 "replies": replies_data
             })
             

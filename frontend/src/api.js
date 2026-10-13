@@ -143,16 +143,20 @@ export function updateStudentRepositoryTags(uuid, repositories) {
 }
 
 // Board Posts APIs
-export function getBoardPostsList(page = 1, size = 10, uuid) {
+export function getBoardPostsList(page = 1, size = 10, uuid, category = null) {
   return ajax('/board/read_posts_list', 'get', {
-    params: { page, count: size, uuid }
+    params: { page, count: size, uuid, ...(category ? { category } : {}) }
   });
 }
 
-export function getBoardPost(postId) {
+export function getBoardPost(postId, uuid = null) {
   return ajax('/board/read_post', 'get', {
-    params: { post_id: postId }
+    params: { post_id: postId, ...(uuid ? { uuid } : {}) }
   });
+}
+
+export function getPostOwnerCandidates() {
+  return ajax('/board/read_owner_candidates', 'get');
 }
 
 // Company Repos APIs
@@ -190,24 +194,6 @@ export function createOrUpdateTrendingRepo(repoData) {
   return ajax('/board/update_trending_repo', 'post', {
     data: repoData,
     headers: { 'Content-Type': 'application/json' }
-  });
-}
-
-// Google Drive Configuration
-export function getDriveConfig() {
-  return ajax('/board/drive_config', 'get');
-}
-
-// Upload File to Google Drive
-export function uploadFileToDrive(postId, file, displayType = 'DOWNLOAD') {
-  const formData = new FormData();
-  formData.append('post_id', postId);
-  formData.append('file', file);
-  formData.append('display_type', displayType);
-
-  return ajax('/board/upload_file_to_drive', 'post', {
-    data: formData,
-    headers: { 'Content-Type': 'multipart/form-data' }
   });
 }
 
