@@ -18,7 +18,7 @@
           </div>
           <p>{{ comment.content }}</p>
           <div class="comment-actions">
-            <button type="button" @click="startReply(comment)">답글</button>
+            <button v-if="canWrite" type="button" @click="startReply(comment)">답글</button>
             <button
               v-if="canDelete(comment)"
               type="button"
@@ -35,7 +35,7 @@
           </div>
           <p>{{ reply.content }}</p>
           <div class="comment-actions">
-            <button type="button" @click="startReply(reply)">답글</button>
+            <button v-if="canWrite" type="button" @click="startReply(reply)">답글</button>
             <button
               v-if="canDelete(reply)"
               type="button"
@@ -47,7 +47,7 @@
       </article>
     </div>
 
-    <form class="comment-form" @submit.prevent="submitComment">
+    <form v-if="canWrite" class="comment-form" @submit.prevent="submitComment">
       <div v-if="replyingTo" class="replying-to">
         <span>{{ replyingTo.author.name }}님에게 답글 작성 중</span>
         <button type="button" @click="cancelReply">취소</button>
@@ -79,6 +79,7 @@ export default {
       type: [Number, String],
       required: true
     },
+    allowStudentWriting: { type: Boolean, default: false },
     responseLabel: {
       type: String,
       default: '댓글'
@@ -98,6 +99,11 @@ export default {
       error: '',
       newContent: '',
       replyingTo: null
+    }
+  },
+  computed: {
+    canWrite() {
+      return this.authStore.isAdmin || (this.authStore.role === 'STUDENT' && this.allowStudentWriting)
     }
   },
   watch: {
@@ -165,7 +171,7 @@ export default {
       }
     },
     canDelete(comment) {
-      return Boolean(comment.author?.id && comment.author.id === this.authStore.memberId)
+      return this.authStore.isAdmin || (this.canWrite && Boolean(comment.author?.id && comment.author.id === this.authStore.memberId))
     },
     async removeComment(commentId) {
       if (!window.confirm(`${this.responseLabel}을 삭제하시겠습니까?`)) return

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { auth } from './services/firebase';
 
 // Vite 환경 변수 사용 + 기본값 '/api'
 const API_BASE_URL = import.meta.env.VITE_API_BASE || '/api';
@@ -8,6 +9,14 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   xsrfHeaderName: 'X-CSRFToken',
   xsrfCookieName: 'csrftoken'
+});
+
+// Firebase refreshes an expired ID token when getIdToken() is called.
+api.interceptors.request.use(async config => {
+  if (auth.currentUser) {
+    config.headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
+  }
+  return config;
 });
 
 const headers = {
@@ -114,16 +123,16 @@ export function createSignUp(signup_data) {
   return ajax('/login/signup', 'post', { data: signup_data });
 }
 
-export function updateStudentIntroduction(uuid, introduction) {
+export function updateStudentIntroduction(uuid, introduction, student_id = null) {
   return ajax('/account/update_student_introduction', 'post', {
-    data: { uuid, introduction },
+    data: { uuid, introduction, ...(student_id ? { student_id } : {}) },
     headers: { 'Content-Type': 'application/json' }
   });
 }
 
-export function updateStudentTechnologyStack(uuid, technology_stack) {
+export function updateStudentTechnologyStack(uuid, technology_stack, student_id = null) {
   return ajax('/account/update_student_technology_stack', 'post', {
-    data: { uuid, technology_stack },
+    data: { uuid, technology_stack, ...(student_id ? { student_id } : {}) },
     headers: { 'Content-Type': 'application/json' }
   });
 }
@@ -135,9 +144,9 @@ export function updateRepoIntroduction(uuid, repo_id, project_introduction) {
   });
 }
 
-export function updateStudentRepositoryTags(uuid, repositories) {
+export function updateStudentRepositoryTags(uuid, repositories, student_id = null) {
   return ajax('/repo/update_student_repository_tags', 'post', {
-    data: { uuid, repositories },
+    data: { uuid, repositories, ...(student_id ? { student_id } : {}) },
     headers: { 'Content-Type': 'application/json' }
   });
 }

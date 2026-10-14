@@ -1,6 +1,7 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
-import { authGuard, guestGuard } from './guards'
+import { authGuard, guestGuard, protectedPath, adminPath } from './guards'
+import { useAuthStore } from '@/stores/auth'
 
 const BoardList = () => import('@/views/Board/BoardList.vue');
 const Information = () => import('@/views/Information.vue');
@@ -166,7 +167,13 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
+  if (protectedPath(to.path)) {
+    const store = useAuthStore()
+    await store.checkSession()
+    if (!store.isAuthenticated) return next('/login')
+    if (adminPath(to.path) && !store.isAdmin) return next('/board')
+  }
 
   const defaultQueryforInformation = { page: '1', type: 'summary' };
   const defaultQueryforStatistics = { type: 'all' };

@@ -4,6 +4,7 @@ from django.http import JsonResponse
 
 from account.models import Student
 from login.models import Student as LoginStudent
+from course.models import Course_registration
 from repo.models import Repo_issue, Repo_pr
 from scoring.models import (
     FORMULA_VERSION,
@@ -106,6 +107,17 @@ def course_ranking(request):
         )
     )
 
+    requester_student_id = getattr(request, 'member_student_id', None)
+    if requester_student_id is not None:
+        attended_ids = Course_registration.objects.filter(
+            student_id=requester_student_id,
+        ).values_list('course_id', flat=True)
+        scored_ids = StudentCourseScore.objects.filter(
+            student_id=requester_student_id, run_id__in=[run.id for run in runs],
+        ).values_list('run_id', flat=True)
+        attended_ids, scored_ids = set(attended_ids), set(scored_ids)
+        runs = [run for run in runs if run.course_id in attended_ids and run.id in scored_ids]
+
     run_ids = [run.id for run in runs]
     course_scores_by_run = defaultdict(list)
     for score in StudentCourseScore.objects.filter(run_id__in=run_ids).select_related(
@@ -169,6 +181,12 @@ def course_ranking(request):
                     "warnings": score.warnings or [],
                 }
             )
+
+        students.sort(key=lambda row: (-row['overall_score'], row['name'], row['student_id']))
+        for position, row in enumerate(students, 1):
+            row['rank'] = position
+        if requester_student_id is not None:
+            students = [row for row in students if row['student_id'] == requester_student_id]
 
         payload.append(
             {

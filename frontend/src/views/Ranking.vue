@@ -37,13 +37,13 @@
       <main class="ranking-content">
         <section class="ranking-summary">
           <div>
-            <p class="eyebrow">과목별 수상자</p>
+            <p class="eyebrow">{{ authStore.isAdmin ? '과목별 수상자' : '나의 과목별 점수' }}</p>
             <h1>{{ selectedCourseTitle }}</h1>
             <p class="summary-meta">{{ summaryMeta }}</p>
           </div>
         </section>
 
-        <section class="winner-strip" v-if="awardCandidates.length">
+        <section class="winner-strip" v-if="authStore.isAdmin && awardCandidates.length">
           <article
             v-for="student in awardCandidates"
             :key="student.student_id"
@@ -68,11 +68,11 @@
         <section class="ranking-table-card">
           <div class="table-top">
             <div>
-              <h2>랭킹 목록</h2>
-              <p>동점자는 이름 순으로 정렬됩니다.</p>
+              <h2>{{ authStore.isAdmin ? '랭킹 목록' : '나의 점수' }}</h2>
+              <p>{{ authStore.isAdmin ? '동점자는 이름 순으로 정렬됩니다.' : '내 순위는 해당 과목의 전체 점수를 기준으로 표시됩니다.' }}</p>
             </div>
             <div class="table-tools">
-              <div class="search-box">
+              <div v-if="authStore.isAdmin" class="search-box">
                 <input v-model="searchKeyword" type="search" placeholder="이름, 학번, Github 검색" :disabled="loading || rows.length === 0" />
               </div>
 
@@ -275,6 +275,7 @@
 
 <script>
 import { getRankingStudentCourseInfo } from '@/api.js'
+import { useAuthStore } from '@/stores/auth'
 
 const TABLE_PREFERENCES_KEY = 'kucode-ranking-table-preferences'
 const METRIC_FILTER_OPTIONS = [
@@ -342,6 +343,7 @@ const DEFAULT_COLUMN_KEYS = ['rank', 'name', 'student_id', 'department', 'github
 
 export default {
   name: 'Ranking',
+  setup() { return { authStore: useAuthStore() } },
   data() {
     return {
       loading: false,
@@ -436,7 +438,7 @@ export default {
         })
         .map((student, index) => ({
           ...student,
-          rank: index + 1,
+          rank: this.authStore.isAdmin ? index + 1 : student.rank,
         }))
     },
     visibleStudents() {
@@ -672,7 +674,7 @@ export default {
     openEProfile(studentId) {
       this.$router.push({
         name: 'EProfile',
-        state: { student_num: studentId },
+        state: this.authStore.isAdmin ? { student_num: studentId } : {},
       })
     },
     toCourseKey(course) {
@@ -708,6 +710,7 @@ export default {
           scored_at: course.scored_at || null,
           students: (course.students || []).map((student) => ({
             student_id: student.student_id || '',
+            rank: Number(student.rank || 0),
             name: student.name || '',
             department: student.department || '',
             github: student.github || '',

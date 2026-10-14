@@ -686,7 +686,7 @@ def delete_comment(request):
             
         # 작성자 권한 확인
         # author가 None인 경우(이미 삭제된 댓글)는 삭제 불가
-        if not comment.author or comment.author.id != author.id:
+        if not getattr(request, 'is_admin', False) and (not comment.author or comment.author.id != author.id):
             return JsonResponse({"status": "Error", "message": "Permission denied"}, status=403)
             
         # 자식 댓글(대댓글) 존재 여부 확인

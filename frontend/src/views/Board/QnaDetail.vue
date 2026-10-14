@@ -24,7 +24,7 @@
             <span v-if="post.owners.length">소유자: {{ ownerNames }}</span>
           </div>
           <p class="post-content">{{ post.content }}</p>
-          <PostComments v-if="post.id" :post-id="post.id" response-label="답변" />
+          <PostComments v-if="post.id" :post-id="post.id" response-label="답변" :allow-student-writing="true" />
         </template>
       </main>
     </div>

@@ -210,7 +210,7 @@ def signin(request):
         except Exception:
             return JsonResponse({"status": "Error", "message": "json load error"}, status=400)
 
-        uuid = body.get('uuid')
+        uuid = request.member.pk
 
         if not uuid:
             return JsonResponse({"status": "Error", "message": "uuid is required"}, status=400)

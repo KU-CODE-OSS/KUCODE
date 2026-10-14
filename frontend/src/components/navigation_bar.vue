@@ -8,10 +8,10 @@
       </div>
       <!-- Navigation_bar -->
       <div class="navigation_bar">
-        <div class="menu-item">
+        <div v-if="authStore.isAdmin" class="menu-item">
           <router-link to="/info" class="default-router">정보관리</router-link>
         </div>
-        <div class="menu-item">
+        <div v-if="authStore.isAdmin" class="menu-item">
           <router-link to="/statistics" class="default-router">통계</router-link>
         </div>
         <div class="menu-item">

@@ -36,7 +36,7 @@
             </div>
 
             <button
-              v-if="authStore.isAuthenticated && activeCategory !== 'opensource'"
+              v-if="authStore.isAuthenticated && (activeCategory === 'qna' || (authStore.isAdmin && activeCategory !== 'opensource'))"
               class="write-post-btn"
               @click="openWritePost"
             >
@@ -101,6 +101,7 @@
                 <div class="table-cell col-author">{{ post.author }}</div>
                 <div class="table-cell col-likes">
                   <span v-if="activeCategory === 'qna'">{{ post.commentCount || 0 }}</span>
+                  <span v-else-if="!authStore.isAdmin">{{ post.likeCount || 0 }}</span>
                   <button v-else
                     class="like-btn"
                     :class="{ liked: post.is_liked }"

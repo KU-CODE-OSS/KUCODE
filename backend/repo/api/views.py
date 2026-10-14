@@ -1,4 +1,5 @@
 import logging
+from login.profile import profile_student
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -2725,7 +2726,7 @@ def repo_account_read_db(request):
             'heatmap': heatmap_data,
             'student_introduction': student.account_introduction or "",
             'student_technology_stack': student.technology_stack or [],
-            'can_edit_repository_tags': uuid != 'empty',
+            'can_edit_repository_tags': getattr(request, 'is_admin', False) or uuid != 'empty',
         }
 
         return JsonResponse(response_data, safe=False)
@@ -2771,8 +2772,7 @@ def update_student_repository_tags(request):
         return JsonResponse({"status": "Error", "message": "repositories must be a list"}, status=400)
 
     try:
-        login_student = LoginStudent.objects.get(member_id=uuid)
-        student = Student.objects.get(id=login_student.id)
+        student = profile_student(request, uuid)
     except LoginStudent.DoesNotExist:
         return JsonResponse({"status": "Error", "message": "Login student not found"}, status=404)
     except Student.DoesNotExist:
@@ -2799,7 +2799,7 @@ def update_student_repository_tags(request):
 
         if repository.is_course:
             return JsonResponse({"status": "Error", "message": f"Course repository tags are read-only: {repo_id}"}, status=400)
-        if not student_can_access_repository(student, repository):
+        if not getattr(request, 'is_admin', False) and not student_can_access_repository(student, repository):
             return JsonResponse({"status": "Error", "message": f"Repository is not available to this student: {repo_id}"}, status=403)
         if len(tags) > 10:
             return JsonResponse({"status": "Error", "message": f"A repository can have at most 10 tags: {repo_id}"}, status=400)
@@ -3611,8 +3611,7 @@ def update_repo_introduction(request):
 
         # uuid → login_student → account_student 검증 (소유자 확인용)
         try:
-            login_student = LoginStudent.objects.get(member_id=uuid)
-            account_student = Student.objects.get(id=login_student.id)
+            account_student = profile_student(request, uuid)
         except LoginStudent.DoesNotExist:
             return JsonResponse({"status": "Error", "message": "login_student not found for given uuid"}, status=404)
         except Student.DoesNotExist:
@@ -3623,10 +3622,8 @@ def update_repo_introduction(request):
         except Repository.DoesNotExist:
             return JsonResponse({"status": "Error", "message": "repository not found"}, status=404)
 
-        # 선택: 요청자가 해당 repo의 owner인지 확인 (owner_github_id 매칭)
-        # owner_mismatch = account_student.github_id and repo.owner_github_id and (account_student.github_id != repo.owner_github_id)
-        # if owner_mismatch:
-        #     return JsonResponse({"status": "Error", "message": "permission denied: not the repo owner"}, status=403)
+        if not getattr(request, 'is_admin', False) and not student_can_access_repository(account_student, repo):
+            return JsonResponse({"status": "Error", "message": "Repository is not available to this student"}, status=403)
 
         repo.repo_introduction = project_introduction or ''
         repo.save()
