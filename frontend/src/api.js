@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { auth } from './services/firebase';
 
 // Vite 환경 변수 사용 + 기본값 '/api'
 const API_BASE_URL = import.meta.env.VITE_API_BASE || '/api';
@@ -8,6 +9,14 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   xsrfHeaderName: 'X-CSRFToken',
   xsrfCookieName: 'csrftoken'
+});
+
+// Firebase refreshes an expired ID token when getIdToken() is called.
+api.interceptors.request.use(async config => {
+  if (auth.currentUser) {
+    config.headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
+  }
+  return config;
 });
 
 const headers = {
@@ -114,16 +123,16 @@ export function createSignUp(signup_data) {
   return ajax('/login/signup', 'post', { data: signup_data });
 }
 
-export function updateStudentIntroduction(uuid, introduction) {
+export function updateStudentIntroduction(uuid, introduction, student_id = null) {
   return ajax('/account/update_student_introduction', 'post', {
-    data: { uuid, introduction },
+    data: { uuid, introduction, ...(student_id ? { student_id } : {}) },
     headers: { 'Content-Type': 'application/json' }
   });
 }
 
-export function updateStudentTechnologyStack(uuid, technology_stack) {
+export function updateStudentTechnologyStack(uuid, technology_stack, student_id = null) {
   return ajax('/account/update_student_technology_stack', 'post', {
-    data: { uuid, technology_stack },
+    data: { uuid, technology_stack, ...(student_id ? { student_id } : {}) },
     headers: { 'Content-Type': 'application/json' }
   });
 }
@@ -135,24 +144,28 @@ export function updateRepoIntroduction(uuid, repo_id, project_introduction) {
   });
 }
 
-export function updateStudentRepositoryTags(uuid, repositories) {
+export function updateStudentRepositoryTags(uuid, repositories, student_id = null) {
   return ajax('/repo/update_student_repository_tags', 'post', {
-    data: { uuid, repositories },
+    data: { uuid, repositories, ...(student_id ? { student_id } : {}) },
     headers: { 'Content-Type': 'application/json' }
   });
 }
 
 // Board Posts APIs
-export function getBoardPostsList(page = 1, size = 10, uuid) {
+export function getBoardPostsList(page = 1, size = 10, uuid, category = null) {
   return ajax('/board/read_posts_list', 'get', {
-    params: { page, count: size, uuid }
+    params: { page, count: size, uuid, ...(category ? { category } : {}) }
   });
 }
 
-export function getBoardPost(postId) {
+export function getBoardPost(postId, uuid = null) {
   return ajax('/board/read_post', 'get', {
-    params: { post_id: postId }
+    params: { post_id: postId, ...(uuid ? { uuid } : {}) }
   });
+}
+
+export function getPostOwnerCandidates() {
+  return ajax('/board/read_owner_candidates', 'get');
 }
 
 // Company Repos APIs
@@ -190,24 +203,6 @@ export function createOrUpdateTrendingRepo(repoData) {
   return ajax('/board/update_trending_repo', 'post', {
     data: repoData,
     headers: { 'Content-Type': 'application/json' }
-  });
-}
-
-// Google Drive Configuration
-export function getDriveConfig() {
-  return ajax('/board/drive_config', 'get');
-}
-
-// Upload File to Google Drive
-export function uploadFileToDrive(postId, file, displayType = 'DOWNLOAD') {
-  const formData = new FormData();
-  formData.append('post_id', postId);
-  formData.append('file', file);
-  formData.append('display_type', displayType);
-
-  return ajax('/board/upload_file_to_drive', 'post', {
-    data: formData,
-    headers: { 'Content-Type': 'multipart/form-data' }
   });
 }
 

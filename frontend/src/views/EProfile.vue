@@ -568,12 +568,14 @@ import RepoDetailModal from './EProfileComponents/RepoDetailModal.vue'
 import { getEProfileHeatmap, getStudentAptitude, updateStudentIntroduction, updateStudentTechnologyStack, updateStudentRepositoryTags } from '@/api.js'
 import { processActivityData, processAddedLinesData, estimateCommitLines } from './EProfileComponents/chartUtils/chartUtils.js'
 import { auth } from '../services/firebase'
+import { useAuthStore } from '@/stores/auth'
 
 // Register Chart.js components
 Chart.register(...registerables)
 
 export default {
   name: 'EPortfolioDashboard',
+  setup() { return { authStore: useAuthStore() } },
   components: {
     EProfileHeatmap,
     RepoDetailModal
@@ -702,7 +704,8 @@ export default {
       sortBy: '',
       sortDirection: 'asc', // 'asc' or 'desc'
       // githubId: "YeoJune", // 임시 테스트용 GitHub 아이디 - TODO: 실제 로그인된 사용자 ID로 변경 필요
-      student_uuid: auth.currentUser.uid,
+      student_uuid: auth.currentUser?.uid || '',
+      viewedStudentId: null,
       // Pagination properties
       currentPage: 1,
       itemsPerPage: 10,
@@ -893,7 +896,7 @@ export default {
     this.techStackDropdowns.forEach(dropdown => {
       dropdown.options = this.allTechOptions
     })
-    const studentNum = this.$router.options.history.state.student_num
+    const studentNum = this.authStore.isAdmin ? this.$router.options.history.state.student_num : undefined
     await Promise.all([
       this.loadHeatmapData(studentNum),
       this.loadStudentAptitude(studentNum)
@@ -981,10 +984,7 @@ export default {
       }
     },
     async handleStudentChang() {
-      const { student_num } = this.$router.options.history.state.student_num || {}
-      const target = student_num || this.student_uuid
-      if (!target) return
-
+      const target = this.authStore.isAdmin ? this.$router.options.history.state.student_num : undefined
       this.resetCharts()
       await Promise.all([
         this.loadHeatmapData(target),
@@ -1587,6 +1587,7 @@ export default {
     async saveProfileChanges() {
       try {
         const uuid = auth.currentUser.uid
+        const targetId = this.authStore.isAdmin ? this.viewedStudentId : null
         
         // 기술 스택 배열 생성 (선택된 값만)
         const technology_stack = []
@@ -1597,10 +1598,10 @@ export default {
         })
 
         // 나의 소개 저장
-        await updateStudentIntroduction(uuid, this.user.introduction)
+        await updateStudentIntroduction(uuid, this.user.introduction, targetId)
         
         // 기술 스택 저장 (배열로 직접 전송)
-        await updateStudentTechnologyStack(uuid, technology_stack)
+        await updateStudentTechnologyStack(uuid, technology_stack, targetId)
 
         if (this.canEditRepositoryTags) {
           this.repositoriesData.forEach(repo => {
@@ -1614,7 +1615,7 @@ export default {
               repo_id: repo.id,
               tags: repo.personal_tags
             }))
-          await updateStudentRepositoryTags(uuid, repositories)
+          await updateStudentRepositoryTags(uuid, repositories, targetId)
         }
       }
       catch (error) {
@@ -2079,6 +2080,7 @@ export default {
             personal_tags: Array.isArray(repo.personal_tags) ? [...repo.personal_tags] : [],
             tagInput: ''
           }))
+          this.viewedStudentId = responseData.student_id
           this.canEditRepositoryTags = Boolean(responseData.can_edit_repository_tags)
         } else {
           // Keep existing test data if no API data (don't clear it)

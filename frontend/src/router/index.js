@@ -1,16 +1,15 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
-import { authGuard, guestGuard } from './guards'
+import { authGuard, guestGuard, protectedPath, adminPath } from './guards'
+import { useAuthStore } from '@/stores/auth'
 
 const BoardList = () => import('@/views/Board/BoardList.vue');
-const Board = () => import('@/views/Board.vue');
 const Information = () => import('@/views/Information.vue');
 const Statistics = () => import('@/views/Statistics.vue');
 const Login = () => import('@/views/Login.vue');
 const Register = () => import('@/views/Register.vue');
 const EmailVerification = () => import('@/views/EmailVerification.vue');
 const EProfile = () => import('@/views/EProfile.vue');
-const QnA = () => import('@/views/QnA.vue');
 
 const StatisticsCourse = () => import('@/views/StatisticsComponents/StatisticsCourse.vue');
 const StatisticsStudent = () => import('@/views/StatisticsComponents/StatisticsStudent.vue');
@@ -75,9 +74,15 @@ const routes = [
     beforeEnter: authGuard
   },
   {
-    path: '/board1',
-    name: 'board1',
-    component: Board,
+    path: '/board/qna/create',
+    name: 'QnaCreate',
+    component: () => import('@/views/Board/QnaCreate.vue'),
+    beforeEnter: authGuard
+  },
+  {
+    path: '/board/qna/:id',
+    name: 'QnaDetail',
+    component: () => import('@/views/Board/QnaDetail.vue'),
     beforeEnter: authGuard
   },
   {
@@ -139,8 +144,8 @@ const routes = [
   },
   {
     path: '/qna',
-    name: 'QnA',
-    component: QnA,
+    name: 'QnaRedirect',
+    redirect: { path: '/board', query: { category: 'qna' } },
     beforeEnter: authGuard,
   },
   {
@@ -162,7 +167,13 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
+  if (protectedPath(to.path)) {
+    const store = useAuthStore()
+    await store.checkSession()
+    if (!store.isAuthenticated) return next('/login')
+    if (adminPath(to.path) && !store.isAdmin) return next('/board')
+  }
 
   const defaultQueryforInformation = { page: '1', type: 'summary' };
   const defaultQueryforStatistics = { type: 'all' };

@@ -1,3 +1,4 @@
+from login.profile import profile_student
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -1649,15 +1650,11 @@ def update_student_introduction(request):
         if not uuid:
             return JsonResponse({"status": "Error", "message": "uuid is required"}, status=400)
 
-        # login_student에서 uuid로 학번(id) 찾기
+        # Resolve the profile through the verified account, or an admin-selected student.
         try:
-            login_student = LoginStudent.objects.get(member_id=uuid)
+            account_student = profile_student(request, uuid)
         except LoginStudent.DoesNotExist:
             return JsonResponse({"status": "Error", "message": "login_student not found for given uuid"}, status=404)
-
-        # account_student 갱신
-        try:
-            account_student = Student.objects.get(id=login_student.id)
         except Student.DoesNotExist:
             return JsonResponse({"status": "Error", "message": "account_student not found for given student id"}, status=404)
 
@@ -1698,15 +1695,11 @@ def update_student_technology_stack(request):
         if not isinstance(technology_stack, list) or not all(isinstance(x, str) for x in technology_stack):
             return JsonResponse({"status": "Error", "message": "technology_stack must be a list of strings"}, status=400)
 
-        # login_student에서 uuid로 학번(id) 찾기
+        # Resolve the profile through the verified account, or an admin-selected student.
         try:
-            login_student = LoginStudent.objects.get(member_id=uuid)
+            account_student = profile_student(request, uuid)
         except LoginStudent.DoesNotExist:
             return JsonResponse({"status": "Error", "message": "login_student not found for given uuid"}, status=404)
-
-        # account_student 갱신
-        try:
-            account_student = Student.objects.get(id=login_student.id)
         except Student.DoesNotExist:
             return JsonResponse({"status": "Error", "message": "account_student not found for given student id"}, status=404)
         

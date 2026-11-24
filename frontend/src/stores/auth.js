@@ -21,11 +21,12 @@ export const useAuthStore = defineStore('auth', () => {
   let roleFetchPromise = null
 
   const isAuthenticated = computed(() => !!user.value)
-  const canWriteBoard = computed(() => ['ADMIN', 'PROFESSOR'].includes(role.value))
+  const isAdmin = computed(() => role.value === 'ADMIN')
+  const canWriteBoard = isAdmin
 
   const setRoleData = (roleData) => {
-    if (!roleData) {
-      return
+    if (!roleData || !['ADMIN', 'STUDENT'].includes(roleData.role)) {
+      throw new Error('이 계정의 접근 권한이 설정되지 않았습니다.')
     }
 
     role.value = roleData.role
@@ -64,13 +65,13 @@ export const useAuthStore = defineStore('auth', () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       const firebaseUser = userCredential.user
 
-      // TODO: Implement email verification first to activate
-      // Check if email is verified
-      // if (!firebaseUser.emailVerified) {
-      //   error.value = '이메일 인증을 완료해주세요'
-      //   await signOut(auth)
-      //   return { success: false, error: error.value }
-      // }
+      if (!firebaseUser.emailVerified) {
+        await signOut(auth)
+        throw new Error('이메일 인증을 완료해주세요')
+      }
+      role.value = null
+      memberId.value = null
+      memberName.value = null
 
       // Set user data from Firebase
       user.value = {
@@ -85,7 +86,12 @@ export const useAuthStore = defineStore('auth', () => {
         await fetchRoleOnce(firebaseUser.uid)
       } catch (roleErr) {
         console.error('Failed to fetch role:', roleErr)
-        // Continue with login even if role fetch fails
+        await signOut(auth)
+        user.value = null
+        role.value = null
+        memberId.value = null
+        memberName.value = null
+        throw roleErr
       }
 
       sessionInitialized = true
@@ -148,22 +154,17 @@ export const useAuthStore = defineStore('auth', () => {
             isVerified: firebaseUser.emailVerified
           }
 
-          // Try to restore role data from cache
-          const cachedRole = sessionStorage.getItem('userRole')
-          const cachedMemberId = sessionStorage.getItem('memberId')
-          const cachedMemberName = sessionStorage.getItem('memberName')
-
-          if (cachedRole && cachedMemberId && cachedMemberName) {
-            role.value = cachedRole
-            memberId.value = cachedMemberId
-            memberName.value = cachedMemberName
-          } else {
-            // Cache miss - re-fetch from API
-            try {
-              await fetchRoleOnce(firebaseUser.uid)
-            } catch (roleErr) {
-              console.error('Failed to fetch role during session check:', roleErr)
-            }
+          // Re-read the role from the verified backend identity on page load.
+          // Browser storage is never treated as an authoritative role source.
+          try {
+            await fetchRoleOnce(firebaseUser.uid)
+          } catch (roleErr) {
+            console.error('Failed to fetch role during session check:', roleErr)
+            user.value = null
+            role.value = null
+            memberId.value = null
+            memberName.value = null
+            await signOut(auth).catch(error => console.error('Failed to sign out:', error))
           }
         } else {
           user.value = null
@@ -189,6 +190,7 @@ export const useAuthStore = defineStore('auth', () => {
     memberName,
     isAuthenticated,
     canWriteBoard,
+    isAdmin,
     login,
     logout,
     checkSession
