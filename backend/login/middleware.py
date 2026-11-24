@@ -29,6 +29,7 @@ DEFERRED = {
     'course': {'course_project_update', 'course_validation', 'course_reg_validation'},
 }
 PROFILE = {
+    ('repo', 'repository_features'),
     ('repo', 'repo_account_read_db'),
     ('repo', 'update_student_repository_tags'),
     ('repo', 'update_repo_introduction'),

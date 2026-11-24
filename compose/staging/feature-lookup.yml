@@ -1,0 +1,11 @@
+services:
+  backend:
+    environment:
+      FEATURE_LOOKUP_SNAPSHOT: /run/kucode-feature-lookup/snapshot.json
+    volumes:
+      - type: bind
+        source: ${FEATURE_LOOKUP_SNAPSHOT_HOST:?Set FEATURE_LOOKUP_SNAPSHOT_HOST to the deployment snapshot file}
+        target: /run/kucode-feature-lookup/snapshot.json
+        read_only: true
+        bind:
+          create_host_path: false

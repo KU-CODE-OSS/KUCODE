@@ -183,6 +183,36 @@ This health check endpoint can be useful for monitoring the status of the backen
 <!-- - `/admin`: Django admin panel. To access, you need to create a superuser using `make createsuperuser`. -->
 - `/api`: Django API. Includes `/api/healthcheck` endpoint.
 
+## E-Profile 저장소 기능 조회
+
+E-Profile → 나의 프로젝트 → Repository 이름을 누르면 `frontend/src/views/EProfileComponents/RepoDetailModal.vue`가 열립니다. 이 모달에 전달되는 `repo.id`로 다음 API를 호출할 수 있습니다.
+
+| GET 요청 | 조회 범위 |
+|---|---|
+| `/api/repo/features/?repo_id=<repo.id>` | 해당 프로젝트의 분석된 코드블록과 기능 목록 |
+| `/api/repo/features/?repo_id=<repo.id>&scope=contributed` | 로그인한 학생이 해당 프로젝트에 기여한 코드블록 |
+| `/api/repo/features/` | 로그인한 학생의 분석된 프로젝트 전체 기여 |
+| `/api/repo/features/?student_id=<student.id>` | 관리자가 지정한 학생의 분석된 프로젝트 전체 기여 |
+| `/api/repo/features/?repo_id=<repo.id>&student_id=<student.id>` | 지정한 학생의 해당 프로젝트 기여 |
+
+다른 E-Profile 요청과 같은 Firebase ID 토큰을 `Authorization: Bearer <token>`으로 보내세요. 학생은 본인 데이터와 소유 또는 기여가 확인된 저장소를 조회할 수 있습니다. 관리자는 저장소 전체나 지정 학생의 기여를 조회할 수 있습니다. 팀 저장소가 대표 코드베이스로 묶인 경우 근거 링크는 분석 시점의 대표 저장소와 커밋을 가리킵니다.
+
+기능은 `features`, 원본 파일·행 범위·코드 링크는 `features[].evidence`에 있습니다. `summary`에는 배정·미배정 건수가 있고, `unassigned`에는 사전에 배정되지 않은 코드블록이 있습니다. `dictionary` 기본값은 `spec_hierarchical`이고 `spec_umap_hdbscan`, `code_hierarchical`, `code_umap_hdbscan`도 선택할 수 있습니다. `limit`은 기본 50, 최대 100이며 `offset`으로 기능 목록을 넘깁니다. 기능 사전의 상태와 각 항목의 검토 표시도 응답에 포함됩니다.
+
+`404 repository_not_analyzed`는 해당 레포의 분석 결과가 아직 없다는 뜻입니다. 분석 스냅샷을 연결하지 않았거나 읽을 수 없으면 `503 snapshot_unavailable`을 반환합니다.
+
+### 스테이징 데이터 연결
+
+분석 파이프라인의 `build_snapshot.py`가 만드는 `feature-api-snapshot-v1` JSON을 배포 서버의 접근 제한 폴더에 준비합니다. 컨테이너의 Django 실행 계정이 파일을 읽을 수 있어야 합니다. 스테이징 스택이 실행 중이면 아래 명령으로 백엔드에 읽기 전용 마운트를 적용합니다.
+
+```bash
+export FEATURE_LOOKUP_SNAPSHOT_HOST=/path/to/private/snapshot.json
+docker compose -p kucode-staging -f staging.yml \
+  -f compose/staging/feature-lookup.yml up -d --build --no-deps backend
+```
+
+Django는 `FEATURE_LOOKUP_SNAPSHOT`이 가리키는 파일을 프로세스에서 읽습니다. 새 스냅샷으로 교체할 때는 마운트를 포함한 위 Compose 구성으로 백엔드 컨테이너를 다시 생성합니다. 스냅샷, 벡터 배열, 실험 산출물, SSH 설정과 자격증명은 Git 및 이미지 밖의 서버 파일로 관리합니다.
+
 ## Make crawling sh and run
 To crawl only updated repos of students in recent semester and course order, run:
 ```

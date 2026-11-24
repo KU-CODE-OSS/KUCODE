@@ -1,9 +1,11 @@
 from django.urls import path
 from .import views
+from .feature_views import repository_features
 
 from account.api.views import HealthCheckAPIView
 
 urlpatterns = [
+  path("features/", repository_features, name="repository_features"),
   path("healthcheck", HealthCheckAPIView.as_view(), name="healthcheck"),
 
 # repo_repository CRUD

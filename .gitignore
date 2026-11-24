@@ -188,3 +188,12 @@ frontend/docekrRun.txt
 
 # TLS certificate
 certs
+
+# Local NPU experiment and feature-lookup deployment files
+/npu_access/
+/npu_pipeline/
+/.feature-data/
+**/.ssh/
+**/runtime.env
+*.npy
+*.npz

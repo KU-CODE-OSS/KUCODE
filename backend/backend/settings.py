@@ -5,6 +5,7 @@ import os
 env = environ.Env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+FEATURE_LOOKUP_SNAPSHOT = env("FEATURE_LOOKUP_SNAPSHOT", default="")
 
 SECRET_KEY = env("SECRET_KEY")
 
