@@ -131,6 +131,51 @@
           </div>
         </div>
         
+        <section class="section" aria-labelledby="repository-features-title">
+          <h3 id="repository-features-title" class="section-title">기능 목록</h3>
+          <div class="summary-box feature-box" :aria-busy="featureLoading">
+            <div v-if="repositoryFeatures.length" class="feature-list">
+              <details v-for="feature in repositoryFeatures" :key="feature.id" class="feature-item">
+                <summary>
+                  <span class="feature-name">{{ feature.name }}</span>
+                  <span class="feature-count">근거 {{ feature.blockCount }}개</span>
+                </summary>
+                <ul v-if="feature.evidence.length" class="feature-evidence-list">
+                  <li v-for="evidence in feature.evidence" :key="evidence.unitId">
+                    <span class="feature-evidence-title">{{ evidence.title }}</span>
+                    <code v-if="evidence.function" class="feature-function">{{ evidence.function }}</code>
+                    <a
+                      v-if="evidence.sourceUrl"
+                      class="feature-source-link"
+                      :href="evidence.sourceUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span class="feature-source-label">원본 코드</span>
+                      <span>{{ evidence.path }} · {{ evidence.startLine }}–{{ evidence.endLine }}줄</span>
+                    </a>
+                  </li>
+                </ul>
+              </details>
+            </div>
+            <p v-if="featureLoading" class="feature-message" role="status">기능 목록을 불러오는 중…</p>
+            <div v-else-if="featureError" class="feature-feedback" role="status">
+              <p class="feature-message">{{ featureError }}</p>
+              <button type="button" class="link-button feature-action" @click="loadRepositoryFeatures">다시 시도</button>
+            </div>
+            <p v-else-if="featureEmptyMessage" class="feature-message" role="status">{{ featureEmptyMessage }}</p>
+            <button
+              v-else-if="featureHasMore"
+              type="button"
+              class="link-button feature-action"
+              @click="loadRepositoryFeatures"
+            >
+              기능 더 보기
+            </button>
+            <p v-if="featureUnassignedCount" class="feature-message">기능이 분류되지 않은 코드 {{ featureUnassignedCount }}개</p>
+          </div>
+        </section>
+
         <!-- 차트 섹션 -->
         <div class="charts-section">
           <!-- 프로젝트 타임라인 차트 -->
@@ -233,12 +278,15 @@
 </template>
 
 <script>
+import { markRaw } from 'vue'
 import { Chart, registerables } from 'chart.js'
-import { updateRepoIntroduction } from '@/api.js'
+import { getRepositoryFeatures, updateRepoIntroduction } from '@/api.js'
 import { auth } from '../../services/firebase'
 
 // Register Chart.js components
 Chart.register(...registerables)
+
+const FEATURE_PAGE_SIZE = 8
 
 export default {
   name: 'RepoDetailModal',
@@ -254,13 +302,23 @@ export default {
   },
   data() {
     return {
-  languageChart: null,
-  showLanguagePanel: false,
-  projectMemo: '',
-  isEditingRepo: false
+      languageChart: null,
+      showLanguagePanel: false,
+      projectMemo: '',
+      isEditingRepo: false,
+      repositoryFeatures: [],
+      featureHasMore: false,
+      featureUnassignedCount: 0,
+      featureLoading: false,
+      featureError: '',
+      featureEmptyMessage: '',
+      featureRequest: null
     }
   },
   computed: {
+    activeFeatureRepoId() {
+      return this.show ? (this.repo?.id ?? null) : null
+    },
     // 가장 최신 월 찾기
     latestMonth() {
       if (!this.repo || !this.repo.monthly_commits || this.repo.monthly_commits.length === 0) {
@@ -500,6 +558,64 @@ export default {
     }
   },
   methods: {
+    resetRepositoryFeatures() {
+      this.featureRequest?.abort()
+      this.featureRequest = null
+      this.repositoryFeatures = []
+      this.featureHasMore = false
+      this.featureUnassignedCount = 0
+      this.featureLoading = false
+      this.featureError = ''
+      this.featureEmptyMessage = ''
+    },
+
+    async loadRepositoryFeatures() {
+      const repoId = this.activeFeatureRepoId
+      if (repoId === null || this.featureLoading) return
+
+      const request = new AbortController()
+      this.featureRequest = request
+      this.featureLoading = true
+      this.featureError = ''
+      const isCurrent = () => this.featureRequest === request && this.activeFeatureRepoId === repoId
+
+      try {
+        const { data } = await getRepositoryFeatures(repoId, {
+          limit: FEATURE_PAGE_SIZE,
+          offset: this.repositoryFeatures.length,
+          signal: request.signal
+        })
+        if (!isCurrent()) return
+
+        this.repositoryFeatures.push(...data.features)
+        this.featureHasMore = data.hasMore
+        this.featureUnassignedCount = data.summary.unassignedBlockCount
+        if (!this.repositoryFeatures.length) {
+          this.featureEmptyMessage = '분류된 기능이 없습니다.'
+        }
+      } catch (error) {
+        if (!isCurrent() || request.signal.aborted) return
+
+        const { status, data } = error.response ?? {}
+        if (status === 404 && data?.code === 'repository_not_analyzed') {
+          this.featureEmptyMessage = '이 프로젝트는 아직 기능 분석 결과가 없습니다.'
+        } else if (status === 401 || status === 403 || status === 404) {
+          this.featureEmptyMessage = status === 401
+            ? '로그인하면 기능 목록을 볼 수 있습니다.'
+            : '이 프로젝트의 기능 목록을 조회할 수 없습니다.'
+        } else {
+          this.featureError = status === 503
+            ? '기능 분석 데이터를 일시적으로 읽을 수 없습니다.'
+            : '기능 목록을 불러오지 못했습니다.'
+        }
+      } finally {
+        if (isCurrent()) {
+          this.featureRequest = null
+          this.featureLoading = false
+        }
+      }
+    },
+
     closeModal() {
       this.isEditingRepo = false
       this.$emit('close')
@@ -578,7 +694,7 @@ export default {
         return
       }
       
-      this.languageChart = new Chart(ctx, {
+      this.languageChart = markRaw(new Chart(ctx, {
         type: 'doughnut',
         data: {
           labels: chartData.map(item => item.name),
@@ -614,7 +730,7 @@ export default {
             intersect: false
           }
         }
-      })
+      }))
     },
     
     updateLanguageChart() {
@@ -685,6 +801,13 @@ export default {
   },
   
   watch: {
+    activeFeatureRepoId: {
+      immediate: true,
+      handler(repoId) {
+        this.resetRepositoryFeatures()
+        if (repoId !== null) this.loadRepositoryFeatures()
+      }
+    },
     show(newVal) {
       if (newVal) {
         // 모달이 열릴 때 프로젝트 소개 데이터 로드
@@ -721,6 +844,7 @@ export default {
   },
   
   beforeUnmount() {
+    this.featureRequest?.abort()
     // 컴포넌트가 제거될 때 차트 정리
     if (this.languageChart) {
       this.languageChart.destroy()
@@ -1286,6 +1410,123 @@ export default {
   color: #8a5360;
   font-size: 13px;
   line-height: 1.5;
+}
+
+/* 프로젝트 기능과 원본 위치 */
+.feature-box {
+  min-height: auto;
+}
+
+.feature-list {
+  width: 100%;
+}
+
+.feature-item + .feature-item {
+  margin-top: 8px;
+}
+
+.feature-item {
+  border: 1px solid #ededf1;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.feature-item > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 14px;
+  color: #262626;
+  cursor: pointer;
+  list-style: none;
+}
+
+.feature-item > summary::-webkit-details-marker {
+  display: none;
+}
+
+.feature-item > summary::before {
+  color: #CB385C;
+  content: '▸';
+}
+
+.feature-item[open] > summary::before {
+  content: '▾';
+}
+
+.feature-name {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.feature-count,
+.feature-message,
+.feature-function {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #595959;
+}
+
+.feature-count {
+  flex-shrink: 0;
+}
+
+.feature-box .feature-message {
+  width: auto;
+  height: auto;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.feature-feedback {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.feature-action {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.feature-evidence-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0 14px 12px 29px;
+  list-style: none;
+}
+
+.feature-evidence-list li {
+  display: grid;
+  gap: 3px;
+  padding: 9px 0 0;
+  border-top: 1px solid #ededf1;
+  overflow-wrap: anywhere;
+}
+
+.feature-evidence-title {
+  font-size: 14px;
+  color: #262626;
+}
+
+.feature-source-link {
+  justify-self: start;
+  color: #a62848;
+  font-size: 13px;
+  line-height: 1.5;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.feature-source-label {
+  margin-right: 0.4em;
+  font-weight: 600;
 }
 
 /* 파싱된 요약 내용 스타일 */

@@ -137,6 +137,13 @@ export function updateStudentTechnologyStack(uuid, technology_stack, student_id 
   });
 }
 
+export function getRepositoryFeatures(repoId, { limit, offset, signal } = {}) {
+  return api.get('/repo/features/', {
+    params: { repo_id: repoId, limit, offset },
+    signal
+  });
+}
+
 export function updateRepoIntroduction(uuid, repo_id, project_introduction) {
   return ajax('/repo/update_repo_introduction', 'post', {
     data: { uuid, repo_id, project_introduction },

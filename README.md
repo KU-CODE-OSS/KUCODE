@@ -185,7 +185,7 @@ This health check endpoint can be useful for monitoring the status of the backen
 
 ## E-Profile 저장소 기능 조회
 
-E-Profile → 나의 프로젝트 → Repository 이름을 누르면 `frontend/src/views/EProfileComponents/RepoDetailModal.vue`가 열립니다. 이 모달에 전달되는 `repo.id`로 다음 API를 호출할 수 있습니다.
+E-Profile → 나의 프로젝트 → Repository 이름을 누르면 `frontend/src/views/EProfileComponents/RepoDetailModal.vue`가 열립니다. 모달의 **기능 목록**에서 항목을 펼치면 근거 코드의 파일·행 범위와 GitHub 원본 링크를 볼 수 있습니다. 프론트엔드는 모달의 `repo.id`로 다음 API를 호출합니다.
 
 | GET 요청 | 조회 범위 |
 |---|---|
@@ -210,6 +210,8 @@ export FEATURE_LOOKUP_SNAPSHOT_HOST=/path/to/private/snapshot.json
 docker compose -p kucode-staging -f staging.yml \
   -f compose/staging/feature-lookup.yml up -d --build --no-deps backend
 ```
+
+모달 화면도 배포할 때는 같은 Compose 구성으로 `nginx` 서비스 이미지를 빌드하고 갱신합니다.
 
 Django는 `FEATURE_LOOKUP_SNAPSHOT`이 가리키는 파일을 프로세스에서 읽습니다. 새 스냅샷으로 교체할 때는 마운트를 포함한 위 Compose 구성으로 백엔드 컨테이너를 다시 생성합니다. 스냅샷, 벡터 배열, 실험 산출물, SSH 설정과 자격증명은 Git 및 이미지 밖의 서버 파일로 관리합니다.
 
