@@ -56,13 +56,13 @@
             </div>
             <button 
               @click="handleStudentIdVerification"
-              :disabled="!studentId || studentIdVerifying || studentIdVerified"
+              :disabled="!studentId || studentIdVerified"
               :class="[
                 'verification-button',
                 studentIdVerified ? 'verified' : ''
               ]"
             >
-              {{ studentIdVerified ? '인증 완료' : (studentIdVerifying ? '인증 중...' : '인증하기') }}
+              {{ studentIdVerified ? '인증 완료' : '인증하기' }}
             </button>
           </div>
           
@@ -159,7 +159,7 @@ import { useRouter } from 'vue-router'
 import { createUserWithEmailAndPassword, sendEmailVerification, getAuth, onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../services/firebase'
 import { useAuthStore } from '../stores/auth'
-import { checkStudentIdNumber, createSignUp } from '@/api.js'
+import { createSignUp } from '@/api.js'
 import axios from 'axios'
 
 // Form data
@@ -171,7 +171,6 @@ const confirmPassword = ref('')
 
 // State management
 const loading = ref(false)
-const studentIdVerifying = ref(false)
 const studentIdVerified = ref(false)
 const basicInfoError = ref('')
 const accountInfoError = ref('')
@@ -194,28 +193,11 @@ const isFormValid = computed(() => {
          password.value === confirmPassword.value
 })
 
-// Handle student ID verification
-const handleStudentIdVerification = async () => {
-  try {
-    studentIdVerifying.value = true
-    basicInfoError.value = ''
-    studentIdVerified.value = false
-
-    const result = await checkStudentIdNumber(studentId.value, studentName.value)
-
-    studentIdVerified.value = result.data.verified
-
-    if (!result.data.verified) {
-        basicInfoError.value = '학번 인증에 실패했습니다'
-    }
-  }
-  catch(error) {
-      basicInfoError.value = '학번 인증 중 오류가 발생했습니다'
-      console.error('Student ID verification error:', error)
-  } finally {
-    studentIdVerifying.value = false  // Set to false when done
-  }
-
+// Temporarily accept the entered student ID while the school API integration
+// is being updated. This does not verify the ID against school records.
+const handleStudentIdVerification = () => {
+  basicInfoError.value = ''
+  studentIdVerified.value = true
 }
 
 // Handle sign up

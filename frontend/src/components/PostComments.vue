@@ -13,7 +13,7 @@
       <article v-for="comment in comments" :key="comment.id" class="comment-thread">
         <div class="comment-card">
           <div class="comment-meta">
-            <strong>{{ comment.author.name }}</strong>
+            <strong>{{ displayName(comment.author.name) }}</strong>
             <time>{{ formatDate(comment.created_at) }}</time>
           </div>
           <p>{{ comment.content }}</p>
@@ -30,7 +30,7 @@
 
         <div v-for="reply in comment.replies" :key="reply.id" class="comment-card reply-card">
           <div class="comment-meta">
-            <strong>{{ reply.author.name }}</strong>
+            <strong>{{ displayName(reply.author.name) }}</strong>
             <time>{{ formatDate(reply.created_at) }}</time>
           </div>
           <p>{{ reply.content }}</p>
@@ -49,7 +49,7 @@
 
     <form v-if="canWrite" class="comment-form" @submit.prevent="submitComment">
       <div v-if="replyingTo" class="replying-to">
-        <span>{{ replyingTo.author.name }}님에게 답글 작성 중</span>
+        <span>{{ displayName(replyingTo.author.name) }}님에게 답글 작성 중</span>
         <button type="button" @click="cancelReply">취소</button>
       </div>
       <textarea
@@ -59,7 +59,7 @@
         required
       ></textarea>
       <div class="form-footer">
-        <span>{{ authStore.memberName || '현재 사용자' }}</span>
+        <span>{{ displayName(authStore.memberName) }}</span>
         <button type="submit" :disabled="submitting || !newContent.trim()">
           {{ submitting ? '등록 중...' : `${responseLabel} 등록` }}
         </button>
@@ -80,6 +80,7 @@ export default {
       required: true
     },
     allowStudentWriting: { type: Boolean, default: false },
+    maskNames: { type: Boolean, default: false },
     responseLabel: {
       type: String,
       default: '댓글'
@@ -115,6 +116,14 @@ export default {
     }
   },
   methods: {
+    displayName(name) {
+      const value = String(name || '').trim()
+      if (!value) return '현재 사용자'
+      if (!this.maskNames || value === 'Anonymous') return value
+      if (value.length === 1) return '*'
+      if (value.length === 2) return `${value[0]}*`
+      return `${value[0]}${'*'.repeat(value.length - 2)}${value[value.length - 1]}`
+    },
     async loadComments() {
       if (!this.postId) return
       this.loading = true
@@ -136,7 +145,7 @@ export default {
     },
     startReply(comment) {
       this.replyingTo = comment
-      const mention = comment.author?.name ? `@${comment.author.name} ` : ''
+      const mention = comment.author?.name ? `@${this.displayName(comment.author.name)} ` : ''
       if (!this.newContent.startsWith(mention)) this.newContent = mention
     },
     cancelReply() {

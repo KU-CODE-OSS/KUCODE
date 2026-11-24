@@ -186,6 +186,9 @@ def read_post(request):
 
         uuid = request.GET.get('uuid')
         owners = list(post.owners.order_by('name', 'id').values('id', 'name', 'role'))
+        if post.category == PostCategory.QNA:
+            for owner in owners:
+                owner['name'] = _mask_member_name(owner['name'])
         author_name = Member.objects.filter(id=post.author).values_list('name', flat=True).first()
         
         data = {
@@ -745,6 +748,12 @@ def read_comments_list(request):
         ).order_by('created_at')
         
         total_root_comments = root_comments_qs.count()
+        mask_names = Post.objects.filter(pk=post_id, category=PostCategory.QNA).exists()
+
+        def display_author_name(author):
+            if not author:
+                return 'Anonymous'
+            return _mask_member_name(author.name) if mask_names else author.name
         
         # 페이지네이션 적용 및 필요한 관계 데이터 미리 로드 (N+1 방지)
         # select_related: author (작성자 정보)
@@ -766,7 +775,7 @@ def read_comments_list(request):
                     "content": reply.content,
                     "author": {
                         "id": reply.author.id if reply.author else None,
-                        "name": reply.author.name if reply.author else "Anonymous"
+                        "name": display_author_name(reply.author)
                     },
                     "created_at": reply.created_at.isoformat(),
                     "updated_at": reply.updated_at.isoformat(),
@@ -778,7 +787,7 @@ def read_comments_list(request):
                 "content": comment.content,
                 "author": {
                     "id": comment.author.id if comment.author else None,
-                    "name": comment.author.name if comment.author else "Anonymous"
+                    "name": display_author_name(comment.author)
                 },
                 "created_at": comment.created_at.isoformat(),
                 "updated_at": comment.updated_at.isoformat(),

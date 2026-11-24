@@ -21,10 +21,9 @@
           <h1>{{ post.title }}</h1>
           <div class="post-meta">
             <span>{{ post.author }}</span>
-            <span v-if="post.owners.length">소유자: {{ ownerNames }}</span>
           </div>
           <p class="post-content">{{ post.content }}</p>
-          <PostComments v-if="post.id" :post-id="post.id" response-label="답변" :allow-student-writing="true" />
+          <PostComments v-if="post.id" :post-id="post.id" response-label="답변" :allow-student-writing="true" :mask-names="true" />
         </template>
       </main>
     </div>
@@ -55,16 +54,10 @@ export default {
         id: null,
         title: '',
         content: '',
-        author: '',
-        owners: []
+        author: ''
       },
       loading: false,
       error: ''
-    }
-  },
-  computed: {
-    ownerNames() {
-      return this.post.owners.map(owner => owner.name || owner.id).join(', ')
     }
   },
   created() {
@@ -84,8 +77,7 @@ export default {
           id: post.id,
           title: post.title,
           content: post.content,
-          author: post.author,
-          owners: post.owners || []
+          author: post.author
         }
       } catch (error) {
         console.error('Failed to load Q&A post:', error)

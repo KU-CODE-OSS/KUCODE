@@ -78,12 +78,17 @@
           <div v-if="activeCategory !== 'opensource'" class="table-wrapper">
             <div class="table-header">
               <div class="table-row header-row">
-                <div class="table-cell col-number">번호</div>
-                <div class="table-cell col-title">제목</div>
-                <div class="table-cell col-date">등록 일자</div>
-                <div class="table-cell col-author">작성자</div>
-                <div class="table-cell col-likes">{{ activeCategory === 'qna' ? '답변' : '좋아요' }}</div>
-                <div class="table-cell col-views">조회수</div>
+                <div
+                  v-for="column in postColumns"
+                  :key="column.key"
+                  :class="['table-cell', column.className]"
+                  role="columnheader"
+                  :aria-sort="sortAria(column.key)"
+                >
+                  <button type="button" class="column-sort" @click="toggleSort(column.key)">
+                    {{ column.label }} <span class="sort-indicator" aria-hidden="true">{{ sortIndicator(column.key) }}</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -127,11 +132,17 @@
           <div v-else class="table-wrapper">
             <div class="table-header">
               <div class="table-row header-row repos-header">
-                <div class="table-cell col-repos-number">순번</div>
-                <div class="table-cell col-repos-company">기업 명</div>
-                <div class="table-cell col-repos-count">저장소 개수</div>
-                <div class="table-cell col-repos-followers">팔로워 수</div>
-                <div class="table-cell col-repos-url">Github 주소</div>
+                <div
+                  v-for="column in repoColumns"
+                  :key="column.key"
+                  :class="['table-cell', column.className]"
+                  role="columnheader"
+                  :aria-sort="sortAria(column.key)"
+                >
+                  <button type="button" class="column-sort" @click="toggleSort(column.key)">
+                    {{ column.label }} <span class="sort-indicator" aria-hidden="true">{{ sortIndicator(column.key) }}</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -183,6 +194,8 @@ export default {
       activeNoticeTab: 'company',
       searchInput: '',
       searchQuery: '',
+      sortKey: 'number',
+      sortDirection: 'asc',
       loading: false,
       error: null,
       eventPosts: [],
@@ -193,6 +206,27 @@ export default {
     }
   },
   computed: {
+    postColumns() {
+      return [
+        { key: 'number', label: '번호', className: 'col-number', type: 'number' },
+        { key: 'title', label: '제목', className: 'col-title', type: 'text' },
+        { key: 'date', label: '등록 일자', className: 'col-date', type: 'date' },
+        { key: 'author', label: '작성자', className: 'col-author', type: 'text' },
+        this.activeCategory === 'qna'
+          ? { key: 'commentCount', label: '답변', className: 'col-likes', type: 'number' }
+          : { key: 'likeCount', label: '좋아요', className: 'col-likes', type: 'number' },
+        { key: 'views', label: '조회수', className: 'col-views', type: 'number' }
+      ]
+    },
+    repoColumns() {
+      return [
+        { key: 'number', label: '순번', className: 'col-repos-number', type: 'number' },
+        { key: 'company', label: '기업 명', className: 'col-repos-company', type: 'text' },
+        { key: 'repoCount', label: '저장소 개수', className: 'col-repos-count', type: 'number' },
+        { key: 'followers', label: '팔로워 수', className: 'col-repos-followers', type: 'number' },
+        { key: 'url', label: 'Github 주소', className: 'col-repos-url', type: 'text' }
+      ]
+    },
     activeCategoryLabel() {
       const category = this.categories.find(cat => cat.value === this.activeCategory)
       return category ? category.label : ''
@@ -218,11 +252,11 @@ export default {
       }
 
       const keyword = this.searchQuery.trim().toLowerCase()
-      if (!keyword) return posts
-      return posts.filter(post =>
+      const filtered = keyword ? posts.filter(post =>
         [post.title, post.author]
           .some(value => String(value || '').toLowerCase().includes(keyword))
-      )
+      ) : posts
+      return this.sortRows(filtered, this.postColumns)
     },
     filteredRepos() {
       let repos = []
@@ -233,14 +267,50 @@ export default {
       }
 
       const keyword = this.searchQuery.trim().toLowerCase()
-      if (!keyword) return repos
-      return repos.filter(repo =>
+      const filtered = keyword ? repos.filter(repo =>
         [repo.company, repo.url]
           .some(value => String(value || '').toLowerCase().includes(keyword))
-      )
+      ) : repos
+      return this.sortRows(filtered, this.repoColumns)
     }
   },
   methods: {
+    toggleSort(key) {
+      if (this.sortKey === key) {
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
+      } else {
+        this.sortKey = key
+        this.sortDirection = 'asc'
+      }
+    },
+    resetSort() {
+      this.sortKey = 'number'
+      this.sortDirection = 'asc'
+    },
+    sortIndicator(key) {
+      return this.sortKey === key ? (this.sortDirection === 'asc' ? '↑' : '↓') : '↕'
+    },
+    sortAria(key) {
+      return this.sortKey === key ? (this.sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'
+    },
+    sortRows(rows, columns) {
+      const column = columns.find(item => item.key === this.sortKey)
+      if (!column) return [...rows]
+      const direction = this.sortDirection === 'asc' ? 1 : -1
+      const valueOf = row => {
+        if (column.type === 'number') return Number(row[column.key]) || 0
+        if (column.type === 'date') return Date.parse(row.createdAt || String(row.date || '').replace(/\./g, '-')) || 0
+        return String(row[column.key] || '')
+      }
+      return [...rows].sort((a, b) => {
+        const left = valueOf(a)
+        const right = valueOf(b)
+        const comparison = column.type === 'text'
+          ? left.localeCompare(right, 'ko', { numeric: true, sensitivity: 'base' })
+          : left - right
+        return comparison * direction || Number(a.number) - Number(b.number)
+      })
+    },
     async loadPosts() {
       this.loading = true
       this.error = null
@@ -258,6 +328,7 @@ export default {
             number: index + 1,
             title: post.title,
             date: this.formatDate(post.created_at),
+            createdAt: post.created_at,
             author: post.author,
             views: 0,
             likeCount: post.like_count || 0,
@@ -273,6 +344,7 @@ export default {
             number: index + 1,
             title: post.title,
             date: this.formatDate(post.created_at),
+            createdAt: post.created_at,
             author: post.author,
             likeCount: post.like_count || 0,
             is_liked: post.is_liked, // TODO: Get from backend based on current user
@@ -288,6 +360,7 @@ export default {
             number: index + 1,
             title: post.title,
             date: this.formatDate(post.created_at),
+            createdAt: post.created_at,
             author: post.author,
             commentCount: post.answer_count || 0,
             likeCount: post.like_count || 0,
@@ -466,12 +539,16 @@ export default {
     }
   },
   watch: {
+    activeCategory() {
+      this.resetSort()
+    },
     '$route.query.category': function(newCategory) {
       if (newCategory && ['events', 'learning', 'opensource', 'qna'].includes(newCategory)) {
         this.activeCategory = newCategory
       }
     },
     activeNoticeTab(newTab) {
+      this.resetSort()
       if (this.activeCategory === 'opensource') {
         if (newTab === 'company') {
           this.loadCompanyRepos()
@@ -776,6 +853,32 @@ export default {
 .table-row:not(.header-row) .col-repos-company {
   font-weight: 600;
   color: #262626;
+}
+
+.column-sort {
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.column-sort:hover,
+.column-sort:focus-visible {
+  color: #CB385C;
+}
+
+.column-sort:focus-visible {
+  outline: 2px solid #CB385C;
+  outline-offset: 3px;
+}
+
+.sort-indicator {
+  font-size: 12px;
 }
 
 /* Event/Learning Table Columns */
